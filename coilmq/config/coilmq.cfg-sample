@@ -1,0 +1,37 @@
+[coilmq]
+
+; Configuration backend used for storage
+; queue_store_class = coilmq.store.memory.MemoryQueue
+
+; Configure the scheduler implementations used
+; subscriber_scheduler_class = coilmq.scheduler.FavorReliableSubscriberScheduler
+; queue_scheduler_class = coilmq.scheduler.RandomQueueScheduler
+
+[loggers]
+keys=root,coilmq
+
+[handlers]
+keys=console
+
+[formatters]
+keys=threaded
+
+[logger_root]
+level=DEBUG
+handlers=console
+
+[logger_coilmq]
+level=DEBUG
+handlers=console
+qualname=coilmq
+; propagate=0
+
+[handler_console]
+class=StreamHandler
+level=DEBUG
+formatter=threaded
+args=(sys.stdout,)
+
+[formatter_threaded]
+format=%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s
+datefmt= 
