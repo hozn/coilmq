@@ -27,32 +27,32 @@ class TestStompFrameBuffer(unittest.TestCase):
         frame.body = body
         return frame.pack()
     
-    def test_getOneMessage(self):
+    def test_extract_message(self):
         """ Make sure we get a Frame back from getNextMessage() """
         sb = StompFrameBuffer()
         m1 = self.createMessage('connect', {'session': uuid.uuid4()}, 'This is the body')
-        sb.appendData(m1)
-        msg = sb.getOneMessage()
+        sb.append(m1)
+        msg = sb.extract_message()
         assert isinstance(msg, stomper.Frame)
         assert m1 == msg.pack()
     
-    def test_getOneMessage_multi(self):
+    def test_extract_message_multi(self):
         """ Test the handling of multiple concatenated messages by the buffer. """
         
         m1 = 'CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00\n'
         m2 = 'SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00SEND\ndestination:/queue/test\n\n\x00'
         
         sb = StompFrameBuffer()
-        sb.appendData(m1)
-        f1 = sb.getOneMessage()
+        sb.append(m1)
+        f1 = sb.extract_message()
         assert f1.cmd == 'CONNECT'
         assert f1.body == '0123456789'
         
-        assert sb.getOneMessage() is None
+        assert sb.extract_message() is None
         
-        sb.appendData(m2)
-        f2 = sb.getOneMessage()
-        f3 = sb.getOneMessage()
+        sb.append(m2)
+        f2 = sb.extract_message()
+        f3 = sb.extract_message()
         
         assert f2.cmd == 'SUBSCRIBE'
         assert f2.body == ''
@@ -60,10 +60,10 @@ class TestStompFrameBuffer(unittest.TestCase):
         assert f3.destination == '/queue/test'
         assert f3.body == ''
         
-        assert sb.getOneMessage() is None
+        assert sb.extract_message() is None
         
         
-    def test_getOneMessage_fragmented(self):
+    def test_extract_message_fragmented(self):
         """ Test the handling of fragmented frame data. """
         
         m1_1  = 'CONNECT\nsession:207567f3-cce7-4a0a-930b-'
@@ -73,24 +73,24 @@ class TestStompFrameBuffer(unittest.TestCase):
         m1_4 = 'ND\ndestination:/queue/test\n\n0123456789\x00'
         
         sb = StompFrameBuffer()
-        sb.appendData(m1_1)
+        sb.append(m1_1)
         
-        assert sb.getOneMessage() is None
+        assert sb.extract_message() is None
         
-        sb.appendData(m1_2)
+        sb.append(m1_2)
         
-        f1 = sb.getOneMessage()
+        f1 = sb.extract_message()
         assert f1.cmd == 'CONNECT'
         assert f1.body == '0123456789'
-        assert sb.getOneMessage() is None
+        assert sb.extract_message() is None
         
-        sb.appendData(m1_3)
-        f2 = sb.getOneMessage()
+        sb.append(m1_3)
+        f2 = sb.extract_message()
         assert f2.cmd == 'SUBSCRIBE'        
-        assert sb.getOneMessage() is None
+        assert sb.extract_message() is None
         
-        sb.appendData(m1_4)
-        f3 = sb.getOneMessage()
+        sb.append(m1_4)
+        f3 = sb.extract_message()
         assert f3.cmd == 'SEND'
         assert f3.destination == '/queue/test'
         assert f3.body == '0123456789'
@@ -102,8 +102,8 @@ class TestStompFrameBuffer(unittest.TestCase):
         m2 = self.createMessage('send', {'destination': '/queue/sample'}, 'This is the body-2')
         print '%r' % m1
         print '%r' % m2
-        sb.appendData(m1)
-        sb.appendData(m2)
+        sb.append(m1)
+        sb.append(m2)
         
         assert sb is iter(sb)
         
