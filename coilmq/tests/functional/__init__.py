@@ -1,19 +1,29 @@
+#
+# Copyright 2009 Hans Lellelid
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """
-Functional tests to test full stack -- i.e. reactor, etc.
+Functional tests to test full stack (but not actual socket layer).
 """
-from twisted.internet.address import IPv4Address
-from twisted.test import proto_helpers
+import unittest
 
-class TestCaseStompClient(object):
+from coilmq.tests import mock
+
+class ConnectionTest(unittest.TestCase):
+    """ Test basic connection and disconnection by clients. """
     
-    def __init__(self, factory, address=None):
-        if address is None: address = IPv4Address('TCP', '127.0.0.1', 61613)
-        self.transport = proto_helpers.StringTransportWithDisconnection()
-        self.protocol = factory.buildProtocol(address)
-        self.transport.protocol = self.protocol
-        self.protocol.makeConnection(self.transport)
-
-    def write(self, stuff):
-        if isinstance(stuff, unicode):
-            stuff = stuff.encode('utf-8')
-        self.protocol.dataReceived(stuff)
+    def setUp(self):
+        self.conn = mock.MockConnection()
+         
+    
+    
