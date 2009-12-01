@@ -63,7 +63,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         # self.request is the TCP socket connected to the client
         try:
             while True:
-                data = self.request.recv(1024)
+                data = self.request.recv(8192)
                 if not data:
                     break
                 
@@ -101,7 +101,7 @@ class StompServer(TCPServer):
     @type topic_manager: L{coilmq.topic.TopicManager}
     """
     
-    def __init__(self, server_address, bind_and_activate=True, authenticator=None, queue_manager=None, topic_manager=None):
+    def __init__(self, server_address, RequestHandlerClass=None, bind_and_activate=True, authenticator=None, queue_manager=None, topic_manager=None):
         """
         Extension to C{TCPServer} constructor to provide mechanism for providing implementation classes.
         
@@ -109,7 +109,9 @@ class StompServer(TCPServer):
         @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
         @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
         """
-        TCPServer.__init__(self, server_address, StompRequestHandler, bind_and_activate=bind_and_activate)
+        if not RequestHandlerClass:
+            RequestHandlerClass = StompRequestHandler
+        TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate=bind_and_activate)
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
