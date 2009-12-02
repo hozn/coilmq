@@ -28,13 +28,97 @@ from Queue import Queue
 from SocketServer import BaseServer
 
 from coilmq.frame import StompFrame
+from coilmq.queue import QueueManager
+from coilmq.topic import TopicManager
+
 from coilmq.server.socketserver import StompServer, StompRequestHandler, ThreadedStompServer
 from coilmq.util.buffer import StompFrameBuffer
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 
 from coilmq.tests import mock
+
+class BaseFunctionalTestCase(unittest.TestCase):
+    """
+    Base class for test cases provides the fixtures for setting up the multi-threaded
+    unit test infrastructure.
+    
+    We use a combination of C{threading.Event} and C{Queue.Queue} objects to faciliate
+    inter-thread communication and lock-stepping the assertions. 
+    """
+    def setUp(self):
         
+        self.clients = []
+        self.server_address = None # This gets set in the server thread.
+        self.ready_event = threading.Event()
+        
+        qm = QueueManager(store=MemoryQueue(),
+                          subscriber_scheduler=FavorReliableSubscriberScheduler(),
+                          queue_scheduler=RandomQueueScheduler())
+        tm = TopicManager()
+        
+        addr_bound = threading.Event()
+        def start_server():
+            self.server = TestStompServer(('127.0.0.1', 0),
+                                          ready_event=self.ready_event,
+                                          authenticator=None,
+                                          queue_manager=self._queuemanager(),
+                                          topic_manager=self._topicmanager())
+            self.server_address = self.server.socket.getsockname()
+            addr_bound.set()
+            self.server.serve_forever()
+            
+        self.server_thread = threading.Thread(target=start_server, name='server')
+        self.server_thread.start()
+        self.ready_event.wait()
+        addr_bound.wait()
+    
+    def _queuemanager(self):
+        """
+        Returns the configured L{QueueManager} instance to use.
+        
+        Can be overridden by subclasses that wish to change out any queue mgr parameters.
+        
+        @rtype: L{QueueManager}
+        """
+        return QueueManager(store=MemoryQueue(),
+                            subscriber_scheduler=FavorReliableSubscriberScheduler(),
+                            queue_scheduler=RandomQueueScheduler())
+    
+    def _topicmanager(self):
+        """
+        Returns the configured L{TopicManager} instance to use.
+        
+        Can be overridden by subclasses that wish to change out any topic mgr parameters.
+        
+        @rtype: L{TopicManager}
+        """
+        return TopicManager()
+    
+    def tearDown(self):
+        for c in self.clients:
+            print "Disconnecting %s" % c
+            c.close()
+        self.server.shutdown()
+        self.server_thread.join()
+        self.ready_event.clear()
+        del self.server_thread
+        
+    def _new_client(self):
+        """
+        Get a new L{TestStompClient} connected to our test server. 
+        
+        The client will also be registered for close in the tearDown method.
+        @rtype: L{TestStompClient}
+        """
+        client = TestStompClient(self.server_address)
+        self.clients.append(client)
+        client.connect()
+        # print "Client created: %s" % (client)
+        r = client.received_frames.get(timeout=1)
+        assert r.cmd == 'CONNECTED'
+        return client
+
 class TestStompServer(ThreadedStompServer):
     """
     A stomp server for functional tests that uses C{threading.Event} objects
@@ -90,8 +174,10 @@ class TestStompClient(object):
     def connect(self):
         self.send_frame(StompFrame('CONNECT'))
         
-    def send(self, destination, message):
-        self.send_frame(StompFrame('SEND', headers={'destination': destination}, body=message))
+    def send(self, destination, message, set_content_length=True):
+        headers = {'destination': destination}
+        if set_content_length: headers['content-length'] = len(message)
+        self.send_frame(StompFrame('SEND', headers=headers, body=message))
     
     def subscribe(self, destination):
         self.send_frame(StompFrame('SUBSCRIBE', headers={'destination': destination}))

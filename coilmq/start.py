@@ -20,26 +20,36 @@ __authors__ = [
 ]
 from optparse import OptionParser
 
-from coilmq.config import config, init_config, resolve_object
+from coilmq.config import config as global_config, init_config, resolve_object
 from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler    
 from coilmq.server.socketserver import ThreadedStompServer
 
-def server_from_config(cfg=None):
+def server_from_config(config=None, server_class=None, additional_kwargs=None):
     """
     Gets a configured L{coilmq.server.StompServer} from specified config.
     
-    If config is None, global L{coilmq.config.config} var will be used instead.
+    If `config` is None, global L{coilmq.config.config} var will be used instead.
     
-    @param cfg: A C{ConfigParser.ConfigParser} instance with loaded config values.
-    @type cfg: C{ConfigParser.ConfigParser}
+    The `server_class` and `additional_kwargs` are primarily hooks for using this method
+    from a testing environment.
+    
+    @param config: A C{ConfigParser.ConfigParser} instance with loaded config values.
+    @type config: C{ConfigParser.ConfigParser}
+    
+    @param server_class: Which class to use for the server.  (This doesn't come from config currently.)
+    @type server_class: C{class}
+    
+    @param additional_kwargs: Any additional args that should be passed to class.
+    @type additional_kwargs: C{list}
     
     @return: The configured StompServer.
     @rtype: L{coilmq.server.StompServer}
     """
-    global config
+    global global_config
+    if not config: config = global_config
     
     queue_store_class = resolve_object(config.get('coilmq', 'queue_store_class'))
     subscriber_scheduler_class = resolve_object(config.get('coilmq', 'subscriber_scheduler_class'))
@@ -76,10 +86,10 @@ def main():
     init_config(options.config_file)
     
     if options.listen_addr is not None:
-        config.set('coilmq', 'listen_addr', options.listen_addr)
+        global_config.set('coilmq', 'listen_addr', options.listen_addr)
         
     if options.listen_port is not None:
-        config.set('coilmq', 'listen_port', options.listen_port)
+        global_config.set('coilmq', 'listen_port', options.listen_port)
     
     server = server_from_config()
     server.serve_forever()
