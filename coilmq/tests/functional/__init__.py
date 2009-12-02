@@ -15,28 +15,52 @@
 """
 Functional tests to test full stack (but not actual socket layer).
 """
+import sys
+import time
 import unittest
 import logging
 import socket
+import select
 import threading
 from Queue import Queue
 
-from coilmq.server.socketserver import StompServer, StompRequestHandler
+# TEMP:
+from SocketServer import BaseServer
+
+from coilmq.frame import StompFrame
+from coilmq.server.socketserver import StompServer, StompRequestHandler, ThreadedStompServer
 from coilmq.util.buffer import StompFrameBuffer
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 
 from coilmq.tests import mock
+        
+class TestStompServer(ThreadedStompServer):
+    """
+    A stomp server for functional tests that uses C{threading.Event} objects
+    to ensure that it stays in sync with the test suite.
+    """
     
-class TestStompRequestHandler(StompRequestHandler):
+    allow_reuse_address = True
     
-    def setup(self):
-        StompRequestHandler.setup(self)
-        self.ready_event = self.server.ready_event
-        self.quit_event = self.server.quit_event
-        self.done_event = self.server.done_event
+    def __init__(self, server_address,
+                 bind_and_activate=True,
+                 ready_event=None,
+                 authenticator=None,
+                 queue_manager=None,
+                 topic_manager=None):
+        self.ready_event = ready_event
+        StompServer.__init__(self, server_address, StompRequestHandler,
+                             bind_and_activate=bind_and_activate,
+                             authenticator=authenticator,
+                             queue_manager=queue_manager,
+                             topic_manager=topic_manager)
+        
+    def server_activate(self):
+        self.ready_event.set()
+        StompServer.server_activate(self)
 
-class StompClient(object):
+class TestStompClient(object):
     """
     A stomp client for use in testing.
     
@@ -46,13 +70,10 @@ class StompClient(object):
     @ivar received_frames: A queue of StompFrame instances that have been received.
     @type received_frames: C{Queue.Queue} containing any received L{coilmq.frame.StompFrame}
     """
-    def __init__(self, addr, quit_event, connect=True):
+    def __init__(self, addr, connect=True):
         """
         @param addr: The (host,port) tuple for connection.
         @type addr: C{tuple}
-        
-        @param quite_event: A C{threading.Event} to signal that we should stop receiving data.
-        @type quite_event: C{threading.Event}
         
         @param connect: Whether to connect socket to specified addr.
         @type connect: C{bool}
@@ -61,12 +82,21 @@ class StompClient(object):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.addr = addr
         self.received_frames = Queue()
-        self.quit_event = quit_event
+        self.read_stopped = threading.Event()
         self.buffer = StompFrameBuffer()
         if connect:
-            self.connect()
+            self._connect()
+    
+    def connect(self):
+        self.send_frame(StompFrame('CONNECT'))
         
-    def send(self, frame):
+    def send(self, destination, message):
+        self.send_frame(StompFrame('SEND', headers={'destination': destination}, body=message))
+    
+    def subscribe(self, destination):
+        self.send_frame(StompFrame('SUBSCRIBE', headers={'destination': destination}))
+        
+    def send_frame(self, frame):
         """
         Sends a stomp frame.
         @param frame: The stomp frame to send.
@@ -76,56 +106,32 @@ class StompClient(object):
             raise RuntimeError("Not connected")
         self.sock.send(frame.pack())
     
-    def connect(self):
+    def _connect(self):
         self.sock.connect(self.addr)
-        t = threading.Thread(target=self._read_loop, name="StompClient.Receiver")
-        t.start()
         self.connected = True
+        self.read_stopped.clear()
+        t = threading.Thread(target=self._read_loop, name="client-receiver-%s" % hex(id(self)))
+        t.start()
     
     def _read_loop(self):
-        while not self.quit_event.is_set():
-            data = self.sock.recv(1024)
-            self.log.debug("Data received: %r" % data)
-            self.buffer.append(data)
-            for frame in self.buffer:
-                self.log.debug("Processing frame: %s" % frame)
-                self.received_frames.put(frame)
-                
+        while self.connected:
+            r, w, e = select.select([self.sock], [], [], 0.1)
+            if r:
+                data = self.sock.recv(1024)
+                self.log.debug("Data received: %r" % data)
+                self.buffer.append(data)
+                for frame in self.buffer:
+                    self.log.debug("Processing frame: %s" % frame)
+                    self.received_frames.put(frame)
+        self.read_stopped.set()
+        # print "Read loop has been quit! for %s" % id(self)
+    
     def disconnect(self):
+        self.send_frame(StompFrame('DISCONNECT'))
+        
+    def close(self):
         if not self.connected:
             raise RuntimeError("Not connected")
-        self.sock.close()
         self.connected = False
-        
-class TestStompServer(StompServer):
-    
-    def __init__(self, server_address,
-                 bind_and_activate=True,
-                 ready_event=None,
-                 quit_event=None,
-                 done_event=None,
-                 authenticator=None,
-                 queue_manager=None,
-                 topic_manager=None):
-        self.ready_event = ready_event
-        self.quit_event = quit_event
-        self.done_event = done_event
-        StompServer.__init__(self, server_address, TestStompRequestHandler,
-                             bind_and_activate=bind_and_activate,
-                             authenticator=authenticator,
-                             queue_manager=queue_manager,
-                             topic_manager=topic_manager)
-
-    def server_activate(self):
-        print "Server activating..."
-        self.ready_event.set()
-        StompServer.server_activate(self)
-    
-    def handle_request(self):
-        print "Handled request."
-        self.ready_event.set()
-        StompServer.handle_request(self)
-        
-    def get_request(self):
-        print "In get_request()"
-        return StompServer.get_request(self)
+        self.read_stopped.wait()
+        self.sock.close()

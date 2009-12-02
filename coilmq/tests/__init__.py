@@ -15,3 +15,6 @@
 """
 Unit and functional tests for project.
 """
+import coilmq.config
+
+coilmq.config.init_config(None)

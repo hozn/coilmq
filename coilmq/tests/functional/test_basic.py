@@ -2,6 +2,7 @@
 
 """
 import unittest
+import logging
 import socket
 import threading
 from Queue import Queue
@@ -12,55 +13,89 @@ from coilmq.topic import TopicManager
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler    
 
-from coilmq.tests.functional import TestStompRequestHandler, TestStompServer, StompClient
+from coilmq.tests.functional import TestStompServer, TestStompClient
 
-class SocketObjTestCase(unittest.TestCase):
+class BasicTest(unittest.TestCase):
+    """
+    A basic set of functional tests.
     
+    We have to jump through a few hoops to test the multi-threaded code.  We're
+    suing a combination of C{threading.Event} and C{Queue.Queue} objects to faciliate
+    inter-thread communication and lock-stepping the assertions. 
+    """
     def setUp(self):
-        self.server_address = ('127.0.0.1', 61613)
+        
+        self.clients = []
+        self.server_address = None # This gets set in the server thread.
         self.ready_event = threading.Event()
-        self.done_event = threading.Event()
-        self.quit_event = threading.Event()
         
         qm = QueueManager(store=MemoryQueue(),
                           subscriber_scheduler=FavorReliableSubscriberScheduler(),
                           queue_scheduler=RandomQueueScheduler())
         tm = TopicManager()
         
+        addr_bound = threading.Event()
         def start_server():
-#            s = socket.socket()
-#            s.bind(("0.0.0.0", 9999))
-#            s.listen(3)
-#            print "Listen(3)"
-            self.server = TestStompServer(self.server_address,
+            self.server = TestStompServer(('127.0.0.1', 0),
                                           ready_event=self.ready_event,
-                                          quit_event=self.quit_event,
-                                          done_event=self.done_event,
                                           authenticator=None,
                                           queue_manager=qm,
                                           topic_manager=tm)
-            print "Serving forever..."
+            self.server_address = self.server.socket.getsockname()
+            addr_bound.set()
+            #print "Server address: %s" % (self.server_address,)
             self.server.serve_forever()
             
-        self.server_thread = threading.Thread(target=start_server, name='StompServer')
+        self.server_thread = threading.Thread(target=start_server, name='server')
         self.server_thread.start()
-        print "Waiting on ready_event."
         self.ready_event.wait()
-        
+        addr_bound.wait()
         
     def tearDown(self):
+        for c in self.clients:
+            print "Disconnecting %s" % c
+            c.close()
         self.server.shutdown()
-        self.quit_event.set()
         self.server_thread.join()
-        del self.server_thread
-        #self.done_event.wait()
         self.ready_event.clear()
-        self.done_event.clear()
-        self.quit_event.clear()
-
+        del self.server_thread
+        
+    def _new_client(self):
+        """
+        Get a new L{TestStompClient} connected to our test server. 
+        """
+        client = TestStompClient(self.server_address)
+        self.clients.append(client)
+        client.connect()
+        print "Client created: %s" % (client)
+        r = client.received_frames.get(timeout=1)
+        assert r.cmd == 'CONNECTED'
+        return client
+        
     def test_connect(self):
-        client = StompClient(self.server_address, self.quit_event)
-        client.send(StompFrame('CONNECT'))
-        received = client.received_frames.get(timeout=1) 
-        print received
-        assert False
+        c = self._new_client()
+        
+    def test_subscribe(self):
+        c1 = self._new_client()
+        c1.subscribe('/queue/foo')
+        
+        c2 = self._new_client()
+        c2.subscribe('/queue/foo2')
+        
+        c2.send('/queue/foo', 'A message')
+        assert c2.received_frames.qsize() == 0
+       
+        r = c1.received_frames.get()
+        assert r.cmd == 'MESSAGE'
+        assert r.body == 'A message'
+    
+    def test_disconnect(self):
+        """
+        Test the 'polite' disconnect.
+        """
+        c1 = self._new_client()
+        c1.connect()
+        c1.disconnect()
+        assert c1.received_frames.qsize() == 0
+        
+    
