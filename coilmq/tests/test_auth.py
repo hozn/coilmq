@@ -34,25 +34,16 @@ class SimpleAuthenticatorTest(unittest.TestCase):
     
     def test_constructor(self):
         """
-        Test the L{SimpleAuthenticator} with passing auth store in constructor.
+        Test the with passing auth store in constructor.
         """
         auth = SimpleAuthenticator({'user': 'pass'})
         assert auth.authenticate('user', 'pass') == True
         assert auth.authenticate('user1', 'pass') == False
         assert auth.authenticate('user', 'pass2') == False
-    
-    def test_constructor(self):
-        """
-        Test the L{SimpleAuthenticator} with passing auth store in constructor.
-        """
-        auth = SimpleAuthenticator({'user': 'pass'})
-        assert auth.authenticate('user', 'pass') == True
-        assert auth.authenticate('user1', 'pass') == False
-        assert auth.authenticate('user', 'pass2') == False
-    
+
     def test_from_configfile(self):
         """
-        Test the L{SimpleAuthenticator.from_configfile} method with file path.
+        Test the loading store from config file path.
         """
         filename = resource_filename('coilmq.tests.resources', 'auth.ini')
         auth = SimpleAuthenticator()
@@ -65,7 +56,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         
     def test_from_configfile_fp(self):
         """
-        Test the L{SimpleAuthenticator.from_configfile} method with file-like object. 
+        Test loading store from file-like object. 
         """
         fp = resource_stream('coilmq.tests.resources', 'auth.ini')
         auth = SimpleAuthenticator()
@@ -78,7 +69,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
     
     def test_from_configfile_invalid(self):
         """
-        Test the L{SimpleAuthenticator.from_configfile} method with invalid file path.
+        Test loading store with invalid file path.
         """
         filename = resource_filename('coilmq.tests.resources', 'auth-invlaid.ini')
         auth = SimpleAuthenticator()
@@ -90,7 +81,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         
     def test_from_configfile_fp_invalid(self):
         """
-        Test the L{SimpleAuthenticator.from_configfile} method with missing section.
+        Test loading store with missing section in config.
         """
         buf = "[invalid]\nusername=password"
         fp = StringIO(buf)

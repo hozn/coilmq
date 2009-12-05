@@ -41,7 +41,7 @@ class TestStompFrameBuffer(unittest.TestCase):
         return frame.pack()
     
     def test_extract_message(self):
-        """ Make sure we get a Frame back from getNextMessage() """
+        """ Test extracting a single frame. """
         sb = StompFrameBuffer()
         m1 = self.createMessage('connect', {'session': uuid.uuid4()}, 'This is the body')
         sb.append(m1)
@@ -49,6 +49,22 @@ class TestStompFrameBuffer(unittest.TestCase):
         assert isinstance(msg, stomper.Frame)
         assert m1 == msg.pack()
     
+    def test_extract_message_binary(self):
+        """ Test extracting a binary frame. """
+        sb = StompFrameBuffer()
+        binmsg = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
+        m1 = self.createMessage('send', {'content-length': len(binmsg)}, binmsg)
+        sb.append(m1)
+        msg = sb.extract_message()
+        assert isinstance(msg, stomper.Frame)
+        assert msg.pack() == m1
+     
+        m2 = self.createMessage('send', {'content-length': len(binmsg), 'x-other-header': 'value'}, binmsg)
+        sb.append(m2)
+        msg = sb.extract_message()
+        assert isinstance(msg, stomper.Frame)
+        assert msg.pack() == m2
+       
     def test_extract_message_multi(self):
         """ Test the handling of multiple concatenated messages by the buffer. """
         

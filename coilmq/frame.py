@@ -48,7 +48,7 @@ class StompFrame(stomper.Frame):
         return self.headers.get(name.replace('-', '_'))
     
     def __repr__(self):
-        return '<%s cmd=%s>' % (self.__class__.__name__, self.cmd)
+        return '<%s cmd=%s len=%d>' % (self.__class__.__name__, self.cmd, len(self.body))
     
 class HeaderValue(object):
     """

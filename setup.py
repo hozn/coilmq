@@ -37,9 +37,9 @@ setup(
     test_suite='nose.collector',
     tests_require=['nose', 'coverage'],
     install_requires=[
-	'distribute',
-        'stomper',
-        'python-daemon'
+          'distribute',
+          'stomper',
+          # 'python-daemon' #(this is unix-specific)
     ],
     extras_require={
         'Twisted': ['Twisted']

@@ -35,8 +35,8 @@ sync_re = re.compile('^.*?\x00')
 
 # regexp to determine the content length. The buffer should always start
 # with a command followed by the headers, so the content-length header will
-# always be preceded by a newline.
-content_length_re = re.compile('\ncontent-length\s*:\s*(\d+)\s*\n')
+# always be preceded by a newline.  It may not always proceeded by a newline, though!
+content_length_re = re.compile('\ncontent-length\s*:\s*(\d+)\s*(\n|$)')
 
 # Separator between the header and the body.
 len_sep = len('\n\n')
@@ -171,7 +171,7 @@ class StompFrameBuffer(object):
             i = data.index('\n\n')
         except ValueError:
             if self.debug:
-                self.log.debug("Could not find <LF><LF> in data.")
+                self.log.debug("No complete frames in buffer.")
             return (0, 0)
         # If the string '\n\n' exists, then we have the entire header and can
         # check for the content-length header. If it exists, we can check
@@ -223,6 +223,8 @@ class StompFrameBuffer(object):
                 # We have enough bytes in the buffer
                 return (req_len, i)
         else:
+            if self.debug:
+                self.log.debug("No content-length header present; reading until first null byte.")
             # There was no content-length header, so just look for the
             # message terminator ('\x00' ).
             try:

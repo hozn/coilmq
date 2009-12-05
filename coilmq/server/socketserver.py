@@ -37,9 +37,13 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     
     @ivar engine: The STOMP protocol engine.
     @type engine: L{coilmq.engine.StompEngine}
+    
+    @ivar debug: Whether to enable extra-verbose debug logging.  (Will be logged at debug level.)
+    @type debug: C{bool}
     """
     
     def setup(self):
+        self.debug = False
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         self.buffer = StompFrameBuffer()
         self.engine = StompEngine(connection=self,
@@ -57,8 +61,8 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                 data = self.request.recv(8192)
                 if not data:
                     break
-                
-                self.log.debug("Data received: %r" % data)
+                if self.debug:
+                    self.log.debug("RECV: %r" % data)
                 self.buffer.append(data)
                 
                 for frame in self.buffer:
@@ -75,7 +79,10 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         @param frame: The frame to send.
         @type frame: L{coilmq.frame.StompFrame}
         """
-        self.request.sendall(frame.pack())
+        packed = frame.pack()
+        if self.debug:
+            self.log.debug("SEND: %r" % packed)
+        self.request.sendall(packed)
 
 class StompServer(TCPServer):
     """
