@@ -18,7 +18,7 @@ limitations under the License."""
 
 from optparse import OptionParser
 
-from coilmq.config import config as global_config, init_config, resolve_object
+from coilmq.config import config as global_config, init_config, resolve_name
 from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
 from coilmq.store.memory import MemoryQueue
@@ -49,15 +49,20 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     global global_config
     if not config: config = global_config
     
-    queue_store_class = resolve_object(config.get('coilmq', 'queue_store_class'))
-    subscriber_scheduler_class = resolve_object(config.get('coilmq', 'subscriber_scheduler_class'))
-    queue_scheduler_class = resolve_object(config.get('coilmq', 'queue_scheduler_class'))
+    queue_store_factory = resolve_name(config.get('coilmq', 'queue_store_factory'))
+    subscriber_scheduler_factory = resolve_name(config.get('coilmq', 'subscriber_scheduler_factory'))
+    queue_scheduler_factory = resolve_name(config.get('coilmq', 'queue_scheduler_factory'))
+    authenticator_factory = resolve_name(config.get('coilmq', 'authenticator_factory'))
     
+    if authenticator_factory:
+        authenticator = authenticator_factory()
+        
     server = ThreadedStompServer((config.get('coilmq', 'listen_addr'), config.getint('coilmq', 'listen_port')),
-                                 queue_manager=QueueManager(store=queue_store_class(),
-                                                            subscriber_scheduler=subscriber_scheduler_class(),
-                                                            queue_scheduler=queue_scheduler_class()),
-                                 topic_manager=TopicManager())
+                                 queue_manager=QueueManager(store=queue_store_factory(),
+                                                            subscriber_scheduler=subscriber_scheduler_factory(),
+                                                            queue_scheduler=queue_scheduler_factory()),
+                                 topic_manager=TopicManager(),
+                                 authenticator=authenticator)
     return server
 
 def main():

@@ -1,11 +1,24 @@
 [coilmq]
 
+; Backend implementation configuration.
+; -------------------------------------
+; Factories for implementations can be configured by passing a dotted-path.
+; This is typically the path to a class or to a callable that returns a configured
+; object (that implements the necessary functionality).  The reason to use a callable
+; is in cases when the object may need to be initialized with values from the
+; app's configuration.  (For example, a database storage engine will need to know
+; the database connect URI.)
+
 ; Configuration backend used for storage
-; queue_store_class = coilmq.store.memory.MemoryQueue
+; queue_store_factory = coilmq.store.memory.MemoryQueue
 
 ; Configure the scheduler implementations used
-; subscriber_scheduler_class = coilmq.scheduler.FavorReliableSubscriberScheduler
-; queue_scheduler_class = coilmq.scheduler.RandomQueueScheduler
+; subscriber_scheduler_factory = coilmq.scheduler.FavorReliableSubscriberScheduler
+; queue_scheduler_factory = coilmq.scheduler.RandomQueueScheduler
+
+; Configure the authenticator class -- and any options
+; authenticator_factory = coilmq.auth.simple:make_simple
+; authenticator_storefile = /path/to/authfile.ini
 
 [loggers]
 keys=root,coilmq

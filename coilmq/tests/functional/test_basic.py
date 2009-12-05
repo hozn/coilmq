@@ -20,6 +20,7 @@ import hashlib
 import zlib
 import random
 
+from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.tests.functional import BaseFunctionalTestCase
 
 class BasicTest(BaseFunctionalTestCase):
@@ -29,6 +30,30 @@ class BasicTest(BaseFunctionalTestCase):
         
     def test_connect(self):
         c = self._new_client()
+    
+    def test_connect_auth(self):
+        """ Test connecting when auth is required. """
+        self.server.authenticator = SimpleAuthenticator(store={'user': 'pass'})
+        
+        c1 = self._new_client(connect=False)
+        c1.connect()
+        r = c1.received_frames.get(timeout=1)
+        assert r.cmd == 'ERROR'
+        assert 'Auth' in r.body
+        
+        c2 = self._new_client(connect=False)
+        c2.connect(headers={'login': 'user', 'passcode': 'pass'})
+        r2 = c2.received_frames.get(timeout=1)
+        print r2
+        
+        assert r2.cmd == 'CONNECTED'
+        
+        c3 = self._new_client(connect=False)
+        c3.connect(headers={'login': 'user', 'passcode': 'pass-invalid'})
+        r3 = c3.received_frames.get(timeout=1)
+        print r3
+        
+        assert r3.cmd == 'ERROR'
         
     def test_subscribe(self):
         c1 = self._new_client()

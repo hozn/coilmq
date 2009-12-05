@@ -48,13 +48,9 @@ class BaseFunctionalTestCase(unittest.TestCase):
     def setUp(self):
         
         self.clients = []
+        self.server = None  # This gets set in the server thread.
         self.server_address = None # This gets set in the server thread.
         self.ready_event = threading.Event()
-        
-        qm = QueueManager(store=MemoryQueue(),
-                          subscriber_scheduler=FavorReliableSubscriberScheduler(),
-                          queue_scheduler=RandomQueueScheduler())
-        tm = TopicManager()
         
         addr_bound = threading.Event()
         def start_server():
@@ -103,19 +99,23 @@ class BaseFunctionalTestCase(unittest.TestCase):
         self.ready_event.clear()
         del self.server_thread
         
-    def _new_client(self):
+    def _new_client(self, connect=True):
         """
         Get a new L{TestStompClient} connected to our test server. 
         
         The client will also be registered for close in the tearDown method.
+        
+        @param connect: Whether to issue the CONNECT command.
+        @type connect: C{bool}
+        
         @rtype: L{TestStompClient}
         """
         client = TestStompClient(self.server_address)
         self.clients.append(client)
-        client.connect()
-        # print "Client created: %s" % (client)
-        r = client.received_frames.get(timeout=1)
-        assert r.cmd == 'CONNECTED'
+        if connect:
+            client.connect()
+            r = client.received_frames.get(timeout=1)
+            assert r.cmd == 'CONNECTED'
         return client
 
 class TestStompServer(ThreadedStompServer):
@@ -170,8 +170,10 @@ class TestStompClient(object):
         if connect:
             self._connect()
     
-    def connect(self):
-        self.send_frame(StompFrame('CONNECT'))
+    def connect(self, headers=None):
+        if headers is None:
+            headers = {}
+        self.send_frame(StompFrame('CONNECT', headers=headers))
         
     def send(self, destination, message, set_content_length=True):
         headers = {'destination': destination}

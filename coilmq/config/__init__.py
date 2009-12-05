@@ -55,20 +55,28 @@ def init_config(config_file):
             raise ValueError("Could not read configuration from file: %s" % config_file)
     else:
         logging.config.fileConfig(resource_filename(__name__, 'defaults.cfg'))
-    
-def resolve_object(name):
+
+def resolve_name(name):
     """
-    Resolve a dotted name to an object.
+    Resolve a dotted name to some object (usually class, module, or function).
     
-    This is borrowed from C{logging._resolve} function.  In this case, it exists to support
-    specifying class names in config files.
+    Supported naming formats include:
+        
+        path.to.module:method
+        path.to.module.ClassName
     
     @param name: The dotted name (e.g. path.to.MyClass)
     @type name: C{str}
     
-    @return: The resolved object (or None if not found).
+    @return: The resolved object (class, callable, etc.) or None if not found.
     """
+    if ':' in name:
+        # Normalize foo.bar.baz:main to foo.bar.baz.main
+        # (since our logic below will handle that)
+        name = '%s.%s' % (name.split(':'))
+        
     name = name.split('.')
+    
     used = name.pop(0)
     found = __import__(used)
     for n in name:
@@ -78,4 +86,5 @@ def resolve_object(name):
         except AttributeError:
             __import__(used)
             found = getattr(found, n)
+            
     return found
