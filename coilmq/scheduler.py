@@ -1,17 +1,3 @@
-#
-# Copyright 2009 Hans Lellelid
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#   http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """
 Classes that provide delivery scheduler implementations.
 
@@ -21,9 +7,19 @@ reliable subscribers.  Developers can write their own delivery schedulers, which
 should implement the methods defined in L{QueueDeliveryScheduler} if they would
 like to customize the behavior.
 """
-__authors__ = [
-  '"Hans Lellelid" <hans@xmpl.org>',
-]
+__authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
+__copyright__ = "Copyright 2009 Hans Lellelid"
+__license__ = """Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License."""
 
 import random
 

@@ -1,23 +1,19 @@
-#
-# Copyright 2009 Hans Lellelid
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#   http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """
-The default SocketServer-based server implementation. 
+The default/recommended SocketServer-based server implementation. 
 """
-__authors__ = [
-  '"Hans Lellelid" <hans@xmpl.org>',
-]
+__authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
+__copyright__ = "Copyright 2009 Hans Lellelid"
+__license__ = """Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License."""
 import logging
 from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
 
@@ -25,11 +21,6 @@ from coilmq.server import StompConnection
 from coilmq.engine import StompEngine
 from coilmq.util.buffer import StompFrameBuffer
 
-from coilmq.topic import TopicManager
-from coilmq.queue import QueueManager
-from coilmq.store.memory import MemoryQueue
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler    
-    
 class StompRequestHandler(BaseRequestHandler, StompConnection):
     """
     Class that will be instantiated to handle STOMP connections.
@@ -118,19 +109,3 @@ class StompServer(TCPServer):
         
 class ThreadedStompServer(ThreadingMixIn, StompServer):
     pass
-
-def main():
-    """ Start the socket server. """
-    
-    # TODO: Replace with config-based setup
-    logging.basicConfig(level=logging.DEBUG)
-
-    server = ThreadedStompServer(('0.0.0.0', 61613),
-                                 queue_manager=QueueManager(store=MemoryQueue(),
-                                                            subscriber_scheduler=FavorReliableSubscriberScheduler(),
-                                                            queue_scheduler=RandomQueueScheduler()),
-                                 topic_manager=TopicManager())
-    server.serve_forever()
-    
-if __name__ == '__main__':
-    main()
