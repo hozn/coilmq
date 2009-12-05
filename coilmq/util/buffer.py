@@ -70,7 +70,7 @@ class StompFrameBuffer(object):
     
     def __init__(self):
         self.buffer = ''
-        self.debug = True
+        self.debug = False
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         
     def buffer_len(self):

@@ -29,18 +29,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-from stomper import VALID_COMMANDS
 import logging
 import uuid
 from collections import defaultdict
 
 from coilmq.frame import ConnectedFrame, ReceiptFrame, ErrorFrame
-from coilmq.auth import AuthError
+from coilmq.exception import ProtocolError, AuthError
 
 VALID_COMMANDS = ['connect', 'send', 'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect']
-
-class ProtocolError(RuntimeError):
-    pass
 
 class StompEngine(object):
     """ 

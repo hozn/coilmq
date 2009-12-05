@@ -1,8 +1,8 @@
 """
-Authentication providers.
+Exception classes used by CoilMQ.
 
-Because authentication providers are instantiated and configured in the application scope
-(and not in the request handler), the authenticator implementations must be thread-safe.
+CoilMQ exceptions extend C{RuntimeError} or other appropriate sub-classes.  These will be
+thrown if there is not a more appropriate error class already provided by builtins.
 """
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -18,14 +18,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-class Authenticator(object):
-    """ Abstract base class for authenticators. """
+class ProtocolError(RuntimeError):
+    """
+    Represents an error at the STOMP protocol layer.
+    """
+
+class ConfigError(RuntimeError):
+    """
+    Represents an error in the configuration of the application.
+    """
     
-    def authenticate(self, login, passcode):
-        """
-        Authenticate the login and passcode.
-         
-        @return: Whether user is authenticated.
-        @rtype: C{bool} 
-        """
-        raise NotImplementedError()
+class AuthError(RuntimeError):
+    """
+    Represents an authentication or authorization error.
+    """

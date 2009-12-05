@@ -172,9 +172,11 @@ class QueueManager(object):
                                     if s not in self._pending]
         
         if not subscribers:
+            self.log.debug("No eligible subscribers; adding message %s to queue %s" % (message, dest))
             self.store.enqueue(dest, message)
         else:
             selected = self.subscriber_scheduler.choice(subscribers, message)
+            self.log.debug("Delivering message %s to subscriber %s" % (message, selected))
             self._send_frame(selected, message)
     
     @synchronized

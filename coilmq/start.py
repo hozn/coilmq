@@ -2,6 +2,7 @@
 """
 Entrypoint for starting the application.
 """
+from ConfigParser import ConfigParser
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +16,16 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-
+import logging
 from optparse import OptionParser
 
 from coilmq.config import config as global_config, init_config, resolve_name
 from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
-from coilmq.store.memory import MemoryQueue
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler    
+ 
 from coilmq.server.socketserver import ThreadedStompServer
+
+logger = lambda: logging.getLogger(__name__)
 
 def server_from_config(config=None, server_class=None, additional_kwargs=None):
     """
@@ -52,10 +54,12 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     queue_store_factory = resolve_name(config.get('coilmq', 'queue_store_factory'))
     subscriber_scheduler_factory = resolve_name(config.get('coilmq', 'subscriber_scheduler_factory'))
     queue_scheduler_factory = resolve_name(config.get('coilmq', 'queue_scheduler_factory'))
-    authenticator_factory = resolve_name(config.get('coilmq', 'authenticator_factory'))
     
-    if authenticator_factory:
+    if config.has_option('coilmq', 'authenticator_factory'):
+        authenticator_factory = resolve_name(config.get('coilmq', 'authenticator_factory'))
         authenticator = authenticator_factory()
+    else:
+        authenticator = None
         
     server = ThreadedStompServer((config.get('coilmq', 'listen_addr'), config.getint('coilmq', 'listen_port')),
                                  queue_manager=QueueManager(store=queue_store_factory(),
@@ -95,6 +99,7 @@ def main():
         global_config.set('coilmq', 'listen_port', options.listen_port)
     
     server = server_from_config()
+    logger().info("Stomp server listening on %s:%s" % server.server_address)
     server.serve_forever()
     
 if __name__ == '__main__':
