@@ -33,7 +33,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     
     @ivar buffer: A StompBuffer instance which buffers received data (to ensure we deal with
                     complete STOMP messages.
-    @type buffer: L{stomper.stompbuffer.StompBuffer}
+    @type buffer: C{stomper.stompbuffer.StompBuffer}
     
     @ivar engine: The STOMP protocol engine.
     @type engine: L{coilmq.engine.StompEngine}
@@ -67,12 +67,21 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                 
                 for frame in self.buffer:
                     self.log.debug("Processing frame: %s" % frame)
-                    self.engine.processFrame(frame)
+                    self.engine.process_frame(frame)
         except Exception, e:
             self.log.error("Error receiving data (unbinding): %s" % e)
             self.engine.unbind()
             raise
-
+    
+    def finish(self):
+        """
+        Normal (non-error) termination of request.
+        
+        Unbinds the engine.
+        @see: L{coilmq.engine.StompEngine.unbind}
+        """
+        self.engine.unbind()
+        
     def send_frame(self, frame):
         """ Sends a frame to connected socket client.
         
@@ -107,12 +116,17 @@ class StompServer(TCPServer):
         @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
         @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
         """
+        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
         TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate=bind_and_activate)
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
-        
+    
+    def close_request(self, request):
+        """Called to clean up an individual request."""
+        self.log.debug("Request closed... %s" % request)
+    
 class ThreadedStompServer(ThreadingMixIn, StompServer):
     pass

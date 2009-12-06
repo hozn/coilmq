@@ -78,7 +78,7 @@ class StompEngine(object):
         self.connected = False
         self.transactions = defaultdict(list)
     
-    def processFrame(self, frame):
+    def process_frame(self, frame):
         """
         Dispatches a received frame to the appropriate internal method.
         
@@ -196,7 +196,7 @@ class StompEngine(object):
         for tframe in self.transactions[frame.transaction]:
             del tframe.headers['transaction']
             print "Processing frame: %s" % tframe
-            self.processFrame(tframe)
+            self.process_frame(tframe)
         
         self.queue_manager.clearTransactionFrames(self.connection, frame.transaction)
         del self.transactions[frame.transaction]
