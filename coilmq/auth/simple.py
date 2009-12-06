@@ -19,6 +19,7 @@ limitations under the License."""
 from ConfigParser import RawConfigParser
 from coilmq.auth import Authenticator
 from coilmq.config import config
+from coilmq.exception import ConfigError
 
 def make_simple():
     """
@@ -26,11 +27,11 @@ def make_simple():
     
     @return: The configured L{SimpleAuthenticator}
     @rtype: L{SimpleAuthenticator}
-    @raise RuntimeError: If there is a configuration error. 
+    @raise ConfigError: If there is a configuration error. 
     """
     authfile = config.get('coilmq', 'authenticator_authfile')
     if not authfile:
-        raise RuntimeError('Missing configuration parameter: authenticator_authfile')
+        raise ConfigError('Missing configuration parameter: authenticator_authfile')
     sa = SimpleAuthenticator()
     sa.from_configfile(authfile)
     return sa
@@ -39,7 +40,7 @@ class SimpleAuthenticator(Authenticator):
     """
     A simple configfile-based authenticator.
     
-    @param store:  Authentication key-value store (of logins to passwords).
+    @ivar store:  Authentication key-value store (of logins to passwords).
     @type store: C{dict} of C{str} to C{str}
     """
     def __init__(self, store=None):
@@ -60,13 +61,15 @@ class SimpleAuthenticator(Authenticator):
         Auth "config" file is parsed with C{ConfigParser.RawConfigParser} and must contain
         an [auth] section which contains the usernames (keys) and passwords (values).
         
-        Example auth file:
+        Example auth file::
+        
             [auth]
             someuser = somepass
             anotheruser = anotherpass
         
         @param configfile: Path to config file or file-like object. 
         @type configfile: C{any}
+        @raise ValueError: If file could not be read or does not contain [auth] section.
         """
         cfg = RawConfigParser()
         if hasattr(configfile, 'read'):
@@ -85,7 +88,7 @@ class SimpleAuthenticator(Authenticator):
         """
         Authenticate the login and passcode.
          
-        @return: Whether user is authenticated.
+        @return: Whether provided login and password match values in store.
         @rtype: C{bool} 
         """
         return login in self.store and self.store[login] == passcode

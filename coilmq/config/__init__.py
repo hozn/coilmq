@@ -38,13 +38,13 @@ def init_config(config_file):
     """
     Initialize the configuration from a config file.
     
-    The values in config_file will override those already loaded form the default
+    The values in config_file will override those already loaded from the default
     configuration file (defaults.cfg, in current package).
     
     @param config_file: The path to a configuration file.
     @type config_file: C{str}
     
-    @raise: C{ValueError} if the specified config_file could not be read.  
+    @raise ValueError: if the specified config_file could not be read.  
     """
     global config
     
@@ -61,9 +61,8 @@ def resolve_name(name):
     Resolve a dotted name to some object (usually class, module, or function).
     
     Supported naming formats include:
-        
-        path.to.module:method
-        path.to.module.ClassName
+        1. path.to.module:method
+        2. path.to.module.ClassName
     
     @param name: The dotted name (e.g. path.to.MyClass)
     @type name: C{str}

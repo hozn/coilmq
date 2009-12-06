@@ -29,6 +29,7 @@ class BasicTest(BaseFunctionalTestCase):
     """
         
     def test_connect(self):
+        """ Test a basic (non-auth) connection. """
         c = self._new_client()
     
     def test_connect_auth(self):

@@ -39,10 +39,9 @@ setup(
     install_requires=[
           'distribute',
           'stomper',
-          # 'python-daemon' #(this is unix-specific)
     ],
     extras_require={
-        'Twisted': ['Twisted']
+        'daemon': ['python-daemon']
     },
     classifiers=[
         "Development Status :: 3 - Alpha",

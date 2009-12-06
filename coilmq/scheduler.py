@@ -4,7 +4,7 @@ Classes that provide delivery scheduler implementations.
 The default implementation used by the system for determining which subscriber
 (connection) should receive a message is simply a random choice but favoring
 reliable subscribers.  Developers can write their own delivery schedulers, which 
-should implement the methods defined in L{QueueDeliveryScheduler} if they would
+should implement the methods defined in L{QueuePriorityScheduler} if they would
 like to customize the behavior.
 """
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']

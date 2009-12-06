@@ -23,7 +23,7 @@ def synchronized(func):
     have a _lock variable (of type C{threading.Lock} or C{threading.RLock}).
 
     @param func: Method to decorate
-    @type funct: C{callable}
+    @type func: C{callable}
     """
     def wrapper(self, *__args, **__kw):
         self._lock.acquire()

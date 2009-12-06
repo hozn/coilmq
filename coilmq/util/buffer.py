@@ -50,9 +50,9 @@ class StompFrameBuffer(object):
     and supports iteration.
     
     This version of the parser also assumes that stomp messages with no content-lengh
-    end in a simple \x00 char -- not '\x00\n' as is assumed by 
-    C{stomper.stompbuffer.StompBuffer}. Additionally, this class differes from Stomper
-    version by conforming to PEP-8 coding style.
+    end in a simple \x00 char, not \x00\\n as is assumed by
+    C{stomper.stompbuffer.StompBuffer}. Additionally, this class differs from Stomper version 
+    by conforming to PEP-8 coding style.
     
     This class can be used to smooth over a transport that may provide partial frames (or
     may provide multiple frames in one data buffer).
@@ -145,13 +145,9 @@ class StompFrameBuffer(object):
         """
         Examines passed-in data and returns a tuple of message and header lengths.
         
-        Return data is in the form:
-        
-          ( message_length, header_length )
-          
-        where message_length is the length in bytes of the first complete
-        message, if it contains at least one message, or 0 if it
-        contains no message.
+        Return data is a C{tuple} in the form (message_length, header_length) where 
+        message_length is the length in bytes of the first complete message, if it 
+        contains at least one message, or 0 if it contains no message.
         
         If message_length is non-zero, header_length contains the length in
         bytes of the header. If message_length is zero, header_length should

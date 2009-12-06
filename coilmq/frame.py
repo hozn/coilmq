@@ -52,37 +52,42 @@ class StompFrame(stomper.Frame):
     
 class HeaderValue(object):
     """
-    An class that can serve as a placeholder and return a calculated value using a
-    passed-in calculator function when it is cast to string.
+    An descriptor class that can be used when a calculated header value is needed.
     
-    This function implements the __str__ method to return the calculated value.  That gets 
-    the desired value into the packed STOMP message.  While according to 
-    U{http://docs.codehaus.org/display/STOMP/Character+Encoding} there seems to some general
-    idea about having UTF-8 as the character encoding for headers; however the C{stomper} lib
-    does not support this currently.
+    This class is a descriptior, implementing  __get__ to return the calculated value.
+    While according to  U{http://docs.codehaus.org/display/STOMP/Character+Encoding} there 
+    seems to some general idea about having UTF-8 as the character encoding for headers;
+    however the C{stomper} lib does not support this currently.
     
     For example, to use this class to generate the content-length header:
     
-    >>> frame = StompFrame(cmd='MESSAGE', body='12345')
-    >>> frame.headers['content-length'] = HeaderValue(calculator=lambda: len(frame.body))
-    >>> frame.pack()
-    CONNECT\n12345
+        >>> h = HeaderValue(calculator=lambda: len('asdf'))
+        >>> str(h)
+        '4'
+        
+    @ivar calc: The calculator function.
+    @type calc: C{callable}
     """
-    def __init__(self, calc):
+    def __init__(self, calculator):
         """
-        @param calc: The calculator callable that will yield the desired value.
-        @type calc: C{callable}
+        @param calculator: The calculator callable that will yield the desired value.
+        @type calculator: C{callable}
         """
-        if not callable(calc):
-            raise ValueError("Non-callable param: %s" % calc)
-        self.calc = calc
+        if not callable(calculator):
+            raise ValueError("Non-callable param: %s" % calculator)
+        self.calc = calculator
+    
+    def __get__(self, obj, objtype):
+        return self.calc()
     
     def __str__(self):
-        """ Returns the result of the calculator function (cast to C{str}). """
         return str(self.calc())
     
+    def __set__(self, obj, value):
+        self.calc = value
+        
     def __repr__(self):
-        return '<%s calc=%s>' % (self.__class__.__name__, self.calc)
+        return '<%s calculator=%s>' % (self.__class__.__name__, self.calc)
 
 # ---------------------------------------------------------------------------------
 # Server Frames
@@ -110,7 +115,7 @@ class MessageFrame(StompFrame):
         @type body: C{str} 
         """
         StompFrame.__init__(self, 'MESSAGE', body=body)
-        self.headers['content-length'] = HeaderValue(calc=lambda: len(self.body))
+        self.headers['content-length'] = HeaderValue(calculator=lambda: len(self.body))
         
 # TODO: Figure out what we need from ErrorFrame (exception wrapping?)
 class ErrorFrame(StompFrame):
@@ -123,7 +128,7 @@ class ErrorFrame(StompFrame):
         """
         StompFrame.__init__(self, 'ERROR', body=body)
         self.headers['message'] = message
-        self.headers['content-length'] = HeaderValue(calc=lambda: len(self.body))
+        self.headers['content-length'] = HeaderValue(calculator=lambda: len(self.body))
     
     def __repr__(self):
         return '<%s message=%r>' % (self.__class__.__name__, self.headers['message']) 
