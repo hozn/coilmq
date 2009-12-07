@@ -50,7 +50,7 @@ class StompFrameBuffer(object):
     and supports iteration.
     
     This version of the parser also assumes that stomp messages with no content-lengh
-    end in a simple \x00 char, not \x00\\n as is assumed by
+    end in a simple \\x00 char, not \\x00\\n as is assumed by
     C{stomper.stompbuffer.StompBuffer}. Additionally, this class differs from Stomper version 
     by conforming to PEP-8 coding style.
     
