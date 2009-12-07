@@ -45,7 +45,7 @@ class SimpleAuthenticator(Authenticator):
     """
     def __init__(self, store=None):
         """
-        Initialize the authenticator to use specified config file (or file-like object).
+        Initialize the authenticator to use (optionally) specified C{dict} store.
         
         @param store:  Authentication store, C{dict} of logins to passwords.
         @type store: C{dict} of C{str} to C{str}
