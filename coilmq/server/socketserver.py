@@ -108,7 +108,7 @@ class StompServer(TCPServer):
     @type topic_manager: L{coilmq.topic.TopicManager}
     """
     
-    def __init__(self, server_address, RequestHandlerClass=None, bind_and_activate=True, authenticator=None, queue_manager=None, topic_manager=None):
+    def __init__(self, server_address, RequestHandlerClass=None, authenticator=None, queue_manager=None, topic_manager=None):
         """
         Extension to C{TCPServer} constructor to provide mechanism for providing implementation classes.
         
@@ -119,7 +119,7 @@ class StompServer(TCPServer):
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
-        TCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate=bind_and_activate)
+        TCPServer.__init__(self, server_address, RequestHandlerClass)
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager

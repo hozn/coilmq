@@ -24,19 +24,19 @@ limitations under the License."""
 import random
 
 class SubscriberPriorityScheduler(object):
-    """ Abstract base class for queue delivery scheduler implementations. """
+    """ Abstract base class for choosing which recipient (subscriber) should receive a message. """
     
     def choice(self, subscribers, message):
         """
-        Chooses which connection of available pool to deliver specified message.
+        Chooses which subscriber (from list) should recieve specified message.
         
-        @param subscribers: Collection of subscribed connections to destination. 
+        @param subscribers: Collection of subscribed connections eligible to receive message. 
         @type subscribers: C{list} of L{coilmq.server.StompConnection}
         
         @param message: The message to be delivered. 
         @type message: L{coilmq.frame.StompFrame}
         
-        @return: A selected subscriber from the list or None if list is empty.
+        @return: A selected subscriber from the list or None if no subscriber could be chosen (e.g. list is empty).
         @rtype: L{coilmq.server.StompConnection}
         """
         raise NotImplementedError()
@@ -63,7 +63,7 @@ class QueuePriorityScheduler(object):
         raise NotImplementedError()
     
 class RandomSubscriberScheduler(SubscriberPriorityScheduler):
-    """ A delivery scheduler that chooses the subscriber for delivery completely at random. """
+    """ A delivery scheduler that chooses a random subscriber for message recipient. """
     
     def choice(self, subscribers, message):
         """

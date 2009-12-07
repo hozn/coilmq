@@ -127,14 +127,12 @@ class TestStompServer(ThreadedStompServer):
     allow_reuse_address = True
     
     def __init__(self, server_address,
-                 bind_and_activate=True,
                  ready_event=None,
                  authenticator=None,
                  queue_manager=None,
                  topic_manager=None):
         self.ready_event = ready_event
         StompServer.__init__(self, server_address, StompRequestHandler,
-                             bind_and_activate=bind_and_activate,
                              authenticator=authenticator,
                              queue_manager=queue_manager,
                              topic_manager=topic_manager)

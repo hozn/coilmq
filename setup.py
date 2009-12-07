@@ -32,7 +32,7 @@ setup(
     author_email='hans@xmpl.org',
     url='http://code.google.com/p/coilmq',
     packages=find_packages(exclude=['ez_setup', 'distribute_setup', 'tests', 'tests.*']),
-    zip_safe=False,
+    zip_safe=False, # We use resource_filename for logging configuration and some unit tests.
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=['nose', 'coverage'],

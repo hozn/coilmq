@@ -209,7 +209,7 @@ class QueueManager(object):
                 self._transaction_frames[connection][transaction].append(pending_frame)
             
             del self._pending[connection]            
-            self._send_subscriber_backlog(connection)
+            self._send_backlog(connection)
             
         else:
             self.log.debug("No pending messages for %s" % connection)
@@ -246,11 +246,12 @@ class QueueManager(object):
         
         del self._transaction_frames[connection][transaction]
         
-    def _send_backlog(self, connection, destination):
+    def _send_backlog(self, connection, destination=None):
         """
-        Sends any queued-up messages for the specified destination to connection.
+        Sends any queued-up messages for the (optionally) specified destination to connection.
         
-        This is called when new subscribers are added to the system.
+        If the destination is not provided, a destination is chosen using the 
+        L{QueueManager.queue_scheduler} scheduler algorithm.
         
         (This method assumes it is being called from within a lock-guarded public
         method.)  
@@ -260,7 +261,17 @@ class QueueManager(object):
         
         @param destination: The topic/queue destination (e.g. '/queue/foo')
         @type destination: C{str} 
-        """ 
+        """
+        if destination is None:
+            # Find all destinations that have frames and that contain this
+            # connection (subscriber).
+            eligible_queues = dict([(dest,q) for (dest, q) in self._queues.items()
+                                    if connection in q and self.store.has_frames(dest)])
+            destination = self.queue_scheduler.choice(eligible_queues, connection)
+            if destination is None:
+                self.log.debug("No eligible queues (with frames) for subscriber %s" % connection)
+                return
+            
         self.log.debug("Sending backlog to %s for destination %s" % (connection, destination))
         if connection.reliable_subscriber:
             # only send one message (waiting for ack)
@@ -269,31 +280,6 @@ class QueueManager(object):
                 self._send_frame(connection, frame)
         else:
             for frame in self.store.frames(destination):
-                self._send_frame(connection, frame)
-                
-    def _send_subscriber_backlog(self, connection):
-        """
-        Sends waiting message(s) for a single subscriber.
-        
-        (This method assumes it is being called from within a lock-guarded public
-        method.)
-        
-        @param connection: The client connection.
-        @type connection: L{coilmq.server.StompConnection}
-        """
-        # Find all destinations that have frames and that contain this
-        # connection (subscriber).
-        eligible_queues = dict([(dest,q) for (dest, q) in self._queues.items()
-                            if connection in q and self.store.has_frames(dest)])
-        
-        if not eligible_queues:
-            self.log.debug("No eligible queues for connection %s" % connection)
-            return
-        
-        selected = self.queue_scheduler.choice(eligible_queues, connection)
-        if selected:
-            frame = self.store.dequeue(selected)
-            if frame:
                 self._send_frame(connection, frame)
                 
     def _send_frame(self, connection, frame):

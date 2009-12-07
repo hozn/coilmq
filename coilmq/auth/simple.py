@@ -29,9 +29,9 @@ def make_simple():
     @rtype: L{SimpleAuthenticator}
     @raise ConfigError: If there is a configuration error. 
     """
-    authfile = config.get('coilmq', 'authenticator_authfile')
+    authfile = config.get('coilmq', 'auth.simple.file')
     if not authfile:
-        raise ConfigError('Missing configuration parameter: authenticator_authfile')
+        raise ConfigError('Missing configuration parameter: auth.simple.file')
     sa = SimpleAuthenticator()
     sa.from_configfile(authfile)
     return sa

@@ -51,11 +51,11 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     global global_config
     if not config: config = global_config
     
-    queue_store_factory = resolve_name(config.get('coilmq', 'queue_store_factory'))
-    subscriber_scheduler_factory = resolve_name(config.get('coilmq', 'subscriber_scheduler_factory'))
-    queue_scheduler_factory = resolve_name(config.get('coilmq', 'queue_scheduler_factory'))
+    queue_store_factory = resolve_name(config.get('coilmq', 'qstore.factory'))
+    subscriber_scheduler_factory = resolve_name(config.get('coilmq', 'scheduler.subscriber_priority_factory'))
+    queue_scheduler_factory = resolve_name(config.get('coilmq', 'scheduler.queue_priority_factory'))
     
-    if config.has_option('coilmq', 'authenticator_factory'):
+    if config.has_option('coilmq', 'auth.factory'):
         authenticator_factory = resolve_name(config.get('coilmq', 'authenticator_factory'))
         authenticator = authenticator_factory()
     else:
