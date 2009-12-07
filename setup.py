@@ -26,19 +26,20 @@ setup(
     version='0.1',
     description='STOMP message broker',
     long_description=__doc__,
-    keywords='stomp server broker twisted',
+    keywords='stomp server broker',
     license='Apache',
     author='Hans Lellelid',
     author_email='hans@xmpl.org',
     url='http://code.google.com/p/coilmq',
     packages=find_packages(exclude=['ez_setup', 'distribute_setup', 'tests', 'tests.*']),
+    package_data={'coilmq': ['config/*.cfg*', 'tests/resources/*']},
     zip_safe=False, # We use resource_filename for logging configuration and some unit tests.
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=['nose', 'coverage'],
     install_requires=[
           'distribute',
-          'stomper',
+          'stomper==0.2.2',
     ],
     extras_require={
         'daemon': ['python-daemon']
