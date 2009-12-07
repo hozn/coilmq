@@ -96,7 +96,7 @@ def main():
         global_config.set('coilmq', 'listen_addr', options.listen_addr)
         
     if options.listen_port is not None:
-        global_config.set('coilmq', 'listen_port', options.listen_port)
+        global_config.set('coilmq', 'listen_port', str(options.listen_port))
     
     server = server_from_config()
     logger().info("Stomp server listening on %s:%s" % server.server_address)
