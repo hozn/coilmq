@@ -42,10 +42,33 @@ class StompFrame(stomper.Frame):
         """ Convenience way to return header values as if they're object attributes. 
         
         We replace '-' chars with '_' to make the headers python-friendly.  For example:
-        
-        frame.headers['message-id'] == frame.message_id
+            
+            frame.headers['message-id'] == frame.message_id
+            
+        >>> f = StompFrame(cmd='MESSAGE', headers={'message-id': 'id-here', 'other_header': 'value'}, body=''}
+        >>> f.message_id
+        'id-here'
+        >>> f.other_header
+        'value'
         """
-        return self.headers.get(name.replace('-', '_'))
+        if name.startswith('_'):
+            raise AttributeError()
+        
+        return self.headers.get(name.replace('_', '-'))
+    
+    def __hash__(self):
+        """ Build hash based on data contents of object (to correspond with implementation of __eq__). """
+        return hash((self.cmd, self.headers, self.body))
+    
+    def __eq__(self, other):
+        """ Override equality checking to test for matching command, headers, and body. """
+        return (isinstance(other, stomper.Frame) and 
+                self.cmd == other.cmd and 
+                self.headers == other.headers and 
+                self.body == other.body)
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
     
     def __repr__(self):
         return '<%s cmd=%s len=%d>' % (self.__class__.__name__, self.cmd, len(self.body))

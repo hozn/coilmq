@@ -43,16 +43,44 @@ class QueueStore(object):
         
         @param destination: The queue destination (e.g. /queue/foo)
         @type destination: C{str}
+        
+        @return: The number of frames in specified queue.
+        @rtype: C{int}
         """
         raise NotImplementedError()
 
     @synchronized
     def has_frames(self, destination):
-        raise NotImplementedError()
+        """
+        Whether specified destination has any frames.
+        
+        Default implementation uses L{QueueStore.size} to determine if there
+        are any frames in queue.  Subclasses may choose to optimize this.
+        
+        @param destination: The queue destination (e.g. /queue/foo)
+        @type destination: C{str}
+        
+        @return: The number of frames in specified queue.
+        @rtype: C{int}
+        """
+        return self.size(destination) > 0
     
+    @synchronized
+    def close(self):
+        """
+        May be implemented to perform any necessary cleanup operations when store is closed.
+        """
+        pass
+    
+    # This is intentionally not synchronized, since it does not directly
+    # expose any shared data.
     def frames(self, destination):
         """
-        Returns an iterator for frames in specified destination.
+        Returns an iterator for frames in specified queue.
+        
+        The iterator simply wraps calls to L{dequeue} method, so the order of the 
+        frames from the iterator will be the reverse of the order in which the
+        frames were enqueued.
         
         @param destination: The queue destination (e.g. /queue/foo)
         @type destination: C{str}
@@ -89,7 +117,7 @@ class QueueFrameIterator(object):
         return self.store.size(self.destination)
     
     def __nonzero__(self):
-        return self.store.has_frame(self.destination)
+        return self.store.has_frames(self.destination)
     
 class TopicStore(object):
     """
