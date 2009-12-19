@@ -5,6 +5,7 @@ import unittest
 import tempfile
 import shutil
 import uuid
+import time
 
 from coilmq.store.dbm import DbmQueue
 from coilmq.frame import StompFrame
@@ -77,6 +78,35 @@ class DbmQueueTest(unittest.TestCase):
             store2 = DbmQueue(data_dir)
             print store2.queue_metadata[dest]
             assert store2.size(dest) == max_ops + 1
+            
+        except:
+            shutil.rmtree(data_dir, ignore_errors=True)
+            raise
+    
+    def test_sync_checkpoint_timeout(self):
+        """ Test a expected sync behavior with checkpoint_timeout param. """
+        
+        data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
+        try:
+            store = DbmQueue(data_dir, checkpoint_timeout=0.5)
+            dest = '/queue/foo'
+            
+            frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -1')
+            store.enqueue(dest, frame)
+            
+            time.sleep(0.5)
+            
+            frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -2')
+            store.enqueue(dest, frame)
+            
+            print store.queue_metadata[dest]    
+            assert store.size(dest) == 2
+            
+            # No close()!
+            
+            store2 = DbmQueue(data_dir)
+            print store2.queue_metadata[dest]
+            assert store2.size(dest) == 2
             
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
