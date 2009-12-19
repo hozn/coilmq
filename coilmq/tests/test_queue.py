@@ -90,16 +90,13 @@ class QueueManagerTest(unittest.TestCase):
         conn = ExcThrowingConn()
         self.qm.subscribe(conn, dest)
         
-        # This unreliable subscriber will be the fallback.
-        self.qm.subscribe(self.conn, dest)
-        
         f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
-        self.qm.send(f)
+        try:
+            self.qm.send(f)
+            self.fail("Expected failure when there was an error sending.")
+        except RuntimeError:
+            pass
         
-        print "Frames: %r" % self.conn.frames
-        
-        assert len(self.conn.frames) == 1, "Expected frame to be delivered"
-        assert self.conn.frames[0] == f
         
     def test_send_backlog_err_reliable(self):
         """ Test errors when sending backlog to reliable subscriber. """

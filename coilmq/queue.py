@@ -154,11 +154,6 @@ class QueueManager(object):
         Note that this method will modify the incoming message object to 
         add a message-id header (if not present) and to change the command
         to 'MESSAGE' (if it is not).
-        
-        If there is an error delivering the message to the selected subscriber,
-        the subscriber will be unsubscribed and this method will be called
-        again with the same message (i.e. for it to be delivered to an available
-        subscriber or to be queued).
          
         @param message: The message frame.
         @type message: L{coilmq.frame.StompFrame}
@@ -182,13 +177,7 @@ class QueueManager(object):
         else:
             selected = self.subscriber_scheduler.choice(subscribers, message)
             self.log.debug("Delivering message %s to subscriber %s" % (message, selected))
-            try:
-                self._send_frame(selected, message)
-            except Exception, x:
-                self.log.error("Error sending message %s, removing subscriber %s: %s" % (message, selected, x))
-                self.unsubscribe(selected, dest)
-                # Recurse in and attempt to deliver this again ...
-                self.send(message)
+            self._send_frame(selected, message)
     
     @synchronized
     def ack(self, connection, frame, transaction=None):
