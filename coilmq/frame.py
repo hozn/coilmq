@@ -60,10 +60,6 @@ class StompFrame(stomper.Frame):
             # Try converting _ to -
             return self.headers.get(name.replace('_', '-'))
     
-    def __hash__(self):
-        """ Build hash based on data contents of object (to correspond with implementation of __eq__). """
-        return hash((self.cmd, self.headers, self.body))
-    
     def __eq__(self, other):
         """ Override equality checking to test for matching command, headers, and body. """
         return (isinstance(other, stomper.Frame) and 

@@ -154,6 +154,11 @@ class QueueManager(object):
         Note that this method will modify the incoming message object to 
         add a message-id header (if not present) and to change the command
         to 'MESSAGE' (if it is not).
+        
+        If there is an error delivering the message to the selected subscriber,
+        the subscriber will be unsubscribed and this method will be called
+        again with the same message (i.e. for it to be delivered to an available
+        subscriber or to be queued).
          
         @param message: The message frame.
         @type message: L{coilmq.frame.StompFrame}
@@ -177,7 +182,13 @@ class QueueManager(object):
         else:
             selected = self.subscriber_scheduler.choice(subscribers, message)
             self.log.debug("Delivering message %s to subscriber %s" % (message, selected))
-            self._send_frame(selected, message)
+            try:
+                self._send_frame(selected, message)
+            except Exception, x:
+                self.log.error("Error sending message %s, removing subscriber %s: %s" % (message, selected, x))
+                self.unsubscribe(selected, dest)
+                # Recurse in and attempt to deliver this again ...
+                self.send(message)
     
     @synchronized
     def ack(self, connection, frame, transaction=None):
@@ -261,6 +272,9 @@ class QueueManager(object):
         
         @param destination: The topic/queue destination (e.g. '/queue/foo')
         @type destination: C{str} 
+        
+        @raise Exception: if the underlying connection object raises an error, the message
+                            will be re-queued and the error will be re-raised.  
         """
         if destination is None:
             # Find all destinations that have frames and that contain this
@@ -277,10 +291,20 @@ class QueueManager(object):
             # only send one message (waiting for ack)
             frame = self.store.dequeue(destination)
             if frame:
-                self._send_frame(connection, frame)
+                try:
+                    self._send_frame(connection, frame)
+                except Exception, x:
+                    self.log.error("Error sending message %s (requeueing): %s" % (frame, x))
+                    self.store.requeue(destination, frame)
+                    raise
         else:
             for frame in self.store.frames(destination):
-                self._send_frame(connection, frame)
+                try:
+                    self._send_frame(connection, frame)
+                except Exception, x:
+                    self.log.error("Error sending message %s (requeueing): %s" % (frame, x))
+                    self.store.requeue(destination, frame)
+                    raise
                 
     def _send_frame(self, connection, frame):
         """
@@ -298,10 +322,12 @@ class QueueManager(object):
         assert connection is not None
         assert frame is not None
         
+        self.log.debug("Delivering frame %s to connection %s" % (frame, connection))
+        
         if connection.reliable_subscriber:
             if connection in self._pending:
                 raise RuntimeError("Connection already has a pending frame.")
-            self.log.debug("Adding pending frame %s to connection %s" % (frame, connection))
+            self.log.debug("Tracking frame %s as pending for connection %s" % (frame, connection))
             self._pending[connection] = frame
             
         connection.send_frame(frame)

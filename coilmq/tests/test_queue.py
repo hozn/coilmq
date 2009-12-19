@@ -75,7 +75,97 @@ class QueueManagerTest(unittest.TestCase):
         assert 'message-id' in f.headers
         assert f.cmd == 'MESSAGE'
         
+    
+    def test_send_err(self):
+        """ Test sending a message when delivery results in error. """
         
+        class ExcThrowingConn(object):
+            reliable_subscriber = True
+            def send_frame(self, frame):
+                raise RuntimeError("Error sending data.")
+        
+        dest = '/queue/dest'
+        
+        # This reliable subscriber will be chosen first
+        conn = ExcThrowingConn()
+        self.qm.subscribe(conn, dest)
+        
+        # This unreliable subscriber will be the fallback.
+        self.qm.subscribe(self.conn, dest)
+        
+        f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
+        self.qm.send(f)
+        
+        print "Frames: %r" % self.conn.frames
+        
+        assert len(self.conn.frames) == 1, "Expected frame to be delivered"
+        assert self.conn.frames[0] == f
+        
+    def test_send_backlog_err_reliable(self):
+        """ Test errors when sending backlog to reliable subscriber. """
+        
+        class ExcThrowingConn(object):
+            reliable_subscriber = True
+            def send_frame(self, frame):
+                raise RuntimeError("Error sending data.")
+        
+        dest = '/queue/dest'
+        
+        f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
+        self.qm.send(f)
+        
+        conn = ExcThrowingConn()
+        try:
+            self.qm.subscribe(conn, dest)
+            self.fail("Expected error when sending backlog.")
+        except RuntimeError:
+            pass
+        
+        # The message will have been requeued at this point, so add a valid
+        # subscriber
+        
+        self.qm.subscribe(self.conn, dest)
+        
+        print "Frames: %r" % self.conn.frames
+        
+        assert len(self.conn.frames) == 1, "Expected frame to be delivered"
+        assert self.conn.frames[0] == f
+        
+    def test_send_backlog_err_unreliable(self):
+        """ Test errors when sending backlog to reliable subscriber. """
+        
+        class ExcThrowingConn(object):
+            reliable_subscriber = False
+            def send_frame(self, frame):
+                raise RuntimeError("Error sending data.")
+        
+        dest = '/queue/dest'
+        
+        f = StompFrame('SEND', headers={'destination': dest}, body='123')
+        self.qm.send(f)
+        
+        f2 = StompFrame('SEND', headers={'destination': dest}, body='12345')
+        self.qm.send(f2)
+        
+        conn = ExcThrowingConn()
+        try:
+            self.qm.subscribe(conn, dest)
+            self.fail("Expected error when sending backlog.")
+        except RuntimeError:
+            pass
+        
+        # The message will have been requeued at this point, so add a valid
+        # subscriber
+        
+        print "Queue state: %r" % (self.store._messages,)
+        
+        self.qm.subscribe(self.conn, dest)
+        
+        print "Frames: %r" % self.conn.frames
+        
+        assert len(self.conn.frames) == 2, "Expected frame to be delivered"
+        assert self.conn.frames == [f2,f]  
+              
     def test_send_reliableFirst(self):
         """
         Test that messages are prioritized to reliable subscribers.
