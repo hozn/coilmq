@@ -48,7 +48,16 @@ class TopicManager(object):
         self._topics = defaultdict(set)
     
         # TODO: If we want durable topics, we'll need a store for topics.
+    
+    @synchronized
+    def close(self):
+        """
+        Closes all resources associated with this topic manager.
         
+        (Currently this is simply here for API conformity w/ L{coilmq.queue.QueueManager}.)
+        """
+        pass
+    
     @synchronized
     def subscribe(self, connection, destination):
         """

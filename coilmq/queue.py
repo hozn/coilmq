@@ -94,6 +94,21 @@ class QueueManager(object):
         self._pending = {}
     
     @synchronized
+    def close(self):
+        """
+        Closes all resources/backends associated with this queue manager.
+        """
+        self.log.info("Shutting down queue manager.")
+        if hasattr(self.store, 'close'):
+            self.store.close()
+            
+        if hasattr(self.subscriber_scheduler, 'close'):
+            self.subscriber_scheduler.close()
+            
+        if hasattr(self.queue_scheduler, 'close'):
+            self.queue_scheduler.close()
+        
+    @synchronized
     def subscribe(self, connection, destination):
         """
         Subscribes a connection to the specified destination (topic or queue). 

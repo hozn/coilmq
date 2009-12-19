@@ -64,6 +64,14 @@ def resolve_name(name):
         1. path.to.module:method
         2. path.to.module.ClassName
     
+    >>> resolve_name('coilmq.store.memory.MemoryQueue')
+    <class 'coilmq.store.memory.MemoryQueue'>
+    >>> t = resolve_name('coilmq.store.dbm.make_dbm')
+    >>> type(t)
+    <type 'function'>
+    >>> t.__name__
+    'make_dbm'
+    
     @param name: The dotted name (e.g. path.to.MyClass)
     @type name: C{str}
     
@@ -72,7 +80,7 @@ def resolve_name(name):
     if ':' in name:
         # Normalize foo.bar.baz:main to foo.bar.baz.main
         # (since our logic below will handle that)
-        name = '%s.%s' % (name.split(':'))
+        name = '%s.%s' % tuple(name.split(':'))
         
     name = name.split('.')
     

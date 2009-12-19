@@ -27,8 +27,10 @@ import logging
 import os
 import os.path
 import shelve
+import ConfigParser
 from collections import deque
 from datetime import datetime, timedelta
+
 
 from coilmq.store import QueueStore
 from coilmq.config import config
@@ -39,16 +41,18 @@ def make_dbm():
     """
     Creates a DBM queue store, pulling config values from the CoilMQ configuration.
     """
-    data_dir = config.get('coilmq', 'store.dbm.data_dir')
-    if not data_dir:
-        raise ConfigError('Missing configuration parameter: store.dbm.data_dir')
+    
+    try:
+        data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
+        cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
+        cp_timeout = config.getint('coilmq', 'qstore.dbm.checkpoint_timeout')
+    except ConfigParser.NoOptionError, e:
+        raise ConfigError('Missing configuration parameter: %s' % e)
+    
     if not os.path.exists(data_dir):
         raise ConfigError('DBM directory does not exist: %s' % data_dir)
     if not os.access(data_dir, os.W_OK | os.R_OK): # FIXME: how do these get applied? Is OR appropriate?
         raise ConfigError('Cannot read and write DBM directory: %s' % data_dir)
-    
-    cp_ops = config.get('coilmq', 'store.dbm.checkpoint_operations')
-    cp_timeout = config.get('coilmq', 'store.dbm.checkpoint_timeout')
     
     store = DbmQueue(data_dir, checkpoint_operations=cp_ops, checkpoint_timeout=cp_timeout)
     return store
@@ -93,20 +97,17 @@ class DbmQueue(QueueStore):
     @ivar checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
     @type checkpoint_timeout: C{float}
     """
-    def __init__(self, data_dir, checkpoint_operations=None, checkpoint_timeout=None):
+    def __init__(self, data_dir, checkpoint_operations, checkpoint_timeout):
         """
         @param data_dir: The directory where DBM files will be stored.
         @param data_dir: C{str}
         
-        @param checkpoint_operations: Number of operations between syncs. (Default = 100)
+        @param checkpoint_operations: Number of operations between syncs.
         @type checkpoint_operations: C{int}
     
-        @param checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache. (Default = 20)
+        @param checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
         @type checkpoint_timeout: C{float}
         """
-        if checkpoint_operations is None: checkpoint_operations = 100  
-        if checkpoint_timeout is None: checkpoint_timeout = 20 
-        
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         
         self._lock = threading.RLock()
@@ -118,6 +119,9 @@ class DbmQueue(QueueStore):
         self.checkpoint_timeout = timedelta(seconds=checkpoint_timeout)
         
         # Should this be in constructor?
+        
+        # The queue metadata stores mutable (dict) objects.  For this reason we set
+        # writeback=True and rely on the sync() method to keep the cache & disk in-sync.
         self.queue_metadata = shelve.open(os.path.join(self.data_dir, 'metadata'), writeback=True)
         
         # Since we do not need mutable objects on the frame stores (we don't modify them, we just

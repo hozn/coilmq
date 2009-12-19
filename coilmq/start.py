@@ -2,7 +2,6 @@
 """
 Entrypoint for starting the application.
 """
-from ConfigParser import ConfigParser
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -99,8 +98,17 @@ def main():
         global_config.set('coilmq', 'listen_port', str(options.listen_port))
     
     server = server_from_config()
-    logger().info("Stomp server listening on %s:%s" % server.server_address)
-    server.serve_forever()
-    
+        
+    try:
+        logger().info("Stomp server listening on %s:%s" % server.server_address)
+        server.serve_forever()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    except Exception, e:
+        logger().error("Caught an exception in server: %s" % e)
+        logger().exception(e)
+    finally:
+        server.server_close()
+        
 if __name__ == '__main__':
     main()

@@ -124,9 +124,16 @@ class StompServer(TCPServer):
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
     
-    def close_request(self, request):
-        """Called to clean up an individual request."""
-        self.log.debug("Request closed... %s" % request)
+    def server_close(self):
+        """
+        Closes the socket server and any associated resources.
+        """
+        self.log.debug("Closing the socket server connection.")
+        TCPServer.server_close(self)
+        self.queue_manager.close()
+        self.topic_manager.close()
+        if hasattr(self.authenticator, 'close'):
+            self.authenticator.close()
     
 class ThreadedStompServer(ThreadingMixIn, StompServer):
     pass
