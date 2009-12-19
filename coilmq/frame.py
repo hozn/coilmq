@@ -45,7 +45,7 @@ class StompFrame(stomper.Frame):
             
             frame.headers['message-id'] == frame.message_id
             
-        >>> f = StompFrame(cmd='MESSAGE', headers={'message-id': 'id-here', 'other_header': 'value'}, body=''}
+        >>> f = StompFrame(cmd='MESSAGE', headers={'message-id': 'id-here', 'other_header': 'value'}, body='')
         >>> f.message_id
         'id-here'
         >>> f.other_header
@@ -54,7 +54,11 @@ class StompFrame(stomper.Frame):
         if name.startswith('_'):
             raise AttributeError()
         
-        return self.headers.get(name.replace('_', '-'))
+        try:
+            return self.headers[name]
+        except KeyError:
+            # Try converting _ to -
+            return self.headers.get(name.replace('_', '-'))
     
     def __hash__(self):
         """ Build hash based on data contents of object (to correspond with implementation of __eq__). """
