@@ -97,7 +97,7 @@ class DbmQueue(QueueStore):
     @ivar checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
     @type checkpoint_timeout: C{float}
     """
-    def __init__(self, data_dir, checkpoint_operations, checkpoint_timeout):
+    def __init__(self, data_dir, checkpoint_operations=100, checkpoint_timeout=30):
         """
         @param data_dir: The directory where DBM files will be stored.
         @param data_dir: C{str}
