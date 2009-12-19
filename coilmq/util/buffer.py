@@ -123,16 +123,13 @@ class StompFrameBuffer(object):
         elems = hdata.split('\n')
         cmd = elems.pop(0)
         headers = {}
-        # We can't use a simple split because the value can legally contain
-        # colon characters (for example, the session returned by ActiveMQ).
+        
         for e in elems:
             try:
-                i = e.find (':')
+                (k,v) = e.split(':', 1) # header values may contain ':' so specify maxsplit
             except ValueError:
                 continue
-            k = e[:i].strip()
-            v = e[i + 1:].strip()
-            headers[k] = v
+            headers[k.strip()] = v.strip()
 
         # hbytes points to the start of the '\n\n' at the end of the header,
         # so 2 bytes beyond this is the start of the body. The body EXCLUDES
