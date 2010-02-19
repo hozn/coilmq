@@ -23,7 +23,7 @@ except ImportError:
 
 setup(
     name='CoilMQ',
-    version='0.2',
+    version='0.3',
     description='STOMP message broker',
     long_description=__doc__,
     keywords='stomp server broker',
