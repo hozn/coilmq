@@ -1,6 +1,10 @@
 """
 A simple config-file based authentication module.
 """
+from ConfigParser import RawConfigParser
+from coilmq.auth import Authenticator
+from coilmq.config import config
+from coilmq.exception import ConfigError
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -15,11 +19,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-
-from ConfigParser import RawConfigParser
-from coilmq.auth import Authenticator
-from coilmq.config import config
-from coilmq.exception import ConfigError
 
 def make_simple():
     """

@@ -3,6 +3,11 @@
 Functional tests that use the default memory-based storage backends and default
 scheduler implementations.
 """
+import zlib
+
+from coilmq.auth.simple import SimpleAuthenticator
+from coilmq.tests.functional import BaseFunctionalTestCase
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +21,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-import hashlib
-import zlib
-import random
-
-from coilmq.auth.simple import SimpleAuthenticator
-from coilmq.tests.functional import BaseFunctionalTestCase
 
 class BasicTest(BaseFunctionalTestCase):
     """

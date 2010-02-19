@@ -1,6 +1,26 @@
 """
 Functional tests to test full stack (but not actual socket layer).
 """
+import sys
+import time
+import unittest
+import logging
+import socket
+import select
+import threading
+from Queue import Queue
+
+from coilmq.frame import StompFrame
+from coilmq.queue import QueueManager
+from coilmq.topic import TopicManager
+
+from coilmq.server.socketserver import StompServer, StompRequestHandler, ThreadedStompServer
+from coilmq.util.buffer import StompFrameBuffer
+from coilmq.store.memory import MemoryQueue
+from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
+
+from coilmq.tests import mock
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,28 +34,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-import sys
-import time
-import unittest
-import logging
-import socket
-import select
-import threading
-from Queue import Queue
-
-# TEMP:
-from SocketServer import BaseServer
-
-from coilmq.frame import StompFrame
-from coilmq.queue import QueueManager
-from coilmq.topic import TopicManager
-
-from coilmq.server.socketserver import StompServer, StompRequestHandler, ThreadedStompServer
-from coilmq.util.buffer import StompFrameBuffer
-from coilmq.store.memory import MemoryQueue
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
-
-from coilmq.tests import mock
 
 class BaseFunctionalTestCase(unittest.TestCase):
     """

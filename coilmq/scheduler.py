@@ -7,6 +7,8 @@ reliable subscribers.  Developers can write their own delivery schedulers, which
 should implement the methods defined in L{QueuePriorityScheduler} if they would
 like to customize the behavior.
 """
+import random
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +22,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-
-import random
 
 class SubscriberPriorityScheduler(object):
     """ Abstract base class for choosing which recipient (subscriber) should receive a message. """

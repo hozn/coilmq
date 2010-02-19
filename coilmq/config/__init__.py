@@ -11,6 +11,13 @@ init_config('/path/to/config.cfg')
 
 config.getint('listen_port')
 """
+import os.path
+import logging
+import logging.config
+import ConfigParser
+
+from pkg_resources import resource_stream, resource_filename
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +31,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-import os.path
-import logging
-import logging.config
-import ConfigParser
-
-from pkg_resources import resource_stream, resource_filename
 
 config = ConfigParser.SafeConfigParser()
 config.readfp(resource_stream(__name__, 'defaults.cfg'))
