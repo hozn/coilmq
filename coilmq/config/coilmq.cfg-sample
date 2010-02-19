@@ -24,20 +24,20 @@
 keys=root,coilmq
 
 [handlers]
-keys=console
+keys=console,file,syslog
 
 [formatters]
-keys=threaded
+keys=threaded,syslog
 
 [logger_root]
 level=DEBUG
-handlers=console
+handlers=console,file,syslog
 
 [logger_coilmq]
 level=DEBUG
-handlers=console
+handlers=console,file,syslog
 qualname=coilmq
-; propagate=0
+propagate=0
 
 [handler_console]
 class=StreamHandler
@@ -45,6 +45,22 @@ level=DEBUG
 formatter=threaded
 args=(sys.stdout,)
 
+[handler_syslog]
+class=handlers.SysLogHandler
+level=DEBUG
+formatter=syslog
+args=('/dev/log',)
+
+[handler_file]
+class=FileHandler
+level=DEBUG
+formatter=threaded
+args=('coilmq.log', 'w')
+
+[formatter_syslog]
+format=[%(threadName)s] %(name)s - %(levelname)s - %(message)s
+datefmt= 
+
 [formatter_threaded]
 format=%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s
-datefmt= 
+datefmt=

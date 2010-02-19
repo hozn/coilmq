@@ -1,3 +1,6 @@
 .project
 .pydevproject
+build
 env
+data
+dist
