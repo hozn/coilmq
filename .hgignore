@@ -1,9 +1,12 @@
+syntax: glob
+*.pyc
 .project
 .pydevproject
 build
 env
 data
 dist
-
-syntax: glob
+.settings
+.coverage
 *.egg*
+*.log
