@@ -5,6 +5,7 @@ Entrypoint for starting the application.
 from __future__ import with_statement
 
 import os
+import sys
 import logging
 from optparse import OptionParser
 
@@ -16,7 +17,7 @@ try:
 except ImportError:
     daemon_support = False
     
-from coilmq.config import config as global_config, init_config, resolve_name
+from coilmq.config import config as global_config, init_config, init_logging, resolve_name
 from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
 
@@ -83,18 +84,42 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     return server
 
 
-def run_server(server):
+def context_serve(options, context):
     """
-    Runs the specified server, catching any exceptions and handling server cleanup.
-    """
-    try:
-        logger().info("Stomp server listening on %s:%s" % server.server_address)
-        server.serve_forever()
-    finally:
-        # FIXME: Temporary!
-        logger().info("Closing the server connection in serve() finally block.")
-        server.server_close()
+    Takes a context object, which implements the __enter__/__exit__ "with" interface 
+    and starts a server within that context.
     
+    This method is a refactored single-place for handling the server-run code whether
+    running in daemon or non-daemon mode.  It is invoked with a dummy (passthrough) 
+    context object for the non-daemon use case. 
+    
+    @param options: The compiled collection of options that need to be parsed. 
+    @type options: C{ConfigParser}
+    
+    @param context: The context object that implements __enter__/__exit__ "with" methods.
+    @type context: C{object}
+    
+    @raise Exception: Any underlying exception will be logged but then re-raised.
+    @see: server_from_config()
+    """
+    server = None
+    try:
+        with context:
+            # There's a possibility here that init_logging() will throw an exception.  If it does,
+            # AND we're in a daemon context, then we're not going to be able to do anything with it.
+            # We've got no stderr/stdout here; and so (to my knowledge) no reliable (& cross-platform),
+            # way to display errors.
+            init_logging(options.config_file)
+            
+            server = server_from_config()
+            logger().info("Stomp server listening on %s:%s" % server.server_address)
+            server.serve_forever()
+    except Exception, e:
+        logger().error("Stomp server stopped due to error: %s" % e)
+        logger().exception(e)
+        raise
+    finally:
+        if server: server.server_close()
     
 def main():
     """
@@ -130,11 +155,14 @@ def main():
     parser.add_option("--umask", dest="umask",
                       help="Umask (octal) to apply for daemonized process.", metavar="MASK")
     
+    parser.add_option('--rundir', dest="rundir",
+                      help="The working directory to use for the daemonized process (default is /).", metavar="DIR")
+    
     (options, args) = parser.parse_args()
     
-    # This probably needs to move into the daemon context block ...
-    #
-    #
+    # Note that we must initialize the configuration before we enter the context
+    # block; however, we _cannot_ initialize logging until we are in the context block
+    # (so we defer that until the context_serve call.)
     init_config(options.config_file)
     
     if options.listen_addr is not None:
@@ -158,32 +186,26 @@ def main():
                 
             if options.pidfile is not None:
                 context.pidfile = lockfile.FileLock(options.pidfile)
-                #context.pidfile = options.pidfile
             
             if options.umask is not None:
                 context.umask = int(options.umask, 8)
+            
+            if options.rundir is not None:
+                context.working_directory = options.rundir
+                
+            context_serve(options, context)
 
-            server = None
-            try:
-                with context:
-                    server = server_from_config()
-                    logger().info("(Daemon) stomp server listening on %s:%s" % server.server_address)
-                    server.serve_forever()
-            except Exception, e:
-                logger().error("This error ruined my day: %s" % e)
-                logger().exception(e)
-                raise
-            finally:
-                if server:
-                    server.server_close()
     else:
-        # Non-daemon version
-        server = server_from_config()
-        logger().info("Stomp server listening on %s:%s" % server.server_address)
-        try:
-            server.serve_forever()
-        finally:
-            server.server_close()
+        # Non-daemon mode, so we use a dummy context objectx
+        # so we can use the same run-server code as the daemon version.
+        
+        class DumbContext(object):
+            def __enter__(self):
+                pass
+            def __exit__(self, type, value, traceback):
+                pass
+        
+        context_serve(options, DumbContext())
         
 if __name__ == '__main__':
     try:

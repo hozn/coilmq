@@ -42,7 +42,8 @@ setup(
           'stomper==0.2.2',
     ],
     extras_require={
-        'daemon': ['python-daemon']
+        'daemon': ['python-daemon'],
+        'sqlalchemy': ['SQLAlchemy']
     },
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -52,7 +53,6 @@ setup(
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    # TODO: Add a console_scripts entry point to provide a more convenient way to start up.
     entry_points="""
     [console_scripts]
     coilmq = coilmq.start:main

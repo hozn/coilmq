@@ -42,21 +42,40 @@ def init_config(config_file):
     The values in config_file will override those already loaded from the default
     configuration file (defaults.cfg, in current package).
     
+    This method does not setup logging.
+    
     @param config_file: The path to a configuration file.
     @type config_file: C{str}
     
-    @raise ValueError: if the specified config_file could not be read.  
+    @raise ValueError: if the specified config_file could not be read.
+    @see: L{init_logging}  
     """
     global config
     
     if config_file and os.path.exists(config_file):
-        logging.config.fileConfig(config_file)
         read = config.read([config_file])
         if not read:
             raise ValueError("Could not read configuration from file: %s" % config_file)
+        
+def init_logging(config_file):
+    """
+    Configures the logging.
+    
+    This is performed separately from L{init_config()} in order to support the case where 
+    logging should happen independent of (usu. *after*) other aspects of the configuration 
+    initialization. For example, if logging may need to be initialized within a  daemon 
+    context.
+    
+    @param config_file: The path to a configuration file.  If the file is not specified or
+                         does not exist, then the default.cfg configuration file will be used
+                         to initialize logging.
+    @type config_file: C{str}
+    """
+    if config_file and os.path.exists(config_file):
+        logging.config.fileConfig(config_file)
     else:
         logging.config.fileConfig(resource_filename(__name__, 'defaults.cfg'))
-
+    
 def resolve_name(name):
     """
     Resolve a dotted name to some object (usually class, module, or function).

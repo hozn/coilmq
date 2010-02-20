@@ -55,7 +55,7 @@ args=('/dev/log',)
 class=FileHandler
 level=DEBUG
 formatter=threaded
-args=('coilmq.log', 'w')
+args=('/tmp/coilmq.log', 'w')
 
 [formatter_syslog]
 format=[%(threadName)s] %(name)s - %(levelname)s - %(message)s
