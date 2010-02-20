@@ -143,20 +143,19 @@ def main():
     parser.add_option("-d", "--daemon", action="store_true", dest="daemon", default=False,
                       help="Run server as a daemon (default False).")
     
-    parser.add_option("--pidfile", dest="pidfile", default="./coilmq.pid",
-                      help="The PID file to use.")
-    
     parser.add_option("-u", "--uid", dest="uid",
                       help="The user/UID to use for daemon process.", metavar="UID")
     
     parser.add_option("-g", "--gid", dest="gid",
                       help="The group/GID to use for daemon process.", metavar="GID")
     
+    parser.add_option("--pidfile", dest="pidfile", help="The PID file to use.", metavar="FILE")
+    
     parser.add_option("--umask", dest="umask",
                       help="Umask (octal) to apply for daemonized process.", metavar="MASK")
     
     parser.add_option('--rundir', dest="rundir",
-                      help="The working directory to use for the daemonized process (default is /).", metavar="DIR")
+                      help="The working directory to use for the daemonized process (default /).", metavar="DIR")
     
     (options, args) = parser.parse_args()
     
