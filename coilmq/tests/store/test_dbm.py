@@ -10,6 +10,8 @@ import time
 from coilmq.store.dbm import DbmQueue
 from coilmq.frame import StompFrame
 
+from coilmq.tests.store import CommonQueueTestsMixin
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +26,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-class DbmQueueTest(unittest.TestCase):
+class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
     
     def setUp(self):
         self.data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
@@ -32,21 +34,8 @@ class DbmQueueTest(unittest.TestCase):
     
     def tearDown(self):
         shutil.rmtree(self.data_dir)
-    
-    def test_enqueue(self):
-        """ Test the enqueue() method. """
-        dest = '/queue/foo'
-        frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
-        self.store.enqueue(dest, frame)
         
-        #print self.store.queue_metadata.keys()
-        print self.store.queue_metadata[dest]
-        #print "Frames? %s" % bool(self.store.queue_metadata[dest]['frames'])
-        
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
-        
-    def test_dequeue(self):
+    def test_dequeue_identity(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
         frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
@@ -61,15 +50,6 @@ class DbmQueueTest(unittest.TestCase):
         
         assert self.store.has_frames(dest) == False
         assert self.store.size(dest) == 0
-        
-    def test_dequeue_empty(self):
-        """ Test dequeue() with empty queue. """
-        
-        r = self.store.dequeue('/queue/nonexist')
-        assert r is None
-        
-        assert self.store.has_frames('/queue/nonexist') == False
-        assert self.store.size('/queue/nonexist') == 0
     
     def test_sync_checkpoint_ops(self):
         """ Test a expected sync behavior with checkpoint_operations param. """
