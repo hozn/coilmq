@@ -1,7 +1,7 @@
 """
-Module to hold some "global" SA objects.
+Module to hold shared SQLAlchemy state.
 
-These objects are initialized by the SA store factory (i.e. L{coilmq.store.sa.make_sa})
+These objects are set by the L{coilmq.store.sa.init_model} function.
 """
 engine = None #: The SA engine
 Session = None #: The SA Session (or Session-like callable) 

@@ -1,8 +1,8 @@
 """
-
+Definition of the datamodel required for SA storage backend.
 """
 
-from sqlalchemy import orm, Table, Column, Integer, String, PickleType, DateTime
+from sqlalchemy import Table, Column, Integer, String, PickleType, DateTime
 from sqlalchemy.sql import func
 
 from coilmq.store.sa import meta
@@ -21,9 +21,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-frames_table = None #: The C{sqlalchemy.Table} set by L{init_model}
+frames_table = None #: The C{sqlalchemy.Table} set by L{setup_tables}
 
-def init_model(create=True):
+def setup_tables(create=True):
     """
     Binds the model classes to registered metadata and engine and (potentially) 
     creates the db tables.

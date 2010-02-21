@@ -1,5 +1,5 @@
 """
-Test DBM queue storage.
+Test SQLAlchemy storage.
 """
 import unittest
 import tempfile
@@ -8,12 +8,10 @@ import uuid
 import time
 import datetime
 
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.sql import select, func, and_, text
+from sqlalchemy import create_engine
 
 from coilmq.store.sa import meta, model
-from coilmq.store.sa.model import init_model
+from coilmq.store.sa import init_model
 from coilmq.store.sa import SAQueue
 from coilmq.frame import StompFrame
 
@@ -36,10 +34,8 @@ limitations under the License."""
 class SAQueueTest(unittest.TestCase, CommonQueueTestsMixin):
     
     def setUp(self):
-        meta.engine = create_engine('sqlite:///:memory:', echo=True)
-        meta.metadata = MetaData(bind=meta.engine)
-        meta.Session = scoped_session(sessionmaker(bind=meta.engine))
-        init_model()
+        engine = create_engine('sqlite:///:memory:', echo=True)
+        init_model(engine)
         self.store = SAQueue()
     
     def tearDown(self):
