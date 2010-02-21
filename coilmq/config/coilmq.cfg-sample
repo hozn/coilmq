@@ -20,6 +20,11 @@
 ; auth.factory = coilmq.auth.simple:make_simple
 ; auth.simple.file = /path/to/authfile.ini
 
+; You can include custom logging configuration, if you like.  If you do configure
+; logging here, then any commandline logging arguments (e.g. --logfile) will be _IGNORED_. 
+; See the Python documentation for the log file format: 
+; 	http://docs.python.org/library/logging.html#configuration-file-format
+
 [loggers]
 keys=root,coilmq
 

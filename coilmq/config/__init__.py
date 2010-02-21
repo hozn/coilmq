@@ -15,8 +15,9 @@ import os.path
 import logging
 import logging.config
 import ConfigParser
+import warnings
 
-from pkg_resources import resource_stream, resource_filename
+from pkg_resources import resource_stream
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -57,25 +58,48 @@ def init_config(config_file):
         if not read:
             raise ValueError("Could not read configuration from file: %s" % config_file)
         
-def init_logging(config_file):
+def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
     """
-    Configures the logging.
+    Configures the logging using either basic filename + loglevel or passed config file path.
     
     This is performed separately from L{init_config()} in order to support the case where 
     logging should happen independent of (usu. *after*) other aspects of the configuration 
     initialization. For example, if logging may need to be initialized within a  daemon 
     context.
     
-    @param config_file: The path to a configuration file.  If the file is not specified or
-                         does not exist, then the default.cfg configuration file will be used
-                         to initialize logging.
-    @type config_file: C{str}
-    """
-    if config_file and os.path.exists(config_file):
-        logging.config.fileConfig(config_file)
-    else:
-        logging.config.fileConfig(resource_filename(__name__, 'defaults.cfg'))
+    @param logfile: An explicitly specified logfile destination.  If this is specified in addition
+                    to default logging, a warning will be issued.
+    @type logfile: C{str}
     
+    @param loglevel: Which level to use when logging to explicitly specified file or stdout.
+    @type loglevel: C{int}
+    
+    @param configfile: The path to a configuration file.  This takes precedence over any explicitly
+                        specified logfile/loglevel (but a warning will be logged if both are specified).
+                        If the file is not specified or does not exist annd no logfile was specified, 
+                        then the default.cfg configuration file will be used to initialize logging.
+    @type configfile: C{str}
+    """
+    # If a config file was specified, we will use that in place of the
+    # explicitly 
+    use_configfile = False
+    if configfile and os.path.exists(configfile):
+        testcfg = ConfigParser.SafeConfigParser()
+        read = testcfg.read(configfile)
+        use_configfile = (read and testcfg.has_section('loggers')) 
+    
+    if use_configfile:
+        logging.config.fileConfig(configfile)
+        if logfile:
+            msg = "Config file conflicts with explicitly specified logfile; config file takes precedence."
+            logging.warn(msg)
+    else:
+        format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
+        if logfile:
+            logging.basicConfig(filename=logfile, level=loglevel, format=format)
+        else:
+            logging.basicConfig(level=loglevel, format=format)
+        
 def resolve_name(name):
     """
     Resolve a dotted name to some object (usually class, module, or function).

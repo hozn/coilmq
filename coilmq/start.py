@@ -109,15 +109,19 @@ def context_serve(options, context):
             # AND we're in a daemon context, then we're not going to be able to do anything with it.
             # We've got no stderr/stdout here; and so (to my knowledge) no reliable (& cross-platform),
             # way to display errors.
-            init_logging(options.config_file)
+            level = logging.DEBUG if options.debug else logging.INFO
+            init_logging(logfile=options.logfile, loglevel=level, configfile=options.configfile)
             
             server = server_from_config()
             logger().info("Stomp server listening on %s:%s" % server.server_address)
             server.serve_forever()
+    except (KeyboardInterrupt, SystemExit):
+        logger().info("Stomp server stopped by user interrupt.")
+        raise SystemExit()
     except Exception, e:
         logger().error("Stomp server stopped due to error: %s" % e)
         logger().exception(e)
-        raise
+        raise SystemExit()
     finally:
         if server: server.server_close()
     
@@ -131,7 +135,7 @@ def main():
     """
 
     parser = OptionParser()
-    parser.add_option("-c", "--config", dest="config_file",
+    parser.add_option("-c", "--config", dest="configfile",
                       help="Read configuration from FILE. (CLI options override config file.)", metavar="FILE")
     
     parser.add_option("-b", "--host", dest="listen_addr",
@@ -140,6 +144,12 @@ def main():
     parser.add_option("-p", "--port", dest="listen_port",
                       help="Listen on specified port (default 61613)", type="int", metavar="PORT")
 
+    parser.add_option("-l", "--logfile", dest="logfile",
+                      help="Log to specified file (unless logging configured in config file).", metavar="FILE")
+
+    parser.add_option("--debug", action="store_true", dest="debug", default=False, 
+                      help="Sets logging to debug (unless logging configured in config file).")
+    
     parser.add_option("-d", "--daemon", action="store_true", dest="daemon", default=False,
                       help="Run server as a daemon (default False).")
     
@@ -162,7 +172,7 @@ def main():
     # Note that we must initialize the configuration before we enter the context
     # block; however, we _cannot_ initialize logging until we are in the context block
     # (so we defer that until the context_serve call.)
-    init_config(options.config_file)
+    init_config(options.configfile)
     
     if options.listen_addr is not None:
         global_config.set('coilmq', 'listen_addr', options.listen_addr)
