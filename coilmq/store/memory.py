@@ -32,8 +32,8 @@ class MemoryQueue(QueueStore):
     over-protective and refactor later it if proves unecessary. 
     """
     def __init__(self):
+        QueueStore.__init__(self)
         self._messages = defaultdict(deque)
-        self._lock = threading.RLock()
     
     @synchronized    
     def enqueue(self, destination, frame):

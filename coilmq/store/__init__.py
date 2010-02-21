@@ -1,6 +1,9 @@
 """
 Storage containers for durable queues and (planned) durable topics.
 """
+import logging
+import threading
+
 from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -22,7 +25,20 @@ class QueueStore(object):
     Abstract base class for queue storage. 
     
     Extensions/implementations of this class must be thread-safe.
+    
+    @ivar log: A logger for this class.
+    @type log: C{logging.Logger}
     """
+    
+    def __init__(self):
+        """
+        A base constructor that sets up logging and the lock used by synchronized decorator.
+        
+        If you extend this class, you should either call this method or at minimum make sure these values
+        get set.
+        """
+        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
+        self._lock = threading.RLock()
     
     @synchronized
     def enqueue(self, destination, frame):
@@ -86,9 +102,6 @@ class QueueStore(object):
         @type destination: C{str}
         """
         return QueueFrameIterator(self, destination)
-    
-    def __getitem__(self, key):
-        return self.frames(key)
     
 class QueueFrameIterator(object):
     """

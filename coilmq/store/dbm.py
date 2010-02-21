@@ -41,7 +41,6 @@ def make_dbm():
     """
     Creates a DBM queue store, pulling config values from the CoilMQ configuration.
     """
-    
     try:
         data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
         cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
@@ -108,9 +107,8 @@ class DbmQueue(QueueStore):
         @param checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
         @type checkpoint_timeout: C{float}
         """
-        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
+        QueueStore.__init__(self)
         
-        self._lock = threading.RLock()
         self._opcount = 0
         self._last_sync = datetime.now()
         

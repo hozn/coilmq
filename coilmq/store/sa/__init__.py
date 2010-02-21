@@ -75,8 +75,6 @@ class SAQueue(QueueStore):
     thread-local Session class-like callables. As a result of deferring that to the SA layer, we don't 
     need to use synchronization locks to guard calls to the methods in this store implementation.
     """
-    def __init__(self):
-        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         
     def enqueue(self, destination, frame):
         """
