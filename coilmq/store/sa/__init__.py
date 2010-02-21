@@ -41,7 +41,7 @@ def make_sa():
     Factory to creates a SQLAlchemy queue store, pulling config values from the CoilMQ configuration.
     """
     configuration = dict(config.items('coilmq'))
-    engine = engine_from_config(configuration, 'qstore.sa.')
+    engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
     init_model(engine)
     store = SAQueue()
     return store
