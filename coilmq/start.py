@@ -69,7 +69,7 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     queue_scheduler_factory = resolve_name(config.get('coilmq', 'scheduler.queue_priority_factory'))
     
     if config.has_option('coilmq', 'auth.factory'):
-        authenticator_factory = resolve_name(config.get('coilmq', 'authenticator_factory'))
+        authenticator_factory = resolve_name(config.get('coilmq', 'auth.factory'))
         authenticator = authenticator_factory()
     else:
         authenticator = None
