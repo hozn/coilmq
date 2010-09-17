@@ -1,4 +1,4 @@
-'''
+"""
 CoilMQ is a STOMP message broker written in Python.
 
 The provided server implementation for CoilMQ uses the Python SocketServer libraries;
@@ -13,7 +13,7 @@ Two things worth noting:
      explicitly designed to use the async patterns (e.g. using Twisted Deffered), which may 
      make it impractical to use this with slow/blocking storage mechanisms (e.g. using db 
      storage will cause all clients to block).
-'''
+"""
 try:
     from setuptools import setup, find_packages
 except ImportError:

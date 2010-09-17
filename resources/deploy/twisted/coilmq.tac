@@ -1,6 +1,6 @@
-'''
+"""
 The TAC file can be used with the twistd script to start this application.
-'''
+"""
 import logging
 
 from twisted.application import internet, service

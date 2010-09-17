@@ -1,5 +1,5 @@
 """
-Test DBM queue storage.
+Test memory queue storage.
 """
 import unittest
 import uuid
