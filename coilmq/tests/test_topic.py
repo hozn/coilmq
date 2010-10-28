@@ -3,7 +3,8 @@ Tests for topic-related functionality.
 """
 import unittest
 
-from coilmq.frame import StompFrame
+from stompclient.frame import Frame
+
 from coilmq.topic import TopicManager
 
 from coilmq.tests.mock import MockConnection
@@ -34,7 +35,7 @@ class TopicManagerTest(unittest.TestCase):
         dest = '/topic/dest'
         
         self.tm.subscribe(self.conn, dest)
-        f = StompFrame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
         print self.conn.frames
@@ -46,7 +47,7 @@ class TopicManagerTest(unittest.TestCase):
         dest = '/topic/dest'
         
         self.tm.subscribe(self.conn, dest)
-        f = StompFrame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
         print self.conn.frames
@@ -54,7 +55,7 @@ class TopicManagerTest(unittest.TestCase):
         assert self.conn.frames[0] == f
         
         self.tm.unsubscribe(self.conn, dest)
-        f = StompFrame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
         assert len(self.conn.frames) == 1
@@ -63,10 +64,10 @@ class TopicManagerTest(unittest.TestCase):
         """ Test a basic send command. """
         dest = '/topic/dest'
         
-        f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
+        f = Frame('SEND', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
         # Assert some side-effects
         assert 'message-id' in f.headers
-        assert f.cmd == 'MESSAGE'
+        assert f.command == 'MESSAGE'
 

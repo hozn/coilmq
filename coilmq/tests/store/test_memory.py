@@ -4,8 +4,9 @@ Test memory queue storage.
 import unittest
 import uuid
 
+from stompclient.frame import Frame
+
 from coilmq.store.memory import MemoryQueue
-from coilmq.frame import StompFrame
 
 from coilmq.tests.store import CommonQueueTestsMixin
 
@@ -31,7 +32,7 @@ class MemoryQueueTest(CommonQueueTestsMixin, unittest.TestCase):
     def test_dequeue_identity(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
+        frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
         self.store.enqueue(dest, frame)
         
         assert self.store.has_frames(dest) == True

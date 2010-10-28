@@ -136,7 +136,7 @@ class DbmQueue(QueueStore):
         @type destination: C{str}
         
         @param frame: The message (frame) to send to specified destinationination.
-        @type frame: C{coilmq.frame.StompFrame}
+        @type frame: C{stompclient.frame.Frame}
         """
         message_id = frame.message_id
         if not message_id:
@@ -163,7 +163,7 @@ class DbmQueue(QueueStore):
         @type destination: C{str}
         
         @return: The first frame in the specified queue, or C{None} if there are none.
-        @rtype: L{coilmq.frame.StompFrame} 
+        @rtype: C{stompclient.frame.Frame} 
         """
         if not self.has_frames(destination):
             return None

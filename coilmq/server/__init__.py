@@ -35,6 +35,6 @@ class StompConnection(object):
         Uses this connection implementation to sends the specified frame to a connected client.
         
         @param frame: The STOMP frame to send.
-        @type frame: L{coilmq.frame.StompFrame}  
+        @type frame: C{stompclient.frame.Frame}  
         """
         raise NotImplementedError()

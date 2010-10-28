@@ -39,7 +39,7 @@ setup(
     tests_require=['nose', 'coverage'],
     install_requires=[
           'distribute',
-          'stomper==0.2.2',
+          'stompclient==0.1',
     ],
     extras_require={
         'daemon': ['python-daemon'],

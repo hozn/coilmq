@@ -7,8 +7,9 @@ import shutil
 import uuid
 import time
 
+from stompclient.frame import Frame
+
 from coilmq.store.dbm import DbmQueue
-from coilmq.frame import StompFrame
 
 from coilmq.tests.store import CommonQueueTestsMixin
 
@@ -38,7 +39,7 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
     def test_dequeue_identity(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
+        frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
         self.store.enqueue(dest, frame)
         
         assert self.store.has_frames(dest) == True
@@ -61,7 +62,7 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
             dest = '/queue/foo'
             
             for i in range(max_ops+1):
-                frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data - %d' % i)
+                frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data - %d' % i)
                 store.enqueue(dest, frame)
             
             print store.queue_metadata[dest]    
@@ -85,12 +86,12 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
             store = DbmQueue(data_dir, checkpoint_timeout=0.5)
             dest = '/queue/foo'
             
-            frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -1')
+            frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -1')
             store.enqueue(dest, frame)
             
             time.sleep(0.5)
             
-            frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -2')
+            frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -2')
             store.enqueue(dest, frame)
             
             print store.queue_metadata[dest]    
@@ -113,7 +114,7 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         try:
             store = DbmQueue(data_dir)
             dest = '/queue/foo'
-            frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
+            frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
             store.enqueue(dest, frame)
             assert store.size(dest) == 1
             
@@ -133,7 +134,7 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         try:
             store = DbmQueue(data_dir)
             dest = '/queue/foo'
-            frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
+            frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
             store.enqueue(dest, frame)
             assert store.size(dest) == 1
             

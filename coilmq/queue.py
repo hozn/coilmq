@@ -53,10 +53,10 @@ class QueueManager(object):
     @type _queues: C{dict} of C{str} to C{set} of L{coilmq.server.StompConnection}
         
     @ivar _pending: All messages waiting for ACK from clients.
-    @type _pending: C{dict} of L{coilmq.server.StompConnection} to L{coilmq.frame.StompFrame}
+    @type _pending: C{dict} of L{coilmq.server.StompConnection} to C{stompclient.frame.Frame}
     
     @ivar _transaction_frames: Frames that have been ACK'd within a transaction.
-    @type _transaction_frames: C{dict} of L{coilmq.server.StompConnection} to C{dict} of C{str} to L{coilmq.frame.StompFrame}
+    @type _transaction_frames: C{dict} of L{coilmq.server.StompConnection} to C{dict} of C{str} to C{stompclient.frame.Frame}
     """
     
     def __init__(self, store, subscriber_scheduler=None, queue_scheduler=None):
@@ -171,13 +171,13 @@ class QueueManager(object):
         to 'MESSAGE' (if it is not).
          
         @param message: The message frame.
-        @type message: L{coilmq.frame.StompFrame}
+        @type message: C{stompclient.frame.Frame}
         """
         dest = message.destination
         if not dest:
             raise ValueError("Cannot send frame with no destination: %s" % message)
         
-        message.cmd = 'MESSAGE'
+        message.command = 'MESSAGE'
         
         if not 'message-id' in message.headers:
             message.headers['message-id'] = str(uuid.uuid4())
@@ -321,7 +321,7 @@ class QueueManager(object):
         @type connection: L{coilmq.server.StompConnection}
         
         @param frame: The frame to send.
-        @type frame: L{coilmq.frame.StompFrame}
+        @type frame: L{stompclient.frame.Frame}
         """
         assert connection is not None
         assert frame is not None

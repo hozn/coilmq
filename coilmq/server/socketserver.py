@@ -4,9 +4,10 @@ The default/recommended SocketServer-based server implementation.
 import logging
 from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
 
+from stompclient.util import FrameBuffer
+
 from coilmq.server import StompConnection
 from coilmq.engine import StompEngine
-from coilmq.util.buffer import StompFrameBuffer
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -34,7 +35,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     
     @ivar buffer: A StompBuffer instance which buffers received data (to ensure we deal with
                     complete STOMP messages.
-    @type buffer: C{stomper.stompbuffer.StompBuffer}
+    @type buffer: C{stompclient.util.FrameBuffer}
     
     @ivar engine: The STOMP protocol engine.
     @type engine: L{coilmq.engine.StompEngine}
@@ -46,7 +47,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     def setup(self):
         self.debug = False
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
-        self.buffer = StompFrameBuffer()
+        self.buffer = FrameBuffer()
         self.engine = StompEngine(connection=self,
                                   authenticator=self.server.authenticator,
                                   queue_manager=self.server.queue_manager,
@@ -87,7 +88,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         """ Sends a frame to connected socket client.
         
         @param frame: The frame to send.
-        @type frame: L{coilmq.frame.StompFrame}
+        @type frame: C{stompclient.frame.Frame}
         """
         packed = frame.pack()
         if self.debug:

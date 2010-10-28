@@ -4,7 +4,8 @@ Tests for queue-related classes.
 import unittest
 import uuid
 
-from coilmq.frame import StompFrame
+from stompclient.frame import Frame
+
 from coilmq.queue import QueueManager
 from coilmq.store.memory import MemoryQueue
  
@@ -37,7 +38,7 @@ class QueueManagerTest(unittest.TestCase):
         dest = '/queue/dest'
         
         self.qm.subscribe(self.conn, dest)
-        f = StompFrame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
         print self.conn.frames
@@ -49,7 +50,7 @@ class QueueManagerTest(unittest.TestCase):
         dest = '/queue/dest'
         
         self.qm.subscribe(self.conn, dest)
-        f = StompFrame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
         print self.conn.frames
@@ -57,7 +58,7 @@ class QueueManagerTest(unittest.TestCase):
         assert self.conn.frames[0] == f
         
         self.qm.unsubscribe(self.conn, dest)
-        f = StompFrame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
         assert len(self.conn.frames) == 1
@@ -67,14 +68,14 @@ class QueueManagerTest(unittest.TestCase):
         """ Test a basic send command. """
         dest = '/queue/dest'
         
-        f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
+        f = Frame('SEND', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
         assert len(self.store.frames(dest)) == 1
         
         # Assert some side-effects
         assert 'message-id' in f.headers
-        assert f.cmd == 'MESSAGE'
+        assert f.command == 'MESSAGE'
         
     
     def test_send_err(self):
@@ -91,7 +92,7 @@ class QueueManagerTest(unittest.TestCase):
         conn = ExcThrowingConn()
         self.qm.subscribe(conn, dest)
         
-        f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
+        f = Frame('SEND', headers={'destination': dest}, body='Empty')
         try:
             self.qm.send(f)
             self.fail("Expected failure when there was an error sending.")
@@ -109,7 +110,7 @@ class QueueManagerTest(unittest.TestCase):
         
         dest = '/queue/dest'
         
-        f = StompFrame('SEND', headers={'destination': dest}, body='Empty')
+        f = Frame('SEND', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
         conn = ExcThrowingConn()
@@ -139,10 +140,10 @@ class QueueManagerTest(unittest.TestCase):
         
         dest = '/queue/dest'
         
-        f = StompFrame('SEND', headers={'destination': dest}, body='123')
+        f = Frame('SEND', headers={'destination': dest}, body='123')
         self.qm.send(f)
         
-        f2 = StompFrame('SEND', headers={'destination': dest}, body='12345')
+        f2 = Frame('SEND', headers={'destination': dest}, body='12345')
         self.qm.send(f2)
         
         conn = ExcThrowingConn()
@@ -182,7 +183,7 @@ class QueueManagerTest(unittest.TestCase):
         conn2.reliable_subscriber = False
         self.qm.subscribe(conn2, dest)
         
-        f = StompFrame('MESSAGE', headers={'destination': dest, 'message-id': uuid.uuid4()}, body='Empty')
+        f = Frame('MESSAGE', headers={'destination': dest, 'message-id': uuid.uuid4()}, body='Empty')
         self.qm.send(f)
             
         print conn1.frames
@@ -199,18 +200,18 @@ class QueueManagerTest(unittest.TestCase):
         
         self.qm.subscribe(conn1, dest)
         
-        m1 = StompFrame('MESSAGE', headers={'destination': dest}, body='Message body (1)')
+        m1 = Frame('MESSAGE', headers={'destination': dest}, body='Message body (1)')
         self.qm.send(m1)
         
         assert conn1.frames[0] == m1
         
-        m2 = StompFrame('MESSAGE', headers={'destination': dest}, body='Message body (2)')
+        m2 = Frame('MESSAGE', headers={'destination': dest}, body='Message body (2)')
         self.qm.send(m2)
         
         assert len(conn1.frames) == 1, "Expected connection to still only have 1 frame."
         assert conn1.frames[0] == m1
         
-        ack = StompFrame('ACK', headers={'destination': dest, 'message-id': m1.message_id})
+        ack = Frame('ACK', headers={'destination': dest, 'message-id': m1.message_id})
         self.qm.ack(conn1, ack)
         
         print conn1.frames
@@ -226,21 +227,21 @@ class QueueManagerTest(unittest.TestCase):
         
         self.qm.subscribe(conn1, dest)
         
-        m1 = StompFrame('MESSAGE', headers={'destination': dest, }, body='Message body (1)')
+        m1 = Frame('MESSAGE', headers={'destination': dest, }, body='Message body (1)')
         self.qm.send(m1)
         
         assert conn1.frames[0] == m1
         
-        m2 = StompFrame('MESSAGE', headers={'destination': dest}, body='Message body (2)')
+        m2 = Frame('MESSAGE', headers={'destination': dest}, body='Message body (2)')
         self.qm.send(m2)
         
         assert len(conn1.frames) == 1, "Expected connection to still only have 1 frame."
         assert conn1.frames[0] == m1
         
-        ack = StompFrame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m1.message_id})
+        ack = Frame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m1.message_id})
         self.qm.ack(conn1, ack, transaction='abc')
         
-        ack = StompFrame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m2.message_id})
+        ack = Frame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m2.message_id})
         self.qm.ack(conn1, ack, transaction='abc')
         
         assert len(conn1.frames) == 2, "Expected 2 frames now, after ACK."

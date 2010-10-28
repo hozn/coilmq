@@ -34,7 +34,7 @@ class SubscriberPriorityScheduler(object):
         @type subscribers: C{list} of L{coilmq.server.StompConnection}
         
         @param message: The message to be delivered. 
-        @type message: L{coilmq.frame.StompFrame}
+        @type message: L{stompclient.frame.Frame}
         
         @return: A selected subscriber from the list or None if no subscriber could be chosen (e.g. list is empty).
         @rtype: L{coilmq.server.StompConnection}
@@ -52,7 +52,7 @@ class QueuePriorityScheduler(object):
         
         @param queues: A C{dict} mapping queue name to queues (sets of frames) to which 
                         specified connection is subscribed.
-        @type queues:  C{dict} of C{str} to C{set} of L{coilmq.frame.StompFrame}
+        @type queues:  C{dict} of C{str} to C{set} of L{stompclient.frame.Frame}
                 
         @param connection: The connection that is going to be delivered the frame(s).
         @type connection: L{coilmq.server.StompConnection}
@@ -73,7 +73,7 @@ class RandomSubscriberScheduler(SubscriberPriorityScheduler):
         @type subscribers: C{list} of L{coilmq.server.StompConnection}
         
         @param message: The message to be delivered. 
-        @type message: L{coilmq.frame.StompFrame}
+        @type message: L{stompclient.frame.Frame}
         
         @return: A random subscriber from the list or None if list is empty.
         @rtype: L{coilmq.server.StompConnection}
@@ -96,7 +96,7 @@ class FavorReliableSubscriberScheduler(SubscriberPriorityScheduler):
         @type subscribers: C{list} of L{coilmq.server.StompConnection}
         
         @param message: The message to be delivered. 
-        @type message: L{coilmq.frame.StompFrame}
+        @type message: L{stompclient.frame.Frame}
         
         @return: A random subscriber from the list or None if list is empty.
         @rtype: L{coilmq.server.StompConnection}
@@ -120,7 +120,7 @@ class RandomQueueScheduler(QueuePriorityScheduler):
         
         @param queues: A C{dict} mapping queue name to queues (sets of frames) to which 
                         specified connection is subscribed.
-        @type queues:  C{dict} of C{str} to C{set} of L{coilmq.frame.StompFrame}
+        @type queues:  C{dict} of C{str} to C{set} of L{stompclient.frame.Frame}
         
         @param connection: The connection that is going to be delivered the frame(s).
         @type connection: L{coilmq.server.StompConnection}

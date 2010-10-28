@@ -38,7 +38,7 @@ class BasicTest(BaseFunctionalTestCase):
         c1 = self._new_client(connect=False)
         c1.connect()
         r = c1.received_frames.get(timeout=1)
-        assert r.cmd == 'ERROR'
+        assert r.command == 'ERROR'
         assert 'Auth' in r.body
         
         c2 = self._new_client(connect=False)
@@ -46,14 +46,14 @@ class BasicTest(BaseFunctionalTestCase):
         r2 = c2.received_frames.get(timeout=1)
         print r2
         
-        assert r2.cmd == 'CONNECTED'
+        assert r2.command == 'CONNECTED'
         
         c3 = self._new_client(connect=False)
         c3.connect(headers={'login': 'user', 'passcode': 'pass-invalid'})
         r3 = c3.received_frames.get(timeout=1)
         print r3
         
-        assert r3.cmd == 'ERROR'
+        assert r3.command == 'ERROR'
         
     def test_subscribe(self):
         c1 = self._new_client()
@@ -66,7 +66,7 @@ class BasicTest(BaseFunctionalTestCase):
         assert c2.received_frames.qsize() == 0
        
         r = c1.received_frames.get()
-        assert r.cmd == 'MESSAGE'
+        assert r.command == 'MESSAGE'
         assert r.body == 'A message'
     
     def test_disconnect(self):
@@ -94,7 +94,7 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send('/queue/foo', zlib.compress(message))
        
         r = c1.received_frames.get()
-        assert r.cmd == 'MESSAGE'
+        assert r.command == 'MESSAGE'
         print '%r' % r.body
         assert zlib.decompress(r.body) == message 
     
@@ -116,6 +116,6 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send('/queue/foo', utf8msg)
         
         r = c1.received_frames.get()
-        assert r.cmd == 'MESSAGE'
+        assert r.command == 'MESSAGE'
         print '%r' % r.body
         assert r.body == utf8msg

@@ -19,7 +19,8 @@ import logging
 import uuid
 from collections import defaultdict
 
-from coilmq.frame import ConnectedFrame, ReceiptFrame, ErrorFrame
+from stompclient.frame import ConnectedFrame, ReceiptFrame, ErrorFrame
+
 from coilmq.exception import ProtocolError, AuthError
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -83,12 +84,12 @@ class StompEngine(object):
         Dispatches a received frame to the appropriate internal method.
         
         @param frame: The frame that was received.
-        @type frame: L{coilmq.frame.StompFrame} 
+        @type frame: C{stompclient.frame.Frame} 
         """
-        cmd_method = frame.cmd.lower()
+        cmd_method = frame.command.lower()
         
         if not cmd_method in VALID_COMMANDS:
-            raise ProtocolError("Invalid STOMP command: %s" % frame.cmd)
+            raise ProtocolError("Invalid STOMP command: %s" % frame.command)
         
         method = getattr(self, cmd_method, None)
         

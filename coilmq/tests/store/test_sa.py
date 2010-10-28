@@ -9,11 +9,11 @@ import time
 import datetime
 
 from sqlalchemy import create_engine
+from stompclient.frame import Frame
 
 from coilmq.store.sa import meta, model
 from coilmq.store.sa import init_model
 from coilmq.store.sa import SAQueue
-from coilmq.frame import StompFrame
 
 from coilmq.tests.store import CommonQueueTestsMixin
 
@@ -46,13 +46,13 @@ class SAQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         """ Test the order that frames are returned by dequeue() method. """
         dest = '/queue/foo'
         
-        frame1 = StompFrame('MESSAGE', headers={'message-id': 'id-1'}, body='message-1') 
+        frame1 = Frame('MESSAGE', headers={'message-id': 'id-1'}, body='message-1') 
         self.store.enqueue(dest, frame1)
         
-        frame2 = StompFrame('MESSAGE', headers={'message-id': 'id-2'}, body='message-2') 
+        frame2 = Frame('MESSAGE', headers={'message-id': 'id-2'}, body='message-2') 
         self.store.enqueue(dest, frame2)
         
-        frame3 = StompFrame('MESSAGE', headers={'message-id': 'id-3'}, body='message-3') 
+        frame3 = Frame('MESSAGE', headers={'message-id': 'id-3'}, body='message-3') 
         self.store.enqueue(dest, frame3)
         
         assert self.store.has_frames(dest) == True

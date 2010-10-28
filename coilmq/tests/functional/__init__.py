@@ -10,12 +10,13 @@ import select
 import threading
 from Queue import Queue
 
-from coilmq.frame import StompFrame
+from stompclient.frame import Frame
+from stompclient.util import FrameBuffer
+
 from coilmq.queue import QueueManager
 from coilmq.topic import TopicManager
 
 from coilmq.server.socketserver import StompServer, StompRequestHandler, ThreadedStompServer
-from coilmq.util.buffer import StompFrameBuffer
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 
@@ -113,7 +114,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
         if connect:
             client.connect()
             r = client.received_frames.get(timeout=1)
-            assert r.cmd == 'CONNECTED'
+            assert r.command == 'CONNECTED'
         return client
 
 class TestStompServer(ThreadedStompServer):
@@ -146,8 +147,8 @@ class TestStompClient(object):
     This client spawns a listener thread and pushes anything that comes in onto the 
     read_frames queue.
     
-    @ivar received_frames: A queue of StompFrame instances that have been received.
-    @type received_frames: C{Queue.Queue} containing any received L{coilmq.frame.StompFrame}
+    @ivar received_frames: A queue of Frame instances that have been received.
+    @type received_frames: C{Queue.Queue} containing any received C{stompclient.frame.Frame}
     """
     def __init__(self, addr, connect=True):
         """
@@ -162,28 +163,28 @@ class TestStompClient(object):
         self.addr = addr
         self.received_frames = Queue()
         self.read_stopped = threading.Event()
-        self.buffer = StompFrameBuffer()
+        self.buffer = FrameBuffer()
         if connect:
             self._connect()
     
     def connect(self, headers=None):
         if headers is None:
             headers = {}
-        self.send_frame(StompFrame('CONNECT', headers=headers))
+        self.send_frame(Frame('CONNECT', headers=headers))
         
     def send(self, destination, message, set_content_length=True):
         headers = {'destination': destination}
         if set_content_length: headers['content-length'] = len(message)
-        self.send_frame(StompFrame('SEND', headers=headers, body=message))
+        self.send_frame(Frame('SEND', headers=headers, body=message))
     
     def subscribe(self, destination):
-        self.send_frame(StompFrame('SUBSCRIBE', headers={'destination': destination}))
+        self.send_frame(Frame('SUBSCRIBE', headers={'destination': destination}))
         
     def send_frame(self, frame):
         """
         Sends a stomp frame.
         @param frame: The stomp frame to send.
-        @type frame: L{coilmq.frame.StompFrame}
+        @type frame: L{stompclient.frame.Frame}
         """
         if not self.connected:
             raise RuntimeError("Not connected")
@@ -210,7 +211,7 @@ class TestStompClient(object):
         # print "Read loop has been quit! for %s" % id(self)
     
     def disconnect(self):
-        self.send_frame(StompFrame('DISCONNECT'))
+        self.send_frame(Frame('DISCONNECT'))
         
     def close(self):
         if not self.connected:

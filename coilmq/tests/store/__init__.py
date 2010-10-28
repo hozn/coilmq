@@ -2,7 +2,8 @@
 Queue storage tests.
 """
 import uuid
-from coilmq.frame import StompFrame
+
+from stompclient.frame import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -28,7 +29,7 @@ class CommonQueueTestsMixin(object):
     def test_enqueue(self):
         """ Test the enqueue() method. """
         dest = '/queue/foo'
-        frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
+        frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
         
         assert self.store.has_frames(dest) == True
@@ -37,7 +38,7 @@ class CommonQueueTestsMixin(object):
     def test_dequeue(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
+        frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
         self.store.enqueue(dest, frame)
         
         assert self.store.has_frames(dest) == True
@@ -57,13 +58,13 @@ class CommonQueueTestsMixin(object):
         dest = '/queue/foo'
         notdest = '/queue/other'
         
-        frame1 = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-1') 
+        frame1 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-1') 
         self.store.enqueue(dest, frame1)
         
-        frame2 = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-2') 
+        frame2 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-2') 
         self.store.enqueue(notdest, frame2)
         
-        frame3 = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-3') 
+        frame3 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-3') 
         self.store.enqueue(dest, frame3)
         
         assert self.store.has_frames(dest) == True
@@ -82,13 +83,13 @@ class CommonQueueTestsMixin(object):
         """ Test the order that frames are returned by dequeue() method. """
         dest = '/queue/foo'
         
-        frame1 = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-1') 
+        frame1 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-1') 
         self.store.enqueue(dest, frame1)
         
-        frame2 = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-2') 
+        frame2 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-2') 
         self.store.enqueue(dest, frame2)
         
-        frame3 = StompFrame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-3') 
+        frame3 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-3') 
         self.store.enqueue(dest, frame3)
         
         assert self.store.has_frames(dest) == True

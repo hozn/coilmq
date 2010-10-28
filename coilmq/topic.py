@@ -112,13 +112,13 @@ class TopicManager(object):
         
         @param message: The message frame.  (The frame will be modified to set command 
                             to MESSAGE and set a message id.)
-        @type message: L{coilmq.frame.StompFrame}
+        @type message: L{stompclient.frame.Frame}
         """
         dest = message.destination
         if not dest:
             raise ValueError("Cannot send frame with no destination: %s" % message)
         
-        message.cmd = 'MESSAGE'
+        message.command = 'MESSAGE'
         
         if not 'message-id' in message.headers:
             message.headers['message-id'] = str(uuid.uuid4())
