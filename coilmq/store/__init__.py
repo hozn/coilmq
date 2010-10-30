@@ -1,6 +1,7 @@
 """
 Storage containers for durable queues and (planned) durable topics.
 """
+import abc
 import logging
 import threading
 
@@ -29,6 +30,7 @@ class QueueStore(object):
     @ivar log: A logger for this class.
     @type log: C{logging.Logger}
     """
+    __metaclass__ = abc.ABCMeta
     
     def __init__(self):
         """
@@ -40,16 +42,43 @@ class QueueStore(object):
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         self._lock = threading.RLock()
     
+    @abc.abstractmethod
     @synchronized
     def enqueue(self, destination, frame):
-        raise NotImplementedError()
+        """
+        Store message (frame) for specified destinationination.
+        
+        @param destination: The destinationination queue name for this message (frame).
+        @type destination: C{str}
+        
+        @param frame: The message (frame) to send to specified destinationination.
+        @type frame: C{stompclient.frame.Frame}
+        """
     
+    @abc.abstractmethod
     @synchronized
     def dequeue(self, destination):
-        raise NotImplementedError()
+        """
+        Removes and returns an item from the queue (or C{None} if no items in queue).
+        
+        @param destination: The queue name (destinationination).
+        @type destination: C{str}
+        
+        @return: The first frame in the specified queue, or C{None} if there are none.
+        @rtype: C{stompclient.frame.Frame} 
+        """
     
     @synchronized
     def requeue(self, destination, frame):
+        """
+        Requeue a message (frame) for storing at specified destinationination.
+        
+        @param destination: The destinationination queue name for this message (frame).
+        @type destination: C{str}
+        
+        @param frame: The message (frame) to send to specified destinationination.
+        @type frame: C{stompclient.frame.Frame}
+        """
         self.enqueue(destination, frame)
 
     @synchronized

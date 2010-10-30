@@ -7,6 +7,7 @@ reliable subscribers.  Developers can write their own delivery schedulers, which
 should implement the methods defined in L{QueuePriorityScheduler} if they would
 like to customize the behavior.
 """
+import abc
 import random
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -25,7 +26,9 @@ limitations under the License."""
 
 class SubscriberPriorityScheduler(object):
     """ Abstract base class for choosing which recipient (subscriber) should receive a message. """
+    __metaclass__ = abc.ABCMeta
     
+    @abc.abstractmethod
     def choice(self, subscribers, message):
         """
         Chooses which subscriber (from list) should recieve specified message.
@@ -38,8 +41,7 @@ class SubscriberPriorityScheduler(object):
         
         @return: A selected subscriber from the list or None if no subscriber could be chosen (e.g. list is empty).
         @rtype: L{coilmq.server.StompConnection}
-        """
-        raise NotImplementedError()
+        """        
 
 class QueuePriorityScheduler(object):
     """
