@@ -2,8 +2,6 @@
 """
 Entrypoint for starting the application.
 """
-from __future__ import with_statement
-
 import os
 import sys
 import logging
