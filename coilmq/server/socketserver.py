@@ -2,6 +2,8 @@
 The default/recommended SocketServer-based server implementation. 
 """
 import logging
+import socket
+import threading
 from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
 
 from stompclient.util import FrameBuffer
@@ -45,6 +47,8 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     """
     
     def setup(self):
+        if self.server.timeout is not None:
+            self.request.settimeout(self.server.timeout)
         self.debug = False
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         self.buffer = FrameBuffer()
@@ -59,17 +63,20 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         """
         # self.request is the TCP socket connected to the client
         try:
-            while True:
-                data = self.request.recv(8192)
-                if not data:
-                    break
-                if self.debug:
-                    self.log.debug("RECV: %r" % data)
-                self.buffer.append(data)
-                
-                for frame in self.buffer:
-                    self.log.debug("Processing frame: %s" % frame)
-                    self.engine.process_frame(frame)
+            while not self.server._shutdown_request_event.is_set():
+                try:
+                    data = self.request.recv(8192)
+                    if not data:
+                        break
+                    if self.debug:
+                        self.log.debug("RECV: %r" % data)
+                    self.buffer.append(data)
+                    
+                    for frame in self.buffer:
+                        self.log.debug("Processing frame: %s" % frame)
+                        self.engine.process_frame(frame)
+                except socket.timeout:
+                    pass
         except Exception, e:
             self.log.error("Error receiving data (unbinding): %s" % e)
             self.engine.unbind()
@@ -110,10 +117,13 @@ class StompServer(TCPServer):
     @type topic_manager: L{coilmq.topic.TopicManager}
     """
     
-    def __init__(self, server_address, RequestHandlerClass=None, authenticator=None, queue_manager=None, topic_manager=None):
+    def __init__(self, server_address, RequestHandlerClass=None, timeout=3.0, authenticator=None, queue_manager=None, topic_manager=None):
         """
         Extension to C{TCPServer} constructor to provide mechanism for providing implementation classes.
         
+        @param server_address: The (address,port) C{tuple}
+        @param RequestHandlerClass: The class to use for handling requests.
+        @param timeout: The timeout for the underlying socket.
         @keyword authenticator: The configure L{coilmq.auth.Authenticator} object to use.
         @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
         @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
@@ -122,9 +132,11 @@ class StompServer(TCPServer):
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
         TCPServer.__init__(self, server_address, RequestHandlerClass)
+        self.timeout = timeout
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
+        self._shutdown_request_event = threading.Event()
     
     def server_close(self):
         """
@@ -136,6 +148,21 @@ class StompServer(TCPServer):
         self.topic_manager.close()
         if hasattr(self.authenticator, 'close'):
             self.authenticator.close()
+        self.shutdown()
     
+    def shutdown(self):
+        self._shutdown_request_event.set()
+        TCPServer.shutdown(self)
+        
+    def serve_forever(self, poll_interval=0.5):
+        """Handle one request at a time until shutdown.
+
+        Polls for shutdown every poll_interval seconds. Ignores
+        self.timeout. If you need to do periodic tasks, do them in
+        another thread.
+        """
+        self._shutdown_request_event.clear()
+        TCPServer.serve_forever(self, poll_interval=poll_interval)
+        
 class ThreadedStompServer(ThreadingMixIn, StompServer):
     pass
