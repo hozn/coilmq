@@ -1,19 +1,10 @@
 """
-CoilMQ is a STOMP message broker written in Python.
-
-The provided server implementation for CoilMQ uses the Python SocketServer libraries;
-however, CoilMQ is only loosely coupled to this server implementation.  It could be used
-with other socket implementations.
-
-Two things worth noting:
-
-  1. The CoilMQ core classes and bundled storage implementations are designed to be thread-safe.
-
-  2. While this project could be used with asynchronous frameworks like Twisted, it is not 
-     explicitly designed to use the async patterns (e.g. using Twisted Deffered), which may 
-     make it impractical to use this with slow/blocking storage mechanisms (e.g. using db 
-     storage will cause all clients to block).
+Simple, lightweight, and easily extensible STOMP message broker.
 """
+import os.path
+import warnings
+import re
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -21,11 +12,38 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
+version = '0.4.1'
+
+news = os.path.join(os.path.dirname(__file__), 'docs', 'news.txt')
+news = open(news).read()
+parts = re.split(r'([0-9\.]+)\s*\n\r?-+\n\r?', news)
+found_news = ''
+for i in range(len(parts)-1):
+    if parts[i] == version:
+        found_news = parts[i+i]
+        break
+if not found_news:
+    warnings.warn('No news for this version found.')
+    
+long_description = """
+The provided server implementation for CoilMQ uses the Python SocketServer 
+libraries; however, CoilMQ is only loosely coupled to this server 
+implementation.  It could be used with other socket implementations.
+
+The CoilMQ core classes and bundled storage implementations are built to be
+thread-safe.
+"""
+
+if found_news:
+    title = 'Changes in %s' % version
+    long_description += "\n%s\n%s\n" % (title, '-'*len(title))
+    long_description += found_news
+
 setup(
     name='CoilMQ',
-    version='0.4',
-    description='STOMP message broker',
-    long_description=__doc__,
+    version=version,
+    description=__doc__,
+    long_description=long_description,
     keywords='stomp server broker',
     license='Apache',
     author='Hans Lellelid',
@@ -39,7 +57,7 @@ setup(
     tests_require=['nose', 'coverage'],
     install_requires=[
           'distribute',
-          'stompclient==0.2',
+          'stompclient>=0.2,<0.4',
     ],
     extras_require={
         'daemon': ['python-daemon'],

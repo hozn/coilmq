@@ -1,0 +1,10 @@
+News: CoilMQ
+============
+
+.. contents::
+
+0.4.1
+-----
+
+* Added a changelog ;)
+* Added socket timeouts so that the server can be interrupted (e.g. CTRL-C)
