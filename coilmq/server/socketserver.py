@@ -117,6 +117,11 @@ class StompServer(TCPServer):
     @type topic_manager: L{coilmq.topic.TopicManager}
     """
     
+    # This causes the SO_REUSEADDR option to be set on the socket, allowing
+    # server to rebind to the same address (w/o waiting for connections to 
+    # leave TIME_WAIT after unclean disconnect).
+    allow_reuse_address = True
+    
     def __init__(self, server_address, RequestHandlerClass=None, timeout=3.0, authenticator=None, queue_manager=None, topic_manager=None):
         """
         Extension to C{TCPServer} constructor to provide mechanism for providing implementation classes.
