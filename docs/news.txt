@@ -3,6 +3,12 @@ News: CoilMQ
 
 .. contents::
 
+0.4.2
+-----
+* Added allow_socket_reuse (SO_REUSEADDR) option to SocketServer subclass
+  to avoid having to wait to restart server after unclean client 
+  disconnect. 
+
 0.4.1
 -----
 
