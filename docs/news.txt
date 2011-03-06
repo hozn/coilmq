@@ -3,6 +3,12 @@ News: CoilMQ
 
 .. contents::
 
+0.4.3
+-----
+* Fixed bug in requeuing of pending frames when client is disconnected
+  (issue 22).
+* Fixed bug in unit test for dbm on windows (issue 21).
+
 0.4.2
 -----
 * Added allow_socket_reuse (SO_REUSEADDR) option to SocketServer subclass
@@ -11,6 +17,5 @@ News: CoilMQ
 
 0.4.1
 -----
-
 * Added a changelog ;)
 * Added socket timeouts so that the server can be interrupted (e.g. CTRL-C)
