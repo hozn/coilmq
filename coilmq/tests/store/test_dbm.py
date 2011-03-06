@@ -34,6 +34,7 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         self.store = DbmQueue(self.data_dir)
     
     def tearDown(self):
+        self.store.close()
         shutil.rmtree(self.data_dir)
         
     def test_dequeue_identity(self):
