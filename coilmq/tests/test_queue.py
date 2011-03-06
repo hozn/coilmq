@@ -63,7 +63,7 @@ class QueueManagerTest(unittest.TestCase):
         
         assert len(self.conn.frames) == 1
         assert len(self.store.frames(dest)) == 1
-        
+    
     def send_simple(self):
         """ Test a basic send command. """
         dest = '/queue/dest'
@@ -251,4 +251,22 @@ class QueueManagerTest(unittest.TestCase):
         
         assert len(conn1.frames) == 3, "Expected 3 frames after re-transmit."
         assert bool(self.qm._pending[conn1]) == True, "Expected 1 pending (waiting on ACK) frame.""" 
+    
+    def test_disconnect_pending_frames(self):
+        """ Test a queue disconnect when there are pending frames. """
         
+        dest = '/queue/dest'
+        conn1 = MockConnection()
+        conn1.reliable_subscriber = True
+        
+        self.qm.subscribe(conn1, dest)
+        
+        m1 = Frame('MESSAGE', headers={'destination': dest}, body='Message body (1)')
+        self.qm.send(m1)
+        
+        assert conn1.frames[0] == m1
+        
+        self.qm.disconnect(conn1)
+        
+        # Now we need to ensure that the frame we sent is re-queued.
+        assert len(self.store.frames(dest)) == 1

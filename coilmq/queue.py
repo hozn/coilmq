@@ -151,7 +151,8 @@ class QueueManager(object):
         """
         self.log.debug("Disconnecting %s" % connection)
         if connection in self._pending:
-            self.store.requeue(self._pending[connection])
+            pending_frame = self._pending[connection]
+            self.store.requeue(pending_frame.destination, pending_frame)
             del self._pending[connection]
         
         for dest in self._queues.keys():
