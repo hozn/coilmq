@@ -1,1 +1,3 @@
 include docs/news.txt
+include coilmq/config/defaults.cfg
+include coilmq/config/coilmq.cfg-sample
