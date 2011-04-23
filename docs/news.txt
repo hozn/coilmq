@@ -3,6 +3,14 @@ News: CoilMQ
 
 .. contents::
 
+0.4.4
+-----
+
+* Fixed packaging (MANIFEST.in) to include defaults.cfg and config.cfg-sample
+  (issue 23).
+* Fixed socket recv loop to appropriately handle client DISCONNECT messages
+  (issue 24).
+
 0.4.3
 -----
 * Fixed bug in requeuing of pending frames when client is disconnected
