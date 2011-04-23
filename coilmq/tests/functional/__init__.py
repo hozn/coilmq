@@ -212,6 +212,7 @@ class TestStompClient(object):
     
     def disconnect(self):
         self.send_frame(Frame('DISCONNECT'))
+        self.sock.close();
         
     def close(self):
         if not self.connected:

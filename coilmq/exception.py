@@ -32,3 +32,8 @@ class AuthError(RuntimeError):
     """
     Represents an authentication or authorization error.
     """
+
+class ClientDisconnected(Exception):
+    """
+    A signal that client has disconnected (so we shouldn't try to keep reading from the client).
+    """

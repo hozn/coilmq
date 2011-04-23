@@ -10,6 +10,7 @@ from stompclient.util import FrameBuffer
 
 from coilmq.server import StompConnection
 from coilmq.engine import StompEngine
+from coilmq.exception import ClientDisconnected
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -75,8 +76,12 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                     for frame in self.buffer:
                         self.log.debug("Processing frame: %s" % frame)
                         self.engine.process_frame(frame)
+                        if not self.engine.connected:
+                            raise ClientDisconnected()
                 except socket.timeout:
                     pass
+        except ClientDisconnected:
+            self.log.debug("Client disconnected, discontinuing read loop.")
         except Exception, e:
             self.log.error("Error receiving data (unbinding): %s" % e)
             self.engine.unbind()
