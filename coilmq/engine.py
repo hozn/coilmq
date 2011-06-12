@@ -138,11 +138,19 @@ class StompEngine(object):
         dest = frame.headers.get('destination')
         if not dest:
             raise ProtocolError('Missing destination for SEND command.')
-        
+                    
         if dest.startswith('/queue/'):
             self.queue_manager.send(frame)
         else:
             self.topic_manager.send(frame)
+            
+        if frame.receipt:
+            # If a receipt was requested we send acknowledgement after enqueuing 
+            # or distributing the message. The spec doesn't specify whether 
+            # receipt should happen regarldess of error, but we'll assume that 
+            # it should not be sent if the message is not actually distributed.  
+            self.connection.send_frame(ReceiptFrame(receipt=frame.receipt))
+
             
     def subscribe(self, frame):
         """

@@ -3,7 +3,7 @@ Tests for the transport-agnostic engine module.
 """
 import unittest
 
-from stompclient.frame import Frame
+from stompclient.frame import Frame, ReceiptFrame
 
 from coilmq.engine import StompEngine
 
@@ -93,6 +93,17 @@ class EngineTest(unittest.TestCase):
         msg = Frame('SEND', headers={}, body='TOPICMSG-BODY')
         self.engine.process_frame(msg)
         self.assertErrorFrame(self.conn.frames[-1], 'Missing destination')
+    
+    def test_send_receipt(self):
+        """ Test sending with a receipt specified. """
+        self._connect()
+        
+        receipt_id = 'FOOBAR'
+        msg = Frame('SEND', headers={'destination': '/queue/foo', 'receipt': receipt_id}, body='QUEUEMSG-BODY')
+        self.engine.process_frame(msg)
+        rframe = self.conn.frames[-1]
+        assert isinstance(rframe, ReceiptFrame)
+        assert receipt_id == rframe.receipt_id
     
     def test_subscribe_ack(self):
         """ Test subscribing to a queue with ack=true """

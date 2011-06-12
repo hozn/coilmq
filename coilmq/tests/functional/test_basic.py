@@ -54,7 +54,14 @@ class BasicTest(BaseFunctionalTestCase):
         print r3
         
         assert r3.command == 'ERROR'
-        
+    
+    def test_send_receipt(self):
+        c1 = self._new_client()
+        c1.send('/topic/foo', 'A message', extra_headers={'receipt': 'FOOBAR'})
+        r = c1.received_frames.get(timeout=1)
+        assert r.command == "RECEIPT"
+        assert r.receipt_id == "FOOBAR"
+
     def test_subscribe(self):
         c1 = self._new_client()
         c1.subscribe('/queue/foo')

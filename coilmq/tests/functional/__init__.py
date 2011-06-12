@@ -172,8 +172,11 @@ class TestStompClient(object):
             headers = {}
         self.send_frame(Frame('CONNECT', headers=headers))
         
-    def send(self, destination, message, set_content_length=True):
-        headers = {'destination': destination}
+    def send(self, destination, message, set_content_length=True, extra_headers=None):
+        if extra_headers is None:
+            extra_headers = {}
+        headers = extra_headers
+        headers['destination'] = destination
         if set_content_length: headers['content-length'] = len(message)
         self.send_frame(Frame('SEND', headers=headers, body=message))
     

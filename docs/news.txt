@@ -3,6 +3,10 @@ News: CoilMQ
 
 .. contents::
 
+0.5.0
+
+* Added support for RECEIPT header and server messages (issue 26). 
+
 0.4.4
 -----
 

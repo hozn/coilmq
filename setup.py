@@ -12,7 +12,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-version = '0.4.4'
+version = '0.5.0'
 
 news = os.path.join(os.path.dirname(__file__), 'docs', 'news.txt')
 news = open(news).read()
