@@ -112,7 +112,15 @@ class StompEngine(object):
             except Exception, e:
                 self.log.error("Could not send error frame: %s" % e)
                 self.log.exception(e)
-        
+        else:
+            # The protocol is not especially clear here (not sure why I'm surprised)
+            # about the expected behavior WRT receipts and errors.  We will assume that
+            # the RECEIPT frame should not be sent if there is an error frame.
+            # Also we'll assume that a transaction should not preclude sending the receipt 
+            # frame.
+            if frame.receipt and method != self.connect:
+                    self.connection.send_frame(ReceiptFrame(receipt=frame.receipt))
+            
     def connect(self, frame):
         """
         Handle CONNECT command: Establishes a new connection and checks auth (if applicable).
@@ -143,14 +151,6 @@ class StompEngine(object):
             self.queue_manager.send(frame)
         else:
             self.topic_manager.send(frame)
-            
-        if frame.receipt:
-            # If a receipt was requested we send acknowledgement after enqueuing 
-            # or distributing the message. The spec doesn't specify whether 
-            # receipt should happen regarldess of error, but we'll assume that 
-            # it should not be sent if the message is not actually distributed.  
-            self.connection.send_frame(ReceiptFrame(receipt=frame.receipt))
-
             
     def subscribe(self, frame):
         """

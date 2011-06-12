@@ -94,13 +94,19 @@ class EngineTest(unittest.TestCase):
         self.engine.process_frame(msg)
         self.assertErrorFrame(self.conn.frames[-1], 'Missing destination')
     
-    def test_send_receipt(self):
-        """ Test sending with a receipt specified. """
+    def test_receipt(self):
+        """ Test pushing frames with a receipt specified. """
         self._connect()
         
         receipt_id = 'FOOBAR'
         msg = Frame('SEND', headers={'destination': '/queue/foo', 'receipt': receipt_id}, body='QUEUEMSG-BODY')
         self.engine.process_frame(msg)
+        rframe = self.conn.frames[-1]
+        assert isinstance(rframe, ReceiptFrame)
+        assert receipt_id == rframe.receipt_id
+        
+        receipt_id = 'FOOBAR2'
+        self.engine.process_frame(Frame('SUBSCRIBE', headers={'destination': '/queue/bar', 'receipt': receipt_id}))
         rframe = self.conn.frames[-1]
         assert isinstance(rframe, ReceiptFrame)
         assert receipt_id == rframe.receipt_id
