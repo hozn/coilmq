@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Test of the QueueManager when using a SQLite (SQLAlchemy) backend (store).
+Test of the QueueManager when using a DBM backend (store).
 """
-from sqlalchemy import engine_from_config
-
-from coilmq.store.sa import SAQueue, init_model
+from coilmq.store.dbm import DbmQueue
 
 from coilmq.tests.test_queue import QueueManagerTest
 
@@ -22,7 +20,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-class SAQueueManagerTest(QueueManagerTest):
+class DBMQueueManagerTest(QueueManagerTest):
     """ Run all the tests from BasicTest using a SQLite database store. """
     
     def _queuestore(self):
@@ -33,7 +31,10 @@ class SAQueueManagerTest(QueueManagerTest):
         
         @rtype: L{QueueStore}
         """
-        configuration = {'qstore.sqlalchemy.url': 'sqlite:///data/coilmq.db'}
-        engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
-        init_model(engine, drop=True)
-        return SAQueue()
+        # FIXME: We probably want to clear out the DBM database; however, currently
+        # it seems to be resilient to re-running of tests ...
+        data_dir = './data'
+        cp_ops = 100
+        cp_timeout = 20
+        store = DbmQueue(data_dir, checkpoint_operations=cp_ops, checkpoint_timeout=cp_timeout)
+        return store
