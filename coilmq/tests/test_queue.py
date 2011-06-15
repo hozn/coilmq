@@ -167,8 +167,6 @@ class QueueManagerTest(unittest.TestCase):
         # The message will have been requeued at this point, so add a valid
         # subscriber
         
-        print "Queue state: %r" % (self.store._messages,)
-        
         self.qm.subscribe(self.conn, dest)
         
         print "Frames: %r" % self.conn.frames
