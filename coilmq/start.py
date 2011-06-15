@@ -5,6 +5,8 @@ Entrypoint for starting the application.
 import os
 import sys
 import logging
+import time
+import threading
 from optparse import OptionParser
 
 try:
@@ -100,6 +102,8 @@ def context_serve(options, context):
     @raise Exception: Any underlying exception will be logged but then re-raised.
     @see: server_from_config()
     """
+    global global_config
+    
     server = None
     try:
         with context:
@@ -112,7 +116,26 @@ def context_serve(options, context):
             
             server = server_from_config()
             logger().info("Stomp server listening on %s:%s" % server.server_address)
+            
+            if options.debug:
+                poll_interval = float(global_config.get('coilmq', 'debug.stats_poll_interval'))
+                if poll_interval: # Setting poll_interval to 0 effectively disables it. 
+                    def diagnostic_loop(server):
+                        log = logger()
+                        while True:
+                            log.debug("Stats heartbeat -------------------------------")
+                            store = server.queue_manager.store
+                            for dest in store.destinations():
+                                log.debug("Size of queue %s: %s" % (dest, store.size(dest)))
+                                
+                            time.sleep(poll_interval)
+                            
+                    diagnostic_thread = threading.Thread(target=diagnostic_loop, name='DiagnosticThread', args=(server,))
+                    diagnostic_thread.daemon = True
+                    diagnostic_thread.start()
+                    
             server.serve_forever()
+            
     except (KeyboardInterrupt, SystemExit):
         logger().info("Stomp server stopped by user interrupt.")
         raise SystemExit()

@@ -146,6 +146,7 @@ class StompServer(TCPServer):
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
+        self._serving_event = threading.Event()
         self._shutdown_request_event = threading.Event()
     
     def server_close(self):
@@ -161,8 +162,10 @@ class StompServer(TCPServer):
         self.shutdown()
     
     def shutdown(self):
-        self._shutdown_request_event.set()
-        TCPServer.shutdown(self)
+        if self._serving_event.is_set():
+            self._shutdown_request_event.set()
+            self._serving_event.clear()
+            TCPServer.shutdown(self)
         
     def serve_forever(self, poll_interval=0.5):
         """Handle one request at a time until shutdown.
@@ -171,6 +174,7 @@ class StompServer(TCPServer):
         self.timeout. If you need to do periodic tasks, do them in
         another thread.
         """
+        self._serving_event.set()
         self._shutdown_request_event.clear()
         TCPServer.serve_forever(self, poll_interval=poll_interval)
         

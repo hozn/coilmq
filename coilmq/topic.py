@@ -56,7 +56,7 @@ class TopicManager(object):
         
         (Currently this is simply here for API conformity w/ L{coilmq.queue.QueueManager}.)
         """
-        pass
+        self.log.info("Shutting down topic manager.")
     
     @synchronized
     def subscribe(self, connection, destination):
