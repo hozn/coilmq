@@ -107,6 +107,26 @@ class QueueManager(object):
             
         if hasattr(self.queue_scheduler, 'close'):
             self.queue_scheduler.close()
+    
+    @synchronized
+    def subscriber_count(self, destination=None):
+        """
+        Returns a count of the number of subscribers.
+        
+        If destination is specified then it only returns count of subscribers 
+        for that specific destination.
+        
+        @param destination: The optional topic/queue destination (e.g. '/queue/foo')
+        @type destination: C{str}
+        """
+        if destination:
+            return len(self._queues[destination])
+        else:
+            # total them up
+            total = 0
+            for k in self._queues.keys():
+                total += len(self._queues[k])
+            return total
         
     @synchronized
     def subscribe(self, connection, destination):

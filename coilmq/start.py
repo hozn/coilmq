@@ -126,8 +126,10 @@ def context_serve(options, context):
                             log.debug("Stats heartbeat -------------------------------")
                             store = server.queue_manager.store
                             for dest in store.destinations():
-                                log.debug("Size of queue %s: %s" % (dest, store.size(dest)))
+                                log.debug("Queue %s: size=%s, subscribers=%s" % (dest, store.size(dest), server.queue_manager.subscriber_count(dest)))
                                 
+                            # TODO: Add number of subscribers?
+                            
                             time.sleep(poll_interval)
                             
                     diagnostic_thread = threading.Thread(target=diagnostic_loop, name='DiagnosticThread', args=(server,))
