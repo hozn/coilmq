@@ -111,6 +111,16 @@ class QueueStore(object):
         return self.size(destination) > 0
     
     @synchronized
+    def destinations(self):
+        """
+        Provides a set of destinations (queue "addresses") available.
+        
+        @return: A list of the detinations available.
+        @rtype: C{set}
+        """
+        raise NotImplementedError()
+    
+    @synchronized
     def close(self):
         """
         May be implemented to perform any necessary cleanup operations when store is closed.

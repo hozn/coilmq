@@ -215,7 +215,17 @@ class DbmQueue(QueueStore):
         """
         self.queue_metadata.close()
         self.frame_store.close()
-            
+    
+    @synchronized
+    def destinations(self):
+        """
+        Provides a list of destinations (queue "addresses") available.
+        
+        @return: A list of the detinations available.
+        @rtype: C{set}
+        """
+        return set(self.queue_metadata.keys())
+        
     def _sync(self):
         """
         Synchronize the cached data with the underlyind database.

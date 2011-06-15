@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import engine_from_config, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.sql import select, func
+from sqlalchemy.sql import select, func, distinct
 
 from coilmq.store import QueueStore
 from coilmq.config import config
@@ -46,17 +46,23 @@ def make_sa():
     store = SAQueue()
     return store
 
-def init_model(engine):
+def init_model(engine, create=True, drop=False):
     """
     Initializes the shared SQLAlchemy state in the L{coilmq.store.sa.model} module.
     
     @param engine: The SQLAlchemy engine instance.
     @type engine: C{sqlalchemy.Engine}
+    
+    @param create: Whether to create the tables (if they do not exist).
+    @type create: C{bool}
+    
+    @param drop: Whether to drop the tables (if they exist).
+    @type drop: C{bool}
     """
     meta.engine = engine
     meta.metadata = MetaData(bind=meta.engine)
     meta.Session = scoped_session(sessionmaker(bind=meta.engine))
-    model.setup_tables()
+    model.setup_tables(create=create, drop=drop)
     
 class SAQueue(QueueStore):
     """
@@ -145,7 +151,6 @@ class SAQueue(QueueStore):
         result = session.execute(sel)
         
         first = result.fetchone()
-        print first
         return first is not None
 
     def size(self, destination):
@@ -166,7 +171,19 @@ class SAQueue(QueueStore):
             return 0
         else:
             return int(first[0])
-            
+    
+    def destinations(self):
+        """
+        Provides a list of destinations (queue "addresses") available.
+        
+        @return: A list of the detinations available.
+        @rtype: C{set}
+        """
+        session = meta.Session()
+        sel = select([distinct(model.frames_table.c.destination)])
+        result = session.execute(sel)
+        return set([r[0] for r in result.fetchall()])
+    
     def close(self):
         """
         Closes the databases, freeing any resources (and flushing any unsaved changes to disk).

@@ -60,3 +60,13 @@ class MemoryQueue(QueueStore):
     def has_frames(self, destination):
         """ Whether this queue has frames for the specified destination. """
         return bool(self._messages[destination])
+    
+    @synchronized
+    def destinations(self):
+        """
+        Provides a list of destinations (queue "addresses") available.
+        
+        @return: A list of the detinations available.
+        @rtype: C{set}
+        """
+        return set(self._messages.keys())

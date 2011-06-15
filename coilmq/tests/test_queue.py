@@ -28,8 +28,18 @@ limitations under the License."""
 class QueueManagerTest(unittest.TestCase):
     """ Test the QueueManager class. """
     
+    def _queuestore(self):
+        """
+        Returns the configured L{QueueStore} instance to use.
+        
+        Can be overridden by subclasses that wish to change out any queue store parameters.
+        
+        @rtype: L{QueueStore}
+        """
+        return MemoryQueue()
+        
     def setUp(self):
-        self.store = MemoryQueue() 
+        self.store = self._queuestore()
         self.qm = QueueManager(self.store)
         self.conn = MockConnection()
     
@@ -63,7 +73,7 @@ class QueueManagerTest(unittest.TestCase):
         
         assert len(self.conn.frames) == 1
         assert len(self.store.frames(dest)) == 1
-    
+        
     def send_simple(self):
         """ Test a basic send command. """
         dest = '/queue/dest'
@@ -71,6 +81,7 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame('SEND', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
+        assert dest in self.store.destinations()
         assert len(self.store.frames(dest)) == 1
         
         # Assert some side-effects
