@@ -47,5 +47,5 @@ def setup_tables(create=True, drop=False):
     if drop:
         meta.metadata.drop_all()
         
-    if create:
+    if drop or create:
         meta.metadata.create_all()

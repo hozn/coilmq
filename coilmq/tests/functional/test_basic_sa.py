@@ -36,7 +36,7 @@ class BasicSqlAlchemyStoreTest(BasicTest):
         
         configuration = {'qstore.sqlalchemy.url': 'sqlite:///data/coilmq.db'}
         engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
-        init_model(engine)
+        init_model(engine, drop=True)
         store = SAQueue()
 
         return QueueManager(store=store,

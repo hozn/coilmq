@@ -31,9 +31,6 @@ class BasicTest(BaseFunctionalTestCase):
         """ Test a basic (non-auth) connection. """
         c = self._new_client()
     
-    def test_destinations(self):
-        self.server.queue_manager.store.destinations()
-        
     def test_connect_auth(self):
         """ Test connecting when auth is required. """
         self.server.authenticator = SimpleAuthenticator(store={'user': 'pass'})
