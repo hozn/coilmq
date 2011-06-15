@@ -79,7 +79,7 @@ class MockQueueManager(object):
         for frame in self.transaction_frames[connection][transaction]:
             self.send(frame)
     
-    def clearTransactionFrames(self, connection, transaction):
+    def clear_transaction_frames(self, connection, transaction):
         """ Clears out the queued ACK frames for specified transaction. 
         
         @param connection: The client connection that committed the transaction.

@@ -204,10 +204,9 @@ class StompEngine(object):
         
         for tframe in self.transactions[frame.transaction]:
             del tframe.headers['transaction']
-            print "Processing frame: %s" % tframe
             self.process_frame(tframe)
         
-        self.queue_manager.clearTransactionFrames(self.connection, frame.transaction)
+        self.queue_manager.clear_transaction_frames(self.connection, frame.transaction)
         del self.transactions[frame.transaction]
     
     def abort(self, frame):
