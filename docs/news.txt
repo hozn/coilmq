@@ -3,9 +3,17 @@ News: CoilMQ
 
 .. contents::
 
+0.6.0
+-----
+* Added a new diagnostic thread that will run when --debug option
+  is passed on the commandline.
+* Added method to QueueManager API  to support tracking subscriber count. 
+* Improved unit and functional test coverage of storage engines.
+* Fixed bug in engine.commit() and updated tests to catch previous 
+  failure (issue 28).
+
 0.5.0
 -----
-
 * Added support for RECEIPT header and server messages (issue 26). 
 
 0.4.4
