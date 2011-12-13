@@ -200,6 +200,22 @@ class QueueManagerTest(unittest.TestCase):
         assert len(conn1.frames) == 1
         assert len(conn2.frames) == 0
     
+    def test_clear_transaction_frames(self):
+        """ Test the clearing of transaction ACK frames. """
+        dest = '/queue/tx'
+        
+        conn1 = MockConnection()
+        conn1.reliable_subscriber = True
+        self.qm.subscribe(conn1, dest)
+        
+        f = Frame('SEND', headers={'destination': dest, 'transaction': '1'}, body='Body-A')
+        self.qm.send(f)
+        
+        assert dest in self.store.destinations()
+        assert len(conn1.frames) == 1
+        
+        self.qm.clear_transaction_frames(conn1, '1')
+        
     def test_ack_basic(self):
         """ Test reliable client (ACK) behavior. """
         

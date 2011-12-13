@@ -279,8 +279,11 @@ class QueueManager(object):
         @param transaction: The transaction id (which was committed).
         @type transaction: C{str}
         """
-        
-        del self._transaction_frames[connection][transaction]
+        try: 
+            del self._transaction_frames[connection][transaction]
+        except KeyError:
+            # There may not have been any ACK frames for this transaction.
+            pass
         
     def _send_backlog(self, connection, destination=None):
         """
