@@ -162,7 +162,7 @@ def main():
                       help="Read configuration from FILE. (CLI options override config file.)", metavar="FILE")
     
     parser.add_option("-b", "--host", dest="listen_addr",
-                      help="Listen on specified address (default 0.0.0.0)", metavar="ADDR")
+                      help="Listen on specified address (default 127.0.0.1)", metavar="ADDR")
     
     parser.add_option("-p", "--port", dest="listen_port",
                       help="Listen on specified port (default 61613)", type="int", metavar="PORT")
