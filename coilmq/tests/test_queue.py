@@ -119,7 +119,7 @@ class QueueManagerTest(unittest.TestCase):
             def send_frame(self, frame):
                 raise RuntimeError("Error sending data.")
         
-        dest = '/queue/dest'
+        dest = '/queue/send-backlog-err-reliable'
         
         f = Frame('SEND', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
@@ -204,14 +204,16 @@ class QueueManagerTest(unittest.TestCase):
         """ Test the clearing of transaction ACK frames. """
         dest = '/queue/tx'
         
+        f = Frame('SEND', headers={'destination': dest, 'transaction': '1'}, body='Body-A')
+        self.qm.send(f)
+        
+        print self.store.destinations()
+        assert dest in self.store.destinations()
+        
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
         self.qm.subscribe(conn1, dest)
         
-        f = Frame('SEND', headers={'destination': dest, 'transaction': '1'}, body='Body-A')
-        self.qm.send(f)
-        
-        assert dest in self.store.destinations()
         assert len(conn1.frames) == 1
         
         self.qm.clear_transaction_frames(conn1, '1')
@@ -219,7 +221,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_ack_basic(self):
         """ Test reliable client (ACK) behavior. """
         
-        dest = '/queue/dest'
+        dest = '/queue/ack-basic'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
         
@@ -246,7 +248,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_ack_transaction(self):
         """ Test the reliable client (ACK) behavior with transactions. """
                 
-        dest = '/queue/dest'
+        dest = '/queue/ack-transaction'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
         
@@ -280,7 +282,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_disconnect_pending_frames(self):
         """ Test a queue disconnect when there are pending frames. """
         
-        dest = '/queue/dest'
+        dest = '/queue/disconnect-pending-frames'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
         

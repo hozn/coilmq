@@ -2,6 +2,9 @@
 """
 Test of the QueueManager when using a SQLite (SQLAlchemy) backend (store).
 """
+import os
+import os.path
+
 from sqlalchemy import engine_from_config
 
 from coilmq.store.sa import SAQueue, init_model
@@ -33,6 +36,10 @@ class SAQueueManagerTest(QueueManagerTest):
         
         @rtype: L{QueueStore}
         """
+        data_dir = os.path.join(os.getcwd(), 'data')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            
         configuration = {'qstore.sqlalchemy.url': 'sqlite:///data/coilmq.db'}
         engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
         init_model(engine, drop=True)

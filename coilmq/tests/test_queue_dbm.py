@@ -2,6 +2,10 @@
 """
 Test of the QueueManager when using a DBM backend (store).
 """
+import os
+import os.path
+import shutil
+
 from coilmq.store.dbm import DbmQueue
 
 from coilmq.tests.test_queue import QueueManagerTest
@@ -31,8 +35,11 @@ class DBMQueueManagerTest(QueueManagerTest):
         
         @rtype: L{QueueStore}
         """
-        # FIXME: We probably want to clear out the DBM database; however, currently
-        # it seems to be resilient to re-running of tests ...
+        data_dir = os.path.abspath(os.path.join(os.getcwd(), 'data'))
+        if os.path.exists(data_dir):
+            shutil.rmtree(data_dir)
+        os.makedirs(data_dir)
+            
         data_dir = './data'
         cp_ops = 100
         cp_timeout = 20
