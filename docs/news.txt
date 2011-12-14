@@ -3,6 +3,14 @@ News: CoilMQ
 
 .. contents::
 
+0.6.1
+-----
+* Error with one subscriber causes topic messages not to be delivered to 
+  other subscribers (issue 33).
+* Fixed error in some circumstances when clearing pending transaction 
+  frames with commit/abort (issue 30).
+* Fixed incorrect default address in help (issue 29).
+
 0.6.0
 -----
 * Added a new diagnostic thread that will run when --debug option
