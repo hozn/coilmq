@@ -2,7 +2,7 @@
 Tests for topic-related functionality.
 """
 import unittest
-
+import socket
 from stompclient.frame import Frame
 
 from coilmq.topic import TopicManager
@@ -71,3 +71,33 @@ class TopicManagerTest(unittest.TestCase):
         assert 'message-id' in f.headers
         assert f.command == 'MESSAGE'
 
+    def send_subscriber_timeout(self):
+        """ Test a send command when one subscriber errs out. """
+        
+        class TimeoutConnection(object):
+            reliable_subscriber = False
+                
+            def send_frame(self, frame):
+                raise socket.timeout("timed out")
+            
+            def reset(self):
+                pass
+                
+        dest = '/topic/dest'
+        
+        bad_client = TimeoutConnection()
+        
+        # Subscribe both a good client and a bad client.
+        self.tm.subscribe(bad_client, dest)
+        self.tm.subscribe(self.conn, dest)
+        
+        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
+        self.tm.send(f)
+
+        # Make sure out good client got the message.
+        assert len(self.conn.frames) == 1
+        assert self.conn.frames[0] == f
+        
+        # Make sure our bad client got disconnected
+        # (This might be a bit too intimate.)
+        assert bad_client not in self.tm._topics[dest]

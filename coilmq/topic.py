@@ -103,7 +103,7 @@ class TopicManager(object):
             if connection in self._topics[dest]:
                 self._topics[dest].remove(connection)
             if not self._topics[dest]: 
-                del self._topics[dest] # This won't trigger RuntimeError, since we're using items()
+                del self._topics[dest] # This won't trigger RuntimeError, since we're using keys()
 
     @synchronized
     def send(self, message):
@@ -123,6 +123,14 @@ class TopicManager(object):
         if not 'message-id' in message.headers:
             message.headers['message-id'] = str(uuid.uuid4())
             
+        bad_subscribers = set()
         for subscriber in self._topics[dest]:
-            subscriber.send_frame(message)    
-    
+            try:
+                subscriber.send_frame(message)
+            except:
+                self.log.exception("Error delivering message to subscriber %s; client will be disconnected." % subscriber)
+                # We queue for deletion so we are not modifying the topics dict while iterating over it.
+                bad_subscribers.add(subscriber)
+        
+        for subscriber in bad_subscribers:
+            self.disconnect(subscriber)
