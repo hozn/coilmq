@@ -6,7 +6,7 @@ Now!
     shell$ easy_install CoilMQ
     shell$ coilmq -b 0.0.0.0 -p 61613
 
-Jump over to [Getting Started Guide](http://code.google.com/p/coilmq/wiki/GettingStarted) for the slightly longer version.
+Jump over to [Getting Started Guide](https://github.com/hozn/coilmq/wiki/Getting-Started) for the slightly longer version.
 
 Status and Goals
 ================
@@ -22,4 +22,4 @@ At a high-level, this project aims to:
 
 Note that as of 3/31/2011 there is a version 1.1 of the STOMP protocol. Currently this is not supported by CoilMQ (but the plan is to add support).
 
-Take a look at the [Roadmap](http://code.google.com/p/coilmq/wiki/Roadmap) for more details.
+Take a look at the [Roadmap](https://github.com/hozn/coilmq/wiki/Roadmap) for more details.
