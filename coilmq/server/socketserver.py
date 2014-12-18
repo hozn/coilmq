@@ -141,13 +141,13 @@ class StompServer(TCPServer):
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
-        TCPServer.__init__(self, server_address, RequestHandlerClass)
         self.timeout = timeout
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
         self._serving_event = threading.Event()
         self._shutdown_request_event = threading.Event()
+        TCPServer.__init__(self, server_address, RequestHandlerClass)
     
     def server_close(self):
         """
