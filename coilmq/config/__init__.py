@@ -14,11 +14,16 @@ config.getint('listen_port')
 import os.path
 import logging
 import logging.config
-import ConfigParser
 import warnings
+import io
 
-from pkg_resources import resource_stream
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
 
+
+from pkg_resources import resource_filename, resource_stream
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,8 +38,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-config = ConfigParser.SafeConfigParser()
-config.readfp(resource_stream(__name__, 'defaults.cfg'))
+config = ConfigParser()
+config.read('defaults.cfg')
 
 def init_config(config_file):
     """
@@ -84,7 +89,7 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
     # explicitly 
     use_configfile = False
     if configfile and os.path.exists(configfile):
-        testcfg = ConfigParser.SafeConfigParser()
+        testcfg = ConfigParser()
         read = testcfg.read(configfile)
         use_configfile = (read and testcfg.has_section('loggers')) 
     

@@ -4,10 +4,13 @@ The default/recommended SocketServer-based server implementation.
 import logging
 import socket
 import threading
-from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
+try:
+    from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
+except ImportError:
+    from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
 
-from stompclient.util import FrameBuffer
 
+from coilmq.util.frames import FrameBuffer
 from coilmq.server import StompConnection
 from coilmq.engine import StompEngine
 from coilmq.exception import ClientDisconnected
@@ -82,7 +85,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                     pass
         except ClientDisconnected:
             self.log.debug("Client disconnected, discontinuing read loop.")
-        except Exception, e:
+        except Exception as e:
             self.log.error("Error receiving data (unbinding): %s" % e)
             self.engine.unbind()
             raise

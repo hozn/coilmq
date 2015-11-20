@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 """
 Core STOMP server logic, abstracted from socket transport implementation.
 
@@ -19,9 +20,9 @@ import logging
 import uuid
 from collections import defaultdict
 
-from stompclient.frame import ConnectedFrame, ReceiptFrame, ErrorFrame
-
+from coilmq.util.frames import ConnectedFrame, ReceiptFrame, ErrorFrame, VALID_COMMANDS
 from coilmq.exception import ProtocolError, AuthError
+
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -37,7 +38,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-VALID_COMMANDS = ['connect', 'send', 'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect']
 
 class StompEngine(object):
     """ 
@@ -86,10 +86,10 @@ class StompEngine(object):
         @param frame: The frame that was received.
         @type frame: C{stompclient.frame.Frame} 
         """
-        cmd_method = frame.command.lower()
+        cmd_method = frame.cmd.lower()
         
         if not cmd_method in VALID_COMMANDS:
-            raise ProtocolError("Invalid STOMP command: %s" % frame.command)
+            raise ProtocolError("Invalid STOMP command: {}".format(frame.cmd))
         
         method = getattr(self, cmd_method, None)
         
@@ -104,12 +104,12 @@ class StompEngine(object):
                 if not transaction in self.transactions:
                     raise ProtocolError("Invalid transaction specified: %s" % transaction)
                 self.transactions[transaction].append(frame) 
-        except Exception, e:
+        except Exception as e:
             self.log.error("Error processing STOMP frame: %s" % e)
             self.log.exception(e)
             try:
                 self.connection.send_frame(ErrorFrame(str(e), str(e)))
-            except Exception, e:
+            except Exception as e:
                 self.log.error("Could not send error frame: %s" % e)
                 self.log.exception(e)
         else:
@@ -118,8 +118,9 @@ class StompEngine(object):
             # the RECEIPT frame should not be sent if there is an error frame.
             # Also we'll assume that a transaction should not preclude sending the receipt 
             # frame.
-            if frame.receipt and method != self.connect:
-                    self.connection.send_frame(ReceiptFrame(receipt=frame.receipt))
+            # import pdb; pdb.set_trace()
+            if frame.headers.get('receipt') and method != self.connect:
+                    self.connection.send_frame(ReceiptFrame(receipt=frame.headers.get('receipt')))
             
     def connect(self, frame):
         """
@@ -248,4 +249,3 @@ class StompEngine(object):
         self.connected = False
         self.queue_manager.disconnect(self.connection)
         self.topic_manager.disconnect(self.connection)
-    

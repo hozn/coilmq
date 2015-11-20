@@ -114,14 +114,13 @@ class TopicManager(object):
                             to MESSAGE and set a message id.)
         @type message: L{stompclient.frame.Frame}
         """
-        dest = message.destination
+        dest = message.headers.get('destination')
         if not dest:
             raise ValueError("Cannot send frame with no destination: %s" % message)
-        
-        message.command = 'MESSAGE'
-        
-        if not 'message-id' in message.headers:
-            message.headers['message-id'] = str(uuid.uuid4())
+
+        message.cmd = 'message'
+
+        message.headers.setdefault('message-id', str(uuid.uuid4()))
             
         bad_subscribers = set()
         for subscriber in self._topics[dest]:

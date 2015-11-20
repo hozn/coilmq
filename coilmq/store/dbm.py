@@ -13,9 +13,13 @@ import logging
 import os
 import os.path
 import shelve
-import ConfigParser
 from collections import deque
 from datetime import datetime, timedelta
+
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
 
 
 from coilmq.store import QueueStore
@@ -45,7 +49,7 @@ def make_dbm():
         data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
         cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
         cp_timeout = config.getint('coilmq', 'qstore.dbm.checkpoint_timeout')
-    except ConfigParser.NoOptionError, e:
+    except ConfigParser.NoOptionError as e:
         raise ConfigError('Missing configuration parameter: %s' % e)
     
     if not os.path.exists(data_dir):
@@ -138,7 +142,7 @@ class DbmQueue(QueueStore):
         @param frame: The message (frame) to send to specified destinationination.
         @type frame: C{stompclient.frame.Frame}
         """
-        message_id = frame.message_id
+        message_id = frame.headers.get('message-id')
         if not message_id:
             raise ValueError("Cannot queue a frame without message-id set.")
         

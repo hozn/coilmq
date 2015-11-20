@@ -3,12 +3,13 @@ Tests for the transport-agnostic engine module.
 """
 import unittest
 
-from stompclient.frame import Frame, ReceiptFrame
+# from stompclient.frame import Frame, ReceiptFrame
 
 from coilmq.engine import StompEngine
 
 from coilmq.tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, 
                                MockTopicManager)
+from coilmq.util.frames import Frame, ReceiptFrame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -46,7 +47,7 @@ class EngineTest(unittest.TestCase):
         """ Assert that the passed in frame is an error frame and that message contains specified
         string.
         """
-        assert frame.command == 'ERROR'
+        assert frame.cmd.lower() == 'error'
         assert msgsub.lower() in frame.headers['message'].lower()
         
     def test_connect_no_auth(self):
@@ -84,11 +85,11 @@ class EngineTest(unittest.TestCase):
         
         msg = Frame('SEND', headers={'destination': '/queue/foo'}, body='QUEUEMSG-BODY')
         self.engine.process_frame(msg)        
-        assert msg == self.qm.messages[-1]
+        self.assertEqual(msg, self.qm.messages[-1])
         
         msg = Frame('SEND', headers={'destination': '/topic/foo'}, body='TOPICMSG-BODY')
         self.engine.process_frame(msg)
-        assert msg == self.tm.messages[-1]
+        self.assertEqual(msg, self.tm.messages[-1])
         
         msg = Frame('SEND', headers={}, body='TOPICMSG-BODY')
         self.engine.process_frame(msg)
@@ -102,14 +103,14 @@ class EngineTest(unittest.TestCase):
         msg = Frame('SEND', headers={'destination': '/queue/foo', 'receipt': receipt_id}, body='QUEUEMSG-BODY')
         self.engine.process_frame(msg)
         rframe = self.conn.frames[-1]
-        assert isinstance(rframe, ReceiptFrame)
-        assert receipt_id == rframe.receipt_id
+        self.assertIsInstance(rframe, ReceiptFrame)
+        self.assertEqual(receipt_id, rframe.headers.get('receipt-id'))
         
         receipt_id = 'FOOBAR2'
         self.engine.process_frame(Frame('SUBSCRIBE', headers={'destination': '/queue/bar', 'receipt': receipt_id}))
         rframe = self.conn.frames[-1]
-        assert isinstance(rframe, ReceiptFrame)
-        assert receipt_id == rframe.receipt_id
+        self.assertIsInstance(rframe, ReceiptFrame)
+        self.assertEqual(receipt_id, rframe.headers.get('receipt-id'))
     
     def test_subscribe_ack(self):
         """ Test subscribing to a queue with ack=true """
@@ -124,17 +125,12 @@ class EngineTest(unittest.TestCase):
         self._connect()
         self.engine.process_frame(Frame('SUBSCRIBE', headers={'destination': '/queue/bar'}))
         assert self.conn in self.qm.queues['/queue/bar']
-        
-        print self.conn.frames
-        
+
         self.engine.process_frame(Frame('UNSUBSCRIBE', headers={'destination': '/queue/bar'}))
         assert self.conn not in self.qm.queues['/queue/bar']
-        
-        print self.conn.frames
-        
+
         self.engine.process_frame(Frame('UNSUBSCRIBE', headers={'destination': '/invalid'}))
-        print self.conn.frames[-1]
-    
+
     def test_begin(self):
         """ Test transaction BEGIN. """
         self._connect()
@@ -156,9 +152,7 @@ class EngineTest(unittest.TestCase):
         assert len(self.tm.messages) == 0
         
         self.engine.process_frame(Frame('COMMIT', headers={'transaction': 'abc'}))
-        
-        print self.conn.frames
-        
+
         assert len(self.tm.messages) == 2
         
         assert len(self.engine.transactions) == 1
@@ -222,4 +216,3 @@ class EngineTest(unittest.TestCase):
         
         self.engine.process_frame(Frame('ABORT', headers={'transaction': 'abc2'}))
         self.assertErrorFrame(self.conn.frames[-1], 'invalid transaction')
-        

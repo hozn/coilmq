@@ -3,10 +3,9 @@ Tests for topic-related functionality.
 """
 import unittest
 import socket
-from stompclient.frame import Frame
 
+from coilmq.util.frames import Frame
 from coilmq.topic import TopicManager
-
 from coilmq.tests.mock import MockConnection
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -38,9 +37,8 @@ class TopicManagerTest(unittest.TestCase):
         f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
-        print self.conn.frames
-        assert len(self.conn.frames) == 1
-        assert self.conn.frames[0] == f
+        self.assertEqual(len(self.conn.frames), 1)
+        self.assertEqual(self.conn.frames[0], f)
     
     def test_unsubscribe(self):
         """ Test unsubscribing a connection from the queue. """
@@ -50,15 +48,14 @@ class TopicManagerTest(unittest.TestCase):
         f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
-        print self.conn.frames
-        assert len(self.conn.frames) == 1
-        assert self.conn.frames[0] == f
+        self.assertEqual(len(self.conn.frames), 1)
+        self.assertEqual(self.conn.frames[0], f)
         
         self.tm.unsubscribe(self.conn, dest)
         f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
         
-        assert len(self.conn.frames) == 1
+        self.assertEqual(len(self.conn.frames), 1)
         
     def send_simple(self):
         """ Test a basic send command. """
@@ -68,8 +65,8 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.send(f)
         
         # Assert some side-effects
-        assert 'message-id' in f.headers
-        assert f.command == 'MESSAGE'
+        self.assertIn('message-id', f.headers)
+        self.assertEqual(f.cmd == 'message')
 
     def send_subscriber_timeout(self):
         """ Test a send command when one subscriber errs out. """
@@ -91,13 +88,13 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.subscribe(bad_client, dest)
         self.tm.subscribe(self.conn, dest)
         
-        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame('message', headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
         # Make sure out good client got the message.
-        assert len(self.conn.frames) == 1
-        assert self.conn.frames[0] == f
+        self.assertEqual(len(self.conn.frames), 1)
+        self.assertEqual(self.conn.frames[0], f)
         
         # Make sure our bad client got disconnected
         # (This might be a bit too intimate.)
-        assert bad_client not in self.tm._topics[dest]
+        self.assertNotIn(bad_client, self.tm._topics[dest])

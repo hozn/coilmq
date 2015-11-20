@@ -22,7 +22,7 @@ from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
 
 from coilmq.exception import ConfigError
-from coilmq.server.socketserver import ThreadedStompServer
+from coilmq.server.socket_server import ThreadedStompServer
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

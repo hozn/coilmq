@@ -8,9 +8,13 @@ import logging
 import os
 import os.path
 import shelve
-import ConfigParser
 from collections import deque
 from datetime import datetime, timedelta
+
+# try:
+#     from configparser import ConfigParser
+# except ImportError:
+#     from ConfigParser import ConfigParser
 
 from sqlalchemy import engine_from_config, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -93,10 +97,10 @@ class SAQueue(QueueStore):
         @type frame: C{stompclient.frame.Frame}
         """
         session = meta.Session()
-        message_id = frame.message_id
+        message_id = frame.headers.get('message-id')
         if not message_id:
             raise ValueError("Cannot queue a frame without message-id set.")
-        ins = model.frames_table.insert().values(message_id=frame.message_id, destination=destination, frame=frame)
+        ins = model.frames_table.insert().values(message_id=message_id, destination=destination, frame=frame)
         session.execute(ins)
         session.commit()
     

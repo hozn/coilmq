@@ -35,7 +35,7 @@ class DBMQueueManagerTest(QueueManagerTest):
         
         @rtype: L{QueueStore}
         """
-        data_dir = os.path.abspath(os.path.join(os.getcwd(), 'data'))
+        data_dir = os.path.abspath(os.path.join('/tmp/coilmq-test', 'data'))
         if os.path.exists(data_dir):
             shutil.rmtree(data_dir)
         os.makedirs(data_dir)

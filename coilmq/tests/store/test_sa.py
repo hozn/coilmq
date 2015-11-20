@@ -9,8 +9,8 @@ import time
 import datetime
 
 from sqlalchemy import create_engine
-from stompclient.frame import Frame
 
+from coilmq.util.frames import Frame
 from coilmq.store.sa import meta, model
 from coilmq.store.sa import init_model
 from coilmq.store.sa import SAQueue
@@ -39,7 +39,6 @@ class SAQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         self.store = SAQueue()
     
     def tearDown(self):
-        print dir(meta.engine)
         meta.Session.remove()
         
     def test_dequeue_order(self):
@@ -55,15 +54,15 @@ class SAQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         frame3 = Frame('MESSAGE', headers={'message-id': 'id-3'}, body='message-3') 
         self.store.enqueue(dest, frame3)
         
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 3
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 3)
         
         # Perform some updates to change the expected order.
         
         sess = meta.Session()
-        sess.execute(model.frames_table.update().where(model.frames_table.c.message_id=='id-1').values(queued=datetime.datetime(2010, 01, 01)))
-        sess.execute(model.frames_table.update().where(model.frames_table.c.message_id=='id-2').values(queued=datetime.datetime(2009, 01, 01)))
-        sess.execute(model.frames_table.update().where(model.frames_table.c.message_id=='id-3').values(queued=datetime.datetime(2004, 01, 01)))
+        sess.execute(model.frames_table.update().where(model.frames_table.c.message_id=='id-1').values(queued=datetime.datetime(2010, 1, 1)))
+        sess.execute(model.frames_table.update().where(model.frames_table.c.message_id=='id-2').values(queued=datetime.datetime(2009, 1, 1)))
+        sess.execute(model.frames_table.update().where(model.frames_table.c.message_id=='id-3').values(queued=datetime.datetime(2004, 1, 1)))
         sess.commit()
         
         rframe1 = self.store.dequeue(dest)
@@ -77,5 +76,3 @@ class SAQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         
         assert self.store.has_frames(dest) == False
         assert self.store.size(dest) == 0
-
-    

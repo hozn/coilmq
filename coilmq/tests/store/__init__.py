@@ -3,7 +3,7 @@ Queue storage tests.
 """
 import uuid
 
-from stompclient.frame import Frame
+from coilmq.util.frames import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -32,8 +32,8 @@ class CommonQueueTestsMixin(object):
         frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
         
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 1)
         
     def test_dequeue(self):
         """ Test the dequeue() method. """
@@ -41,17 +41,17 @@ class CommonQueueTestsMixin(object):
         frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
         self.store.enqueue(dest, frame)
         
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 1)
         
         rframe = self.store.dequeue(dest)
-        assert frame == rframe
+        self.assertEqual(frame, rframe)
         
         # We cannot generically assert whether or not frame and rframe are
         # the *same* object. 
         
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
+        self.assertFalse(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 0)
     
     def test_dequeue_specific(self):
         """ Test that we only dequeue from the correct queue. """

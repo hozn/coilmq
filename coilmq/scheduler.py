@@ -132,4 +132,4 @@ class RandomQueueScheduler(QueuePriorityScheduler):
         """
         if not queues:
             return None
-        return random.choice(queues.keys())
+        return random.choice(list(queues.keys()))

@@ -4,8 +4,8 @@ Test memory queue storage.
 import unittest
 import uuid
 
-from stompclient.frame import Frame
 
+from coilmq.util.frames import Frame
 from coilmq.store.memory import MemoryQueue
 
 from coilmq.tests.store import CommonQueueTestsMixin
@@ -35,13 +35,12 @@ class MemoryQueueTest(CommonQueueTestsMixin, unittest.TestCase):
         frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
         self.store.enqueue(dest, frame)
         
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 1)
         
         rframe = self.store.dequeue(dest)
-        assert frame == rframe
-        assert frame is rframe # Currently we expect these to be the /same/ object.  
+        self.assertEqual(frame, rframe)
+        self.assertIs(frame, rframe) # Currently we expect these to be the /same/ object.
         
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
-        
+        self.assertFalse(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 0)

@@ -7,8 +7,7 @@ import shutil
 import uuid
 import time
 
-from stompclient.frame import Frame
-
+from coilmq.util.frames import Frame
 from coilmq.store.dbm import DbmQueue
 
 from coilmq.tests.store import CommonQueueTestsMixin
@@ -43,15 +42,15 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
         frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
         self.store.enqueue(dest, frame)
         
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 1)
         
         rframe = self.store.dequeue(dest)
-        assert frame == rframe
-        assert frame is not rframe 
+        self.assertEqual(frame, rframe)
+        self.assertIsNot(frame, rframe)
         
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
+        self.assertFalse(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 0)
     
     def test_sync_checkpoint_ops(self):
         """ Test a expected sync behavior with checkpoint_operations param. """
@@ -66,14 +65,12 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
                 frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data - %d' % i)
                 store.enqueue(dest, frame)
             
-            print store.queue_metadata[dest]    
-            assert store.size(dest) == max_ops + 1
+            self.assertEqual(store.size(dest), max_ops + 1)
             
             # No close()!
             
             store2 = DbmQueue(data_dir)
-            print store2.queue_metadata[dest]
-            assert store2.size(dest) == max_ops + 1
+            self.assertEqual(store2.size(dest), max_ops + 1)
             
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
@@ -95,14 +92,12 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
             frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data -2')
             store.enqueue(dest, frame)
             
-            print store.queue_metadata[dest]    
-            assert store.size(dest) == 2
+            self.assertEqual(store.size(dest), 2)
             
             # No close()!
             
             store2 = DbmQueue(data_dir)
-            print store2.queue_metadata[dest]
-            assert store2.size(dest) == 2
+            self.assertEqual(store2.size(dest), 2)
             
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
@@ -117,12 +112,12 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
             dest = '/queue/foo'
             frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
             store.enqueue(dest, frame)
-            assert store.size(dest) == 1
+            self.assertEqual(store.size(dest), 1)
             
             store.close()
             
             store2 = DbmQueue(data_dir)
-            assert store2.size(dest) == 1
+            self.assertEqual(store2.size(dest), 1)
             
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
@@ -137,10 +132,10 @@ class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
             dest = '/queue/foo'
             frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
             store.enqueue(dest, frame)
-            assert store.size(dest) == 1
+            self.assertEqual(store.size(dest), 1)
             
             store2 = DbmQueue(data_dir)
-            assert store2.size(dest) == 0
+            self.assertEqual(store2.size(dest), 0)
             
         except:
             shutil.rmtree(data_dir, ignore_errors=True)

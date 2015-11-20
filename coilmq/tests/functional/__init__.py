@@ -8,19 +8,31 @@ import logging
 import socket
 import select
 import threading
-from Queue import Queue
 
-from stompclient.frame import Frame
-from stompclient.util import FrameBuffer
 
+try:
+    from queue import Queue
+except ImportError:
+    from Queue import Queue
+
+from coilmq.util.frames import Frame, FrameBuffer
 from coilmq.queue import QueueManager
 from coilmq.topic import TopicManager
-
-from coilmq.server.socketserver import StompServer, StompRequestHandler, ThreadedStompServer
+from coilmq.util import frames
+from coilmq.server.socket_server import StompServer, StompRequestHandler, ThreadedStompServer
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 
-from coilmq.tests import mock
+
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+import sys
+ch = logging.FileHandler('/tmp/log.log', mode='a', encoding=None, delay=False)
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+root.addHandler(ch)
+
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -36,6 +48,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
+# @unittest.skip('')
 class BaseFunctionalTestCase(unittest.TestCase):
     """
     Base class for test cases provides the fixtures for setting up the multi-threaded
@@ -91,7 +105,6 @@ class BaseFunctionalTestCase(unittest.TestCase):
     
     def tearDown(self):
         for c in self.clients:
-            print "Disconnecting %s" % c
             c.close()
         self.server.shutdown()
         self.server_thread.join()
@@ -113,8 +126,8 @@ class BaseFunctionalTestCase(unittest.TestCase):
         self.clients.append(client)
         if connect:
             client.connect()
-            r = client.received_frames.get(timeout=1)
-            assert r.command == 'CONNECTED'
+            res = client.received_frames.get(timeout=1)
+            self.assertEqual(res.cmd, 'connected')
         return client
 
 class TestStompServer(ThreadedStompServer):
@@ -168,20 +181,17 @@ class TestStompClient(object):
             self._connect()
     
     def connect(self, headers=None):
-        if headers is None:
-            headers = {}
-        self.send_frame(Frame('CONNECT', headers=headers))
+        self.send_frame(Frame(frames.CONNECT, headers=headers))
         
     def send(self, destination, message, set_content_length=True, extra_headers=None):
-        if extra_headers is None:
-            extra_headers = {}
-        headers = extra_headers
+        headers = extra_headers or {}
         headers['destination'] = destination
-        if set_content_length: headers['content-length'] = len(message)
-        self.send_frame(Frame('SEND', headers=headers, body=message))
+        if set_content_length:
+            headers['content-length'] = len(message)
+        self.send_frame(Frame('send', headers=headers, body=message))
     
     def subscribe(self, destination):
-        self.send_frame(Frame('SUBSCRIBE', headers={'destination': destination}))
+        self.send_frame(Frame('subscribe', headers={'destination': destination}))
         
     def send_frame(self, frame):
         """
@@ -205,7 +215,6 @@ class TestStompClient(object):
             r, w, e = select.select([self.sock], [], [], 0.1)
             if r:
                 data = self.sock.recv(1024)
-                self.log.debug("Data received: %r" % data)
                 self.buffer.append(data)
                 for frame in self.buffer:
                     self.log.debug("Processing frame: %s" % frame)
@@ -214,8 +223,8 @@ class TestStompClient(object):
         # print "Read loop has been quit! for %s" % id(self)
     
     def disconnect(self):
-        self.send_frame(Frame('DISCONNECT'))
-        self.sock.close();
+        self.send_frame(Frame('disconnect'))
+        self.sock.close()
         
     def close(self):
         if not self.connected:

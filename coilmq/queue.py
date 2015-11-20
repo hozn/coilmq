@@ -7,7 +7,6 @@ Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 import logging
 import threading
 import uuid
-
 from collections import defaultdict
 
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
@@ -172,10 +171,10 @@ class QueueManager(object):
         self.log.debug("Disconnecting %s" % connection)
         if connection in self._pending:
             pending_frame = self._pending[connection]
-            self.store.requeue(pending_frame.destination, pending_frame)
+            self.store.requeue(pending_frame.headers.get('destination'), pending_frame)
             del self._pending[connection]
         
-        for dest in self._queues.keys():
+        for dest in list(self._queues.keys()):
             if connection in self._queues[dest]:
                 self._queues[dest].remove(connection)
             if not self._queues[dest]:
@@ -194,14 +193,13 @@ class QueueManager(object):
         @param message: The message frame.
         @type message: C{stompclient.frame.Frame}
         """
-        dest = message.destination
+        dest = message.headers.get('destination')
         if not dest:
             raise ValueError("Cannot send frame with no destination: %s" % message)
         
-        message.command = 'MESSAGE'
+        message.cmd = 'message'
         
-        if not 'message-id' in message.headers:
-            message.headers['message-id'] = str(uuid.uuid4())
+        message.headers.setdefault('message-id', str(uuid.uuid4()))
         
         # Grab all subscribers for this destination that do not have pending frames
         subscribers = [s for s in self._queues[dest] 
@@ -236,7 +234,7 @@ class QueueManager(object):
             pending_frame = self._pending[connection]
             # Make sure that the frame being acknowledged matches
             # the expected frame
-            if pending_frame.message_id != frame.message_id:
+            if pending_frame.headers.get('message-id') != frame.headers.get('message-id'):
                 self.log.warning("Got a ACK for unexpected message-id: %s" % frame.message_id)
                 self.store.requeue(pending_frame.destination, pending_frame)
                 # (The pending frame will be removed further down)
@@ -321,7 +319,7 @@ class QueueManager(object):
             if frame:
                 try:
                     self._send_frame(connection, frame)
-                except Exception, x:
+                except Exception as x:
                     self.log.error("Error sending message %s (requeueing): %s" % (frame, x))
                     self.store.requeue(destination, frame)
                     raise
@@ -329,7 +327,7 @@ class QueueManager(object):
             for frame in self.store.frames(destination):
                 try:
                     self._send_frame(connection, frame)
-                except Exception, x:
+                except Exception as x:
                     self.log.error("Error sending message %s (requeueing): %s" % (frame, x))
                     self.store.requeue(destination, frame)
                     raise

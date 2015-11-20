@@ -4,8 +4,7 @@ Tests for queue-related classes.
 import unittest
 import uuid
 
-from stompclient.frame import Frame
-
+from coilmq.util.frames import Frame
 from coilmq.queue import QueueManager
 from coilmq.store.memory import MemoryQueue
  
@@ -51,7 +50,6 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
-        print self.conn.frames
         assert len(self.conn.frames) == 1
         assert self.conn.frames[0] == f
     
@@ -63,7 +61,6 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
         self.qm.send(f)
         
-        print self.conn.frames
         assert len(self.conn.frames) == 1
         assert self.conn.frames[0] == f
         
@@ -136,8 +133,6 @@ class QueueManagerTest(unittest.TestCase):
         
         self.qm.subscribe(self.conn, dest)
         
-        print "Frames: %r" % self.conn.frames
-        
         assert len(self.conn.frames) == 1, "Expected frame to be delivered"
         assert self.conn.frames[0] == f
         
@@ -168,9 +163,7 @@ class QueueManagerTest(unittest.TestCase):
         # subscriber
         
         self.qm.subscribe(self.conn, dest)
-        
-        print "Frames: %r" % self.conn.frames
-        
+
         assert len(self.conn.frames) == 2, "Expected frame to be delivered"
         assert self.conn.frames == [f2,f]  
               
@@ -194,9 +187,7 @@ class QueueManagerTest(unittest.TestCase):
         
         f = Frame('MESSAGE', headers={'destination': dest, 'message-id': uuid.uuid4()}, body='Empty')
         self.qm.send(f)
-            
-        print conn1.frames
-        print conn2.frames
+
         assert len(conn1.frames) == 1
         assert len(conn2.frames) == 0
     
@@ -207,7 +198,6 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame('SEND', headers={'destination': dest, 'transaction': '1'}, body='Body-A')
         self.qm.send(f)
         
-        print self.store.destinations()
         assert dest in self.store.destinations()
         
         conn1 = MockConnection()
@@ -238,10 +228,9 @@ class QueueManagerTest(unittest.TestCase):
         assert len(conn1.frames) == 1, "Expected connection to still only have 1 frame."
         assert conn1.frames[0] == m1
         
-        ack = Frame('ACK', headers={'destination': dest, 'message-id': m1.message_id})
+        ack = Frame('ACK', headers={'destination': dest, 'message-id': m1.headers['message-id']})
         self.qm.ack(conn1, ack)
         
-        print conn1.frames
         assert len(conn1.frames) == 2, "Expected 2 frames now, after ACK."
         assert conn1.frames[1] == m2
         
@@ -265,10 +254,10 @@ class QueueManagerTest(unittest.TestCase):
         assert len(conn1.frames) == 1, "Expected connection to still only have 1 frame."
         assert conn1.frames[0] == m1
         
-        ack = Frame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m1.message_id})
+        ack = Frame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m1.headers.get('message-id')})
         self.qm.ack(conn1, ack, transaction='abc')
         
-        ack = Frame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m2.message_id})
+        ack = Frame('ACK', headers={'destination': dest, 'transaction': 'abc', 'message-id': m2.headers.get('message-id')})
         self.qm.ack(conn1, ack, transaction='abc')
         
         assert len(conn1.frames) == 2, "Expected 2 frames now, after ACK."
