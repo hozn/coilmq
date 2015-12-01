@@ -39,7 +39,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 config = ConfigParser()
-config.read('defaults.cfg')
+config.read(os.path.join(os.path.dirname(__file__), 'defaults.cfg'))
+
 
 def init_config(config_file):
     """
@@ -116,8 +117,9 @@ def resolve_name(name):
     >>> resolve_name('coilmq.store.memory.MemoryQueue')
     <class 'coilmq.store.memory.MemoryQueue'>
     >>> t = resolve_name('coilmq.store.dbm.make_dbm')
-    >>> type(t)
-    <type 'function'>
+    >>> import inspect
+    >>> inspect.isfunction(t)
+    True
     >>> t.__name__
     'make_dbm'
     

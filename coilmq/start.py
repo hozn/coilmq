@@ -141,7 +141,7 @@ def context_serve(options, context):
     except (KeyboardInterrupt, SystemExit):
         logger().info("Stomp server stopped by user interrupt.")
         raise SystemExit()
-    except Exception, e:
+    except Exception as e:
         logger().error("Stomp server stopped due to error: %s" % e)
         logger().exception(e)
         raise SystemExit()
@@ -244,6 +244,6 @@ if __name__ == '__main__':
         main()
     except (KeyboardInterrupt, SystemExit):
         pass
-    except Exception, e:
+    except Exception as e:
         logger().error("Server terminated due to error: %s" % e)
         logger().exception(e)

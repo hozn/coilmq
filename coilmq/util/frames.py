@@ -81,7 +81,11 @@ class Frame(object):
         self.body = body or ''
 
     def __str__(self):
-        return '{cmd=%s,headers=[%s],body=%s}' % (self.cmd, self.headers, self.body)
+        return '{{cmd={0},headers=[{1}],body={2}}}'.format(
+            self.cmd,
+            self.headers,
+            self.body if isinstance(self.body, six.binary_type) else six.b(self.body)
+        )
 
     def __eq__(self, other):
         """ Override equality checking to test for matching command, headers, and body. """

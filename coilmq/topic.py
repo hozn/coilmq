@@ -99,7 +99,7 @@ class TopicManager(object):
         @type connection: L{coilmq.server.StompConnection}
         """
         self.log.debug("Disconnecting %s" % connection)
-        for dest in self._topics.keys():
+        for dest in list(self._topics.keys()):
             if connection in self._topics[dest]:
                 self._topics[dest].remove(connection)
             if not self._topics[dest]: 

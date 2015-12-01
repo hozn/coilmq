@@ -23,8 +23,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-import unittest
-# @unittest.skip('')
+
+
 class BasicTest(BaseFunctionalTestCase):
     """
     Functional tests using default storage engine, etc.
@@ -60,8 +60,6 @@ class BasicTest(BaseFunctionalTestCase):
         c1 = self._new_client()
         c1.send('/topic/foo', 'A message', extra_headers={'receipt': 'FOOBAR'})
         r = c1.received_frames.get(timeout=1)
-        # r.cmd == "RECEIPT"
-        # assert r.receipt_id == "FOOBAR"
 
     def test_subscribe(self):
         c1 = self._new_client()
@@ -87,7 +85,6 @@ class BasicTest(BaseFunctionalTestCase):
         self.assertEqual(c1.received_frames.qsize(), 0)
         
     def test_send_binary(self):
-
         """
         Test sending binary data.
         """

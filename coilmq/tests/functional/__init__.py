@@ -24,16 +24,6 @@ from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 
 
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-import sys
-ch = logging.FileHandler('/tmp/log.log', mode='a', encoding=None, delay=False)
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-root.addHandler(ch)
-
-
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +39,6 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-# @unittest.skip('')
 class BaseFunctionalTestCase(unittest.TestCase):
     """
     Base class for test cases provides the fixtures for setting up the multi-threaded
@@ -172,7 +161,7 @@ class TestStompClient(object):
         @type connect: C{bool}
         """
         self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = None
         self.addr = addr
         self.received_frames = Queue()
         self.read_stopped = threading.Event()
@@ -204,6 +193,7 @@ class TestStompClient(object):
         self.sock.send(frame.pack())
     
     def _connect(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(self.addr)
         self.connected = True
         self.read_stopped.clear()
