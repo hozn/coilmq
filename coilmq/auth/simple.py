@@ -25,6 +25,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 def make_simple():
     """
     Create a L{SimpleAuthenticator} instance using values read from coilmq configuration.
@@ -40,6 +41,7 @@ def make_simple():
     sa.from_configfile(authfile)
     return sa
 
+
 class SimpleAuthenticator(Authenticator):
     """
     A simple configfile-based authenticator.
@@ -47,6 +49,7 @@ class SimpleAuthenticator(Authenticator):
     @ivar store:  Authentication key-value store (of logins to passwords).
     @type store: C{dict} of C{str} to C{str}
     """
+
     def __init__(self, store=None):
         """
         Initialize the authenticator to use (optionally) specified C{dict} store.

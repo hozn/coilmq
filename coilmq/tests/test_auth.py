@@ -27,6 +27,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class SimpleAuthenticatorTest(unittest.TestCase):
 
     def setUp(self):
@@ -60,7 +61,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store from file-like object.
         """
-        with open(resource_filename('coilmq.tests.resources', 'auth.ini'),'r') as fp:
+        with open(resource_filename('coilmq.tests.resources', 'auth.ini'), 'r') as fp:
             auth = SimpleAuthenticator()
             auth.from_configfile(fp)
 
@@ -73,7 +74,8 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store with invalid file path.
         """
-        filename = resource_filename('coilmq.tests.resources', 'auth-invlaid.ini')
+        filename = resource_filename(
+            'coilmq.tests.resources', 'auth-invlaid.ini')
         auth = SimpleAuthenticator()
         try:
             auth.from_configfile(filename)

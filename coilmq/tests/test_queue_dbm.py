@@ -24,24 +24,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class DBMQueueManagerTest(QueueManagerTest):
     """ Run all the tests from BasicTest using a SQLite database store. """
-    
+
     def _queuestore(self):
         """
         Returns the configured L{QueueStore} instance to use.
-        
+
         Can be overridden by subclasses that wish to change out any queue store parameters.
-        
+
         @rtype: L{QueueStore}
         """
         data_dir = os.path.abspath(os.path.join('/tmp/coilmq-test', 'data'))
         if os.path.exists(data_dir):
             shutil.rmtree(data_dir)
         os.makedirs(data_dir)
-            
+
         # data_dir = './data'
         cp_ops = 100
         cp_timeout = 20
-        store = DbmQueue(data_dir, checkpoint_operations=cp_ops, checkpoint_timeout=cp_timeout)
+        store = DbmQueue(data_dir, checkpoint_operations=cp_ops,
+                         checkpoint_timeout=cp_timeout)
         return store

@@ -29,33 +29,33 @@ class BasicTest(BaseFunctionalTestCase):
     """
     Functional tests using default storage engine, etc.
     """
-        
+
     def test_connect(self):
         """ Test a basic (non-auth) connection. """
         c = self._new_client()
-    
+
     def test_connect_auth(self):
         """ Test connecting when auth is required. """
         self.server.authenticator = SimpleAuthenticator(store={'user': 'pass'})
-        
+
         c1 = self._new_client(connect=False)
         c1.connect()
         r = c1.received_frames.get(timeout=1)
         self.assertEqual(r.cmd, 'error')
         self.assertIn(b'Auth', r.body)
-        
+
         c2 = self._new_client(connect=False)
         c2.connect(headers={'login': 'user', 'passcode': 'pass'})
         r2 = c2.received_frames.get(timeout=1)
 
         self.assertEqual(r2.cmd.lower(), 'connected')
-        
+
         c3 = self._new_client(connect=False)
         c3.connect(headers={'login': 'user', 'passcode': 'pass-invalid'})
         r3 = c3.received_frames.get(timeout=1)
 
         self.assertEqual(r3.cmd, 'error')
-    
+
     def test_send_receipt(self):
         c1 = self._new_client()
         c1.send('/topic/foo', 'A message', extra_headers={'receipt': 'FOOBAR'})
@@ -64,17 +64,17 @@ class BasicTest(BaseFunctionalTestCase):
     def test_subscribe(self):
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
-        
+
         c2 = self._new_client()
         c2.subscribe('/queue/foo2')
-        
+
         c2.send('/queue/foo', 'A message')
         self.assertEqual(c2.received_frames.qsize(), 0)
-       
+
         r = c1.received_frames.get()
         self.assertEqual(r.cmd, 'message')
         self.assertEqual(r.body, b'A message')
-    
+
     def test_disconnect(self):
         """
         Test the 'polite' disconnect.
@@ -83,14 +83,14 @@ class BasicTest(BaseFunctionalTestCase):
         c1.connect()
         c1.disconnect()
         self.assertEqual(c1.received_frames.qsize(), 0)
-        
+
     def test_send_binary(self):
         """
         Test sending binary data.
         """
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
-        
+
         # Read some random binary data.
         # (This should be cross-platform.)
         message = six.b('This is the message that will be compressed.')
@@ -100,21 +100,21 @@ class BasicTest(BaseFunctionalTestCase):
         res = c1.received_frames.get()
         self.assertEqual(res.cmd, 'message')
         self.assertEqual(zlib.decompress(res.body), message)
-    
+
     def test_send_utf8(self):
         """
         Test sending utf-8-encoded strings.
         """
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
-        
+
         unicodemsg = u'我能吞下玻璃而不伤身体'
         utf8msg = unicodemsg.encode('utf-8')
 
         c2 = self._new_client()
 
         c2.send('/queue/foo', utf8msg)
-        
+
         res = c1.received_frames.get()
         self.assertEqual(res.cmd, 'message')
         self.assertEqual(res.body, utf8msg)

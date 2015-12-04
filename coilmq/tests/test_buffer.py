@@ -45,7 +45,8 @@ class TestFrameBuffer(unittest.TestCase):
     def test_extract_frame(self):
         """ Test extracting a single frame. """
         sb = FrameBuffer()
-        m1 = self.createMessage('connect', {'session': uuid.uuid4()}, 'This is the body')
+        m1 = self.createMessage(
+            'connect', {'session': uuid.uuid4()}, 'This is the body')
         sb.append(m1)
         msg = sb.extract_frame()
         self.assertIsInstance(msg, Frame)
@@ -93,8 +94,10 @@ class TestFrameBuffer(unittest.TestCase):
     def test_iteration(self):
         """ Test the iteration feature of our buffer."""
         sb = FrameBuffer()
-        m1 = self.createMessage(frames.CONNECT, {'session': uuid.uuid4()}, b'This is the body')
-        m2 = self.createMessage(frames.SEND, {'destination': '/queue/sample'}, b'This is the body-2')
+        m1 = self.createMessage(
+            frames.CONNECT, {'session': uuid.uuid4()}, b'This is the body')
+        m2 = self.createMessage(
+            frames.SEND, {'destination': '/queue/sample'}, b'This is the body-2')
         sb.append(m1)
         sb.append(m2)
 
@@ -113,13 +116,15 @@ class TestFrameBuffer(unittest.TestCase):
 class FrameTestCase(unittest.TestCase):
 
     def test_parse_frame(self):
-        buff = io.BytesIO(b'CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00')
+        buff = io.BytesIO(
+            b'CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00')
         cmd, headers = parse_headers(buff)
         body = parse_body(buff, headers)
 
         self.assertIsInstance(cmd, six.string_types)
         self.assertEqual(cmd, frames.CONNECT)
-        self.assertEqual(headers['session'], '207567f3-cce7-4a0a-930b-46fc394dd53d')
+        self.assertEqual(headers['session'],
+                         '207567f3-cce7-4a0a-930b-46fc394dd53d')
 
         for e in [cmd] + list(headers.keys()) + list(headers.values()):
             self.assertIsInstance(e, six.string_types)
@@ -133,16 +138,17 @@ class FrameTestCase(unittest.TestCase):
         self.assertRaises(BodyNotTerminated, lambda: Frame.from_buffer(buff))
 
     def test_parse_frame_empty_body(self):
-        buff = io.BytesIO(b'SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00fdffdfd')
+        buff = io.BytesIO(
+            b'SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00fdffdfd')
         f = Frame.from_buffer(buff)
 
     def test_pack(self):
         frame = Frame(frames.CONNECT, OrderedDict(foo='bar'), 'body')
-        self.assertEqual(frame.pack(), b'CONNECT\nfoo:bar\ncontent-length:4\n\nbody\x00')
+        self.assertEqual(
+            frame.pack(), b'CONNECT\nfoo:bar\ncontent-length:4\n\nbody\x00')
 
     def test_pack_binary(self):
         bin_body = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
         frame = Frame(frames.CONNECT, body=bin_body)
-        self.assertEqual(frame.pack(), b'CONNECT\ncontent-length:17\n\n\x00\x00HELLO\x00\x00DONKEY\x00\x00\x00')
-
-
+        self.assertEqual(frame.pack(
+        ), b'CONNECT\ncontent-length:17\n\n\x00\x00HELLO\x00\x00DONKEY\x00\x00\x00')

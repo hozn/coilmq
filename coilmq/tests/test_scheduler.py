@@ -20,6 +20,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class QueueDeliverySchedulerTest(unittest.TestCase):
     """ Tests for various message delivery schedulers. """
 
@@ -36,4 +37,5 @@ class QueueDeliverySchedulerTest(unittest.TestCase):
 
         choice = sched.choice((conn1, conn2), None)
 
-        self.assertIs(choice, conn1, "Expected reliable connection to be selected.")
+        self.assertIs(
+            choice, conn1, "Expected reliable connection to be selected.")

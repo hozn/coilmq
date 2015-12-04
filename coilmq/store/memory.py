@@ -21,51 +21,53 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class MemoryQueue(QueueStore):
     """
     A QueueStore implementation that stores messages in memory.
-    
+
     This classes uses a C{threading.RLock} to guard access to the memory store.  
     The locks on this class are probably excessive given that the 
     L{coilmq.queue.QueueManager} is already implementing coarse-grained locking 
     on the methods that access this storage backend.  That said, we'll start
     over-protective and refactor later it if proves unecessary. 
     """
+
     def __init__(self):
         QueueStore.__init__(self)
         self._messages = defaultdict(deque)
-    
-    @synchronized    
+
+    @synchronized
     def enqueue(self, destination, frame):
         self._messages[destination].appendleft(frame)
-        
+
     @synchronized
     def dequeue(self, destination):
         try:
             return self._messages[destination].pop()
         except IndexError:
             return None
-    
+
     @synchronized
     def size(self, destination):
         """
         Size of the queue for specified destination.
-        
+
         @param destination: The queue destination (e.g. /queue/foo)
         @type destination: C{str}
         """
         return len(self._messages[destination])
-        
+
     @synchronized
     def has_frames(self, destination):
         """ Whether this queue has frames for the specified destination. """
         return bool(self._messages[destination])
-    
+
     @synchronized
     def destinations(self):
         """
         Provides a list of destinations (queue "addresses") available.
-        
+
         @return: A list of the detinations available.
         @rtype: C{set}
         """

@@ -19,15 +19,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class Authenticator(object):
     """ Abstract base class for authenticators. """
     __metaclass__ = abc.ABCMeta
-    
+
     @abc.abstractmethod
     def authenticate(self, login, passcode):
         """
         Authenticate the login and passcode.
-         
+
         @return: Whether user is authenticated.
         @rtype: C{bool} 
         """

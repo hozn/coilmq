@@ -19,7 +19,8 @@ ABORT = 'ABORT'
 ACK = 'ACK'
 DISCONNECT = 'DISCONNECT'
 
-VALID_COMMANDS = ['message', 'connect', 'connected', 'error', 'send', 'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect']
+VALID_COMMANDS = ['message', 'connect', 'connected', 'error', 'send',
+                  'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect']
 
 
 class IncompleteFrame(Exception):
@@ -75,6 +76,7 @@ class Frame(object):
     :param headers: a map of headers for the frame
     :param body: the content of the frame.
     """
+
     def __init__(self, cmd, headers=None, body=None):
         self.cmd = cmd
         self.headers = headers or {}
@@ -84,7 +86,8 @@ class Frame(object):
         return '{{cmd={0},headers=[{1}],body={2}}}'.format(
             self.cmd,
             self.headers,
-            self.body if isinstance(self.body, six.binary_type) else six.b(self.body)
+            self.body if isinstance(
+                self.body, six.binary_type) else six.b(self.body)
         )
 
     def __eq__(self, other):
@@ -116,7 +119,8 @@ class Frame(object):
 
         # Convert and append any existing headers to a string as the
         # protocol describes.
-        headerparts = ("{0}:{1}\n".format(key, value) for key, value in self.headers.items())
+        headerparts = ("{0}:{1}\n".format(key, value)
+                       for key, value in self.headers.items())
 
         # Frame is Command + Header + EOF marker.
         return six.b("{0}\n{1}\n".format(self.cmd, "".join(headerparts))) + (self.body if isinstance(self.body, six.binary_type) else six.b(self.body)) + six.b('\x00')
@@ -128,12 +132,14 @@ class ConnectedFrame(Frame):
     @ivar session: The (throw-away) session ID to include in response.
     @type session: C{str}
     """
+
     def __init__(self, session, extra_headers=None):
         """
         @param session: The (throw-away) session ID to include in response.
         @type session: C{str}
         """
-        super(ConnectedFrame,self).__init__(cmd='connected', headers=extra_headers or {})
+        super(ConnectedFrame, self).__init__(
+            cmd='connected', headers=extra_headers or {})
         self.headers['session'] = session
 
 
@@ -157,6 +163,7 @@ class HeaderValue(object):
     @ivar calc: The calculator function.
     @type calc: C{callable}
     """
+
     def __init__(self, calculator):
         """
         @param calculator: The calculator callable that will yield the desired value.
@@ -187,9 +194,11 @@ class ErrorFrame(Frame):
         @param body: The message body bytes.
         @type body: C{str}
         """
-        super(ErrorFrame, self).__init__(cmd='error', headers=extra_headers or {}, body=body)
+        super(ErrorFrame, self).__init__(cmd='error',
+                                         headers=extra_headers or {}, body=body)
         self.headers['message'] = message
-        self.headers['content-length'] = HeaderValue(calculator=lambda: len(self.body))
+        self.headers[
+            'content-length'] = HeaderValue(calculator=lambda: len(self.body))
 
     def __repr__(self):
         return '<%s message=%r>' % (self.__class__.__name__, self.headers['message'])
@@ -203,7 +212,8 @@ class ReceiptFrame(Frame):
         @param receipt: The receipt message ID.
         @type receipt: C{str}
         """
-        super(ReceiptFrame, self).__init__('RECEIPT', headers=extra_headers or {})
+        super(ReceiptFrame, self).__init__(
+            'RECEIPT', headers=extra_headers or {})
         self.headers['receipt-id'] = receipt
 
 
@@ -236,14 +246,16 @@ class FrameBuffer(object):
 
     # regexp to determine the content length. The buffer should always start
     # with a command followed by the headers, so the content-length header will
-    # always be preceded by a newline.  It may not always proceeded by a newline, though!
+    # always be preceded by a newline.  It may not always proceeded by a
+    # newline, though!
     content_length_re = re.compile('\ncontent-length\s*:\s*(\d+)\s*(\n|$)')
 
     def __init__(self):
         self._buffer = io.BytesIO()
         self._pointer = 0
         self.debug = False
-        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger('%s.%s' % (
+            self.__module__, self.__class__.__name__))
 
     def clear(self):
         """
@@ -323,7 +335,6 @@ class FrameBuffer(object):
 
         return f
 
-
     def _find_message_bytes(self, data):
         """
         Examines passed-in data and returns a tuple of message and header lengths.
@@ -367,7 +378,8 @@ class FrameBuffer(object):
             content_length = int(match.groups()[0])
 
             if self.debug:
-                self.log.debug("Message contains a content-length header; reading %d bytes" % content_length)
+                self.log.debug(
+                    "Message contains a content-length header; reading %d bytes" % content_length)
 
             # This is the content length of the body up until the null
             # byte, not the entire message. Note that this INCLUDES the 2
@@ -376,7 +388,7 @@ class FrameBuffer(object):
             # StompEngine.callRemote()), so we only need to add 2 final bytes
             # for the footer.
             #
-            #The message looks like:
+            # The message looks like:
             #
             #   <header>\n\n<body>\n\n\x00
             #           ^         ^^^^
@@ -392,19 +404,22 @@ class FrameBuffer(object):
             req_len = i + len('\n\n') + content_length + len('\x00')
 
             if self.debug:
-                self.log.debug("We have [%s] bytes and need [%s] bytes" % (len(data), req_len))
+                self.log.debug(
+                    "We have [%s] bytes and need [%s] bytes" % (len(data), req_len))
 
             if len(data) < req_len:
                 # We don't have enough bytes in the buffer.
                 if self.debug:
-                    self.log.debug("Not enough bytes in buffer to construct a frame.")
+                    self.log.debug(
+                        "Not enough bytes in buffer to construct a frame.")
                 return (0, 0)
             else:
                 # We have enough bytes in the buffer
                 return (req_len, i)
         else:
             if self.debug:
-                self.log.debug("No content-length header present; reading until first null byte.")
+                self.log.debug(
+                    "No content-length header present; reading until first null byte.")
             # There was no content-length header, so just look for the
             # message terminator ('\x00' ).
             try:
@@ -418,7 +433,6 @@ class FrameBuffer(object):
             # j points to the 0-indexed location of the null byte. However,
             # we need to add 1 (to turn it into a byte count)
             return (j + 1, i)
-
 
     def sync_buffer(self):
         """
