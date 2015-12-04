@@ -18,20 +18,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class ProtocolError(RuntimeError):
     """
     Represents an error at the STOMP protocol layer.
     """
 
+
 class ConfigError(RuntimeError):
     """
     Represents an error in the configuration of the application.
     """
-    
+
+
 class AuthError(RuntimeError):
     """
     Represents an authentication or authorization error.
     """
+
 
 class ClientDisconnected(Exception):
     """

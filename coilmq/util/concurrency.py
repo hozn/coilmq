@@ -15,16 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 def synchronized(func):
     """
     Decorator to lock and unlock a method (Phillip J. Eby).
-    
+
     This function is to be used with object instance methods; the object must
     have a _lock variable (of type C{threading.Lock} or C{threading.RLock}).
 
     @param func: Method to decorate
     @type func: C{callable}
     """
+
     def wrapper(self, *__args, **__kw):
         self._lock.acquire()
         try:
