@@ -29,9 +29,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class BasicSqlAlchemyStoreTest(BasicTest):
     """ Run all the tests from BasicTest using a SQLite database store. """
-    
+
     def _queuemanager(self):
         """
         Returns the configured L{QueueManager} instance to use.

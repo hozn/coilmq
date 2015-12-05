@@ -3,7 +3,7 @@ Queue storage tests.
 """
 import uuid
 
-from stompclient.frame import Frame
+from coilmq.util.frames import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -19,99 +19,108 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class CommonQueueTestsMixin(object):
     """
     An abstract set of base tests for queue storage engines.
-    
+
     This class must be mixed in with something that extends C{unittest.TestCase}.
     """
-    
+
     def test_enqueue(self):
         """ Test the enqueue() method. """
         dest = '/queue/foo'
-        frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data')
+        frame = Frame('MESSAGE', headers={
+                      'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
-        
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
-        
+
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 1)
+
     def test_dequeue(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='some data') 
+        frame = Frame('MESSAGE', headers={
+                      'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
-        
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 1
-        
+
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 1)
+
         rframe = self.store.dequeue(dest)
-        assert frame == rframe
-        
+        self.assertEqual(frame, rframe)
+
         # We cannot generically assert whether or not frame and rframe are
-        # the *same* object. 
-        
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
-    
+        # the *same* object.
+
+        self.assertFalse(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 0)
+
     def test_dequeue_specific(self):
         """ Test that we only dequeue from the correct queue. """
         dest = '/queue/foo'
         notdest = '/queue/other'
-        
-        frame1 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-1') 
+
+        frame1 = Frame('MESSAGE', headers={
+                       'message-id': str(uuid.uuid4())}, body='message-1')
         self.store.enqueue(dest, frame1)
-        
-        frame2 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-2') 
+
+        frame2 = Frame('MESSAGE', headers={
+                       'message-id': str(uuid.uuid4())}, body='message-2')
         self.store.enqueue(notdest, frame2)
-        
-        frame3 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-3') 
+
+        frame3 = Frame('MESSAGE', headers={
+                       'message-id': str(uuid.uuid4())}, body='message-3')
         self.store.enqueue(dest, frame3)
-        
+
         assert self.store.has_frames(dest) == True
         assert self.store.size(dest) == 2
-        
+
         rframe1 = self.store.dequeue(dest)
         assert frame1 == rframe1
-         
+
         rframe2 = self.store.dequeue(dest)
         assert frame3 == rframe2
-        
+
         assert self.store.has_frames(dest) == False
         assert self.store.size(dest) == 0
-        
+
     def test_dequeue_order(self):
         """ Test the order that frames are returned by dequeue() method. """
         dest = '/queue/foo'
-        
-        frame1 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-1') 
+
+        frame1 = Frame('MESSAGE', headers={
+                       'message-id': str(uuid.uuid4())}, body='message-1')
         self.store.enqueue(dest, frame1)
-        
-        frame2 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-2') 
+
+        frame2 = Frame('MESSAGE', headers={
+                       'message-id': str(uuid.uuid4())}, body='message-2')
         self.store.enqueue(dest, frame2)
-        
-        frame3 = Frame('MESSAGE', headers={'message-id': str(uuid.uuid4())}, body='message-3') 
+
+        frame3 = Frame('MESSAGE', headers={
+                       'message-id': str(uuid.uuid4())}, body='message-3')
         self.store.enqueue(dest, frame3)
-        
+
         assert self.store.has_frames(dest) == True
         assert self.store.size(dest) == 3
-        
+
         rframe1 = self.store.dequeue(dest)
         assert frame1 == rframe1
-         
+
         rframe2 = self.store.dequeue(dest)
         assert frame2 == rframe2
-        
+
         rframe3 = self.store.dequeue(dest)
         assert frame3 == rframe3
-        
+
         assert self.store.has_frames(dest) == False
         assert self.store.size(dest) == 0
-        
+
     def test_dequeue_empty(self):
         """ Test dequeue() with empty queue. """
-        
+
         r = self.store.dequeue('/queue/nonexist')
         assert r is None
-        
+
         assert self.store.has_frames('/queue/nonexist') == False
         assert self.store.size('/queue/nonexist') == 0

@@ -1,8 +1,13 @@
 """
 Tests for authenticators.
 """
+import os
 import unittest
-from StringIO import StringIO
+try:
+    from io import StringIO
+    unicode = str
+except ImportError:
+    from StringIO import StringIO
 
 from pkg_resources import resource_stream, resource_filename
 
@@ -13,7 +18,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -22,14 +27,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+
 class SimpleAuthenticatorTest(unittest.TestCase):
-    
+
     def setUp(self):
         pass
-        
+
     def tearDown(self):
         pass
-    
+
     def test_constructor(self):
         """
         Test the with passing auth store in constructor.
@@ -46,46 +52,45 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         filename = resource_filename('coilmq.tests.resources', 'auth.ini')
         auth = SimpleAuthenticator()
         auth.from_configfile(filename)
-        print "Auth store: %r" % auth.store
         assert auth.authenticate('juniper', 'b3rr1es') == True
         assert auth.authenticate('oak', 'ac$rrubrum') == True
         assert auth.authenticate('pinetree', 'str0bus') == True
         assert auth.authenticate('foo', 'bar') == False
-        
+
     def test_from_configfile_fp(self):
         """
-        Test loading store from file-like object. 
+        Test loading store from file-like object.
         """
-        fp = resource_stream('coilmq.tests.resources', 'auth.ini')
-        auth = SimpleAuthenticator()
-        auth.from_configfile(fp)
-        
+        with open(resource_filename('coilmq.tests.resources', 'auth.ini'), 'r') as fp:
+            auth = SimpleAuthenticator()
+            auth.from_configfile(fp)
+
         assert auth.authenticate('juniper', 'b3rr1es') == True
         assert auth.authenticate('oak', 'ac$rrubrum') == True
         assert auth.authenticate('pinetree', 'str0bus') == True
         assert auth.authenticate('foo', 'bar') == False
-    
+
     def test_from_configfile_invalid(self):
         """
         Test loading store with invalid file path.
         """
-        filename = resource_filename('coilmq.tests.resources', 'auth-invlaid.ini')
+        filename = resource_filename(
+            'coilmq.tests.resources', 'auth-invlaid.ini')
         auth = SimpleAuthenticator()
         try:
             auth.from_configfile(filename)
             self.fail("Expected error with invalid filename.")
-        except ValueError, e:
+        except ValueError as e:
             pass
-        
+
     def test_from_configfile_fp_invalid(self):
         """
         Test loading store with missing section in config.
         """
-        buf = "[invalid]\nusername=password"
-        fp = StringIO(buf)
+        fp = StringIO(u"[invalid]\nusername=password")
         auth = SimpleAuthenticator()
         try:
             auth.from_configfile(fp)
             self.fail("Expected error with missing section.")
-        except ValueError, e:
+        except ValueError as e:
             pass
