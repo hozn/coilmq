@@ -8,7 +8,7 @@ import zlib
 import six
 
 from coilmq.auth.simple import SimpleAuthenticator
-from coilmq.tests.functional import BaseFunctionalTestCase
+from coilmq.tests.functional import BaseFunctionalTestCase, Empty as QueueEmpty
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -81,8 +81,10 @@ class BasicTest(BaseFunctionalTestCase):
         """
         c1 = self._new_client()
         c1.connect()
+        response = c1.received_frames.get(timeout=0.5)
+        self.assertEqual(response.cmd, 'connected')
         c1.disconnect()
-        self.assertEqual(c1.received_frames.qsize(), 0)
+        self.assertRaises(QueueEmpty, lambda: c1.received_frames.get(block=False))
 
     def test_send_binary(self):
         """
