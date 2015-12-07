@@ -11,9 +11,9 @@ import threading
 
 
 try:
-    from queue import Queue
+    from queue import Queue, Empty
 except ImportError:
-    from Queue import Queue
+    from Queue import Queue, Empty
 
 from coilmq.util.frames import Frame, FrameBuffer
 from coilmq.queue import QueueManager
@@ -223,11 +223,10 @@ class TestStompClient(object):
 
     def disconnect(self):
         self.send_frame(Frame('disconnect'))
-        self.sock.close()
 
     def close(self):
         if not self.connected:
             raise RuntimeError("Not connected")
         self.connected = False
-        self.read_stopped.wait()
+        self.read_stopped.wait(timeout=0.5)
         self.sock.close()
