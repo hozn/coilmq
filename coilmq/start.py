@@ -2,28 +2,18 @@
 """
 Entrypoint for starting the application.
 """
-import os
-import sys
 import logging
 import time
 import threading
-from optparse import OptionParser
+from contextlib import contextmanager
 
-try:
-    daemon_support = True
-    import daemon as pydaemon
-    import signal
-    import lockfile
-except ImportError:
-    daemon_support = False
-
+import daemon as pydaemon
+import pid
 import click
 
 from coilmq.config import config as global_config, init_config, init_logging, resolve_name
 from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
-
-from coilmq.exception import ConfigError
 from coilmq.server.socket_server import ThreadedStompServer
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -91,7 +81,8 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     return server
 
 
-def context_serve(context, configfile, listen_addr, listen_port, logfile, debug, daemon, uid, gid, pidfile, umask, rundir):
+def context_serve(context, configfile, listen_addr, listen_port, logfile,
+                  debug, daemon, uid, gid, pidfile, umask, rundir):
     """
     Takes a context object, which implements the __enter__/__exit__ "with" interface 
     and starts a server within that context.
@@ -176,31 +167,13 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
     if port is not None:
         global_config.set('coilmq', 'listen_port', str(port))
 
-    if daemon:
-        if not daemon_support:
-            raise ConfigError(
-                "This environment/platform does not support running as daemon. (Are you running on *nix and did you install python-daemon package?)")
-        else:
-
-            context = pydaemon.DaemonContext(uid=uid,
-                                             gid=gid,
-                                             pidfile=lockfile.FileLock(pidfile) if pidfile else None,
-                                             umask=int(umask, 8),
-                                             working_directory=rundir)
-
-    else:
-        # Non-daemon mode, so we use a dummy context objectx
-        # so we can use the same run-server code as the daemon version.
-
-        class DumbContext(object):
-
-            def __enter__(self):
-                pass
-
-            def __exit__(self, type, value, traceback):
-                pass
-
-        context = DumbContext()
+    # in an on-daemon mode, we use a dummy context objectx
+    # so we can use the same run-server code as the daemon version.
+    context = pydaemon.DaemonContext(uid=uid,
+                                     gid=gid,
+                                     pidfile=pid.PidFile(pidname=pidfile) if pidfile else None,
+                                     umask=int(umask, 8),
+                                     working_directory=rundir) if daemon else contextmanager(lambda: (yield))()
 
     context_serve(context, config, host, port, logfile, debug, daemon, uid, gid, pidfile, umask, rundir)
 
