@@ -41,10 +41,10 @@ for i in range(len(parts)-1):
         break
 if not found_news:
     warnings.warn('No news for this version found.')
-    
+
 long_description = """
-The provided server implementation for CoilMQ uses the Python SocketServer 
-libraries; however, CoilMQ is only loosely coupled to this server 
+The provided server implementation for CoilMQ uses the Python SocketServer
+libraries; however, CoilMQ is only loosely coupled to this server
 implementation.  It could be used with other socket implementations.
 
 The CoilMQ core classes and bundled storage implementations are built to be
@@ -65,7 +65,7 @@ setup(
     license='Apache',
     author='Hans Lellelid',
     author_email='hans@xmpl.org',
-    url='http://code.google.com/p/coilmq',
+    url='https://github.com/hozn/coilmq',
     packages=find_packages(exclude=['ez_setup', 'distribute_setup', 'tests', 'tests.*']),
     package_dir={'coilmq':  'coilmq'},
     package_data={'coilmq': ['config/*.cfg*', 'tests/resources/*']},
@@ -88,6 +88,9 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Communications",
+        "Topic :: System :: Distributed Computing",
+        "Topic :: System :: Networking"
     ],
     entry_points="""
     [console_scripts]
