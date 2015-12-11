@@ -3,13 +3,11 @@ Tests for the transport-agnostic engine module.
 """
 import unittest
 
-# from stompclient.frame import Frame, ReceiptFrame
-
 from coilmq.engine import StompEngine
 
-from coilmq.tests.mock import (MockAuthenticator, MockConnection, MockQueueManager,
-                               MockTopicManager)
+from coilmq.tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, MockTopicManager)
 from coilmq.util.frames import Frame, ReceiptFrame
+from coilmq.util import frames
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

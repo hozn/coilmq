@@ -175,9 +175,6 @@ class QueueFrameIterator(object):
     def __len__(self):
         return self.store.size(self.destination)
 
-    def __nonzero__(self):
-        return self.store.has_frames(self.destination)
-
 
 class TopicStore(object):
     """

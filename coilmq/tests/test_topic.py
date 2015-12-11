@@ -4,6 +4,7 @@ Tests for topic-related functionality.
 import unittest
 import socket
 
+from coilmq.util import frames
 from coilmq.util.frames import Frame
 from coilmq.topic import TopicManager
 from coilmq.tests.mock import MockConnection
@@ -35,7 +36,7 @@ class TopicManagerTest(unittest.TestCase):
         dest = '/topic/dest'
 
         self.tm.subscribe(self.conn, dest)
-        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
@@ -46,30 +47,30 @@ class TopicManagerTest(unittest.TestCase):
         dest = '/topic/dest'
 
         self.tm.subscribe(self.conn, dest)
-        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
         self.assertEqual(self.conn.frames[0], f)
 
         self.tm.unsubscribe(self.conn, dest)
-        f = Frame('MESSAGE', headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
 
-    def send_simple(self):
+    def test_send_simple(self):
         """ Test a basic send command. """
         dest = '/topic/dest'
 
-        f = Frame('SEND', headers={'destination': dest}, body='Empty')
+        f = Frame(frames.SEND, headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
         # Assert some side-effects
         self.assertIn('message-id', f.headers)
-        self.assertEqual(f.cmd == 'message')
+        self.assertEqual(f.cmd, 'message')
 
-    def send_subscriber_timeout(self):
+    def test_send_subscriber_timeout(self):
         """ Test a send command when one subscriber errs out. """
 
         class TimeoutConnection(object):
