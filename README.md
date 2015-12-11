@@ -6,12 +6,12 @@ CoilMQ
 [![PyPI version](https://badge.fury.io/py/coilmq.svg)](https://badge.fury.io/py/coilmq)
 
 
-CoilMQ is a simple, configurable STOMP message broker (aka STOMP server) written in Python. This project is inspired by the simple design of the Ruby [stompserver project](http://rubyforge.org/projects/stompserver/) by Patrick Hurley and Lionel Bouton. The goal of this project is to provide a well-tested and well-documented Python implementation with a good set of built-in functionality and numerous paths for extensibility.
+CoilMQ is a simple, configurable STOMP message broker (aka STOMP server) written in Python. This project is inspired by the simple design of the Ruby [stompserver project](http://stompserver.rubyforge.org/) by Patrick Hurley and Lionel Bouton. The goal of this project is to provide a well-tested and well-documented Python implementation with a good set of built-in functionality and numerous paths for extensibility.
 
 Now!
 ====
 
-    shell$ easy_install CoilMQ
+    shell$ pip install CoilMQ
     shell$ coilmq -b 0.0.0.0 -p 61613
 
 Jump over to [Getting Started Guide](https://github.com/hozn/coilmq/wiki/Getting-Started) for the slightly longer version.
