@@ -42,7 +42,7 @@ config = ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), 'defaults.cfg'))
 
 
-def init_config(config_file):
+def init_config(config_file=None):
     """
     Initialize the configuration from a config file.
 
