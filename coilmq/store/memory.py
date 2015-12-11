@@ -1,7 +1,6 @@
 """
 Queue storage module that uses thread-safe, in-memory data structures.  
 """
-import threading
 from collections import defaultdict, deque
 
 from coilmq.store import QueueStore
