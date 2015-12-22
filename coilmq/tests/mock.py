@@ -52,6 +52,9 @@ class MockQueueManager(object):
         self.messages = []
         self.transaction_frames = defaultdict(lambda: defaultdict(list))
 
+    def disconnect(self, connection):
+        pass
+
     def subscribe(self, conn, dest):
         self.queues[dest].add(conn)
 
@@ -114,3 +117,6 @@ class MockTopicManager(object):
 
     def send(self, message):
         self.messages.append(message)
+
+    def disconnect(self, connection):
+        pass

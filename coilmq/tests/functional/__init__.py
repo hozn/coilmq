@@ -9,7 +9,6 @@ import socket
 import select
 import threading
 
-
 try:
     from queue import Queue, Empty
 except ImportError:
@@ -22,6 +21,7 @@ from coilmq.util import frames
 from coilmq.server.socket_server import StompServer, StompRequestHandler, ThreadedStompServer
 from coilmq.store.memory import MemoryQueue
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
+from coilmq.protocol import STOMP10
 
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -119,7 +119,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
         if connect:
             client.connect()
             res = client.received_frames.get(timeout=1)
-            self.assertEqual(res.cmd, 'connected')
+            self.assertEqual(res.cmd, frames.CONNECTED)
         return client
 
 
@@ -140,7 +140,8 @@ class TestStompServer(ThreadedStompServer):
         StompServer.__init__(self, server_address, StompRequestHandler,
                              authenticator=authenticator,
                              queue_manager=queue_manager,
-                             topic_manager=topic_manager)
+                             topic_manager=topic_manager,
+                             protocol=STOMP10)
 
     def server_activate(self):
         self.ready_event.set()
