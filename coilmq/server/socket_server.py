@@ -60,7 +60,8 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         self.engine = StompEngine(connection=self,
                                   authenticator=self.server.authenticator,
                                   queue_manager=self.server.queue_manager,
-                                  topic_manager=self.server.topic_manager)
+                                  topic_manager=self.server.topic_manager,
+                                  protocol=self.server.protocol)
 
     def handle(self):
         """
@@ -132,7 +133,8 @@ class StompServer(TCPServer):
     # leave TIME_WAIT after unclean disconnect).
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass=None, timeout=3.0, authenticator=None, queue_manager=None, topic_manager=None):
+    def __init__(self, server_address, RequestHandlerClass=None, timeout=3.0,
+                 authenticator=None, queue_manager=None, topic_manager=None, protocol=None):
         """
         Extension to C{TCPServer} constructor to provide mechanism for providing implementation classes.
 
@@ -151,6 +153,7 @@ class StompServer(TCPServer):
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
+        self.protocol = protocol
         self._serving_event = threading.Event()
         self._shutdown_request_event = threading.Event()
         TCPServer.__init__(self, server_address, RequestHandlerClass)

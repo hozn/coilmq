@@ -41,7 +41,7 @@ class EngineTest(unittest.TestCase):
 
     def _connect(self):
         """ Call the engine connect() method so that we have a valid 'session'. """
-        self.engine.connect(Frame('CONNECT'))
+        self.engine.process_frame(Frame('CONNECT'))
 
     def assertErrorFrame(self, frame, msgsub):
         """ Assert that the passed in frame is an error frame and that message contains specified
