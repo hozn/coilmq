@@ -22,7 +22,7 @@ ACK = 'ACK'
 DISCONNECT = 'DISCONNECT'
 
 VALID_COMMANDS = ['message', 'connect', 'connected', 'error', 'send',
-                  'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect', 'nack']
+                  'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect', 'nack', 'stomp']
 
 
 class STOMP(object):
@@ -31,6 +31,9 @@ class STOMP(object):
 
     def __init__(self, engine):
         self.engine = engine
+
+    def stomp(self, frame):
+        self.connect(frame)
 
     @abc.abstractmethod
     def process_frame(self, frame):
@@ -89,7 +92,7 @@ class STOMP10(STOMP):
 
         method = getattr(self, cmd_method, None)
 
-        if not self.engine.connected and method != self.connect:
+        if not self.engine.connected and method not in (self.connect, self.stomp):
             raise ProtocolError("Not connected.")
 
         try:
