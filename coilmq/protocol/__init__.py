@@ -1,6 +1,6 @@
 import abc
 import uuid
-import threading
+import socket
 import datetime
 
 from coilmq.exception import ProtocolError, AuthError
@@ -247,7 +247,7 @@ class STOMP10(STOMP):
 
 class STOMP11(STOMP10):
 
-    SUPPORTED = {'1.0', '1.1'}
+    SUPPORTED_VERSIONS = {'1.0', '1.1'}
 
     def __init__(self, engine, send_heartbeat_interval=100, receive_heartbeat_interval=100, *args, **kwargs):
         super(STOMP11, self).__init__(engine)
@@ -307,9 +307,9 @@ class STOMP11(STOMP10):
         client_versions = frame.headers.get('accept-version')
         if not client_versions:
             raise ProtocolError('No version specified')
-        common = set(client_versions.split(',')) & self.SUPPORTED
+        common = set(client_versions.split(',')) & self.SUPPORTED_VERSIONS
         if not common:
-            versions = ','.join(self.SUPPORTED)
+            versions = ','.join(self.SUPPORTED_VERSIONS)
             self.engine.connection.send_frame(Frame(
                     frames.ERROR,
                     headers={'version': versions, 'content-type': frames.TEXT_PLAIN},
@@ -323,4 +323,17 @@ class STOMP11(STOMP10):
                 self.engine.protocol.connect(frame, response=response)
 
 
-PROTOCOL_MAP = {'1.0': STOMP10, '1.1': STOMP11}
+class STOMP12(STOMP11):
+
+    SUPPORTED_VERSIONS = STOMP11.SUPPORTED_VERSIONS.union({'1.2', })
+
+    def connect(self, frame, response=None):
+        host = frame.headers.get('host')
+        if not host:
+            raise ProtocolError('"host" header is required')
+        if host != socket.getfqdn():
+            raise ProtocolError('Virtual hosting is not supported or host is unknown')
+        super(STOMP12, self).connect(frame, response)
+
+
+PROTOCOL_MAP = {'1.0': STOMP10, '1.1': STOMP11, '1.2': STOMP12}

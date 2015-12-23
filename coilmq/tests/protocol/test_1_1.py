@@ -1,34 +1,16 @@
 import time
-import unittest
 from contextlib import contextmanager
 
-from coilmq.engine import StompEngine
-from coilmq.exception import ProtocolError
 from coilmq.protocol import STOMP11
-from coilmq.tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, MockTopicManager)
+from coilmq.tests.protocol import ProtocolBaseTestCase
 from coilmq.util.frames import Frame, ErrorFrame
 from coilmq.util import frames
 
 
-class STOMP11TestCase(unittest.TestCase):
+class STOMP11TestCase(ProtocolBaseTestCase):
 
-    def setUp(self):
-        self.qm = MockQueueManager()
-        self.tm = MockTopicManager()
-        self.conn = MockConnection()
-        self.auth = MockAuthenticator()
-        self.engine = StompEngine(connection=self.conn,
-                                  queue_manager=self.qm,
-                                  topic_manager=self.tm,
-                                  authenticator=None)
-
-        self.engine.protocol = STOMP11(self.engine, send_heartbeat_interval=1)
-
-    def get_engine(self):
-        return StompEngine(connection=self.conn,
-                           queue_manager=self.qm,
-                           topic_manager=self.tm,
-                           authenticator=None)
+    def get_protocol(self):
+        return STOMP11
 
     @contextmanager
     def with_heartbeat(self, protocol):
@@ -78,6 +60,3 @@ class STOMP11TestCase(unittest.TestCase):
         self.assertIsInstance(self.conn.frames[-1], ErrorFrame)
         self.engine.process_frame(Frame(frames.NACK, headers={'message-id': 1}))
         self.assertIsInstance(self.conn.frames[-1], ErrorFrame)
-
-    def tearDown(self):
-        self.conn.reset()
