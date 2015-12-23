@@ -317,9 +317,9 @@ class STOMP11(STOMP10):
             ))
         else:
             response.headers['version'] = max(common)
-            protocol = PROTOCOL_MAP[response.headers['version']]
-            if not isinstance(self, protocol):
-                self.engine.protocol = protocol()
+            protocol_class = PROTOCOL_MAP[response.headers['version']]
+            if type(self) is not protocol_class:
+                self.engine.protocol = protocol_class(self.engine)
                 self.engine.protocol.connect(frame, response=response)
 
 
