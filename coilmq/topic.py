@@ -25,6 +25,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+lock = threading.RLock()
+
 
 class TopicManager(object):
     """
@@ -52,7 +54,7 @@ class TopicManager(object):
 
         # TODO: If we want durable topics, we'll need a store for topics.
 
-    @synchronized
+    @synchronized(lock)
     def close(self):
         """
         Closes all resources associated with this topic manager.
@@ -61,7 +63,7 @@ class TopicManager(object):
         """
         self.log.info("Shutting down topic manager.")
 
-    @synchronized
+    @synchronized(lock)
     def subscribe(self, connection, destination):
         """
         Subscribes a connection to the specified topic destination. 
@@ -75,7 +77,7 @@ class TopicManager(object):
         self.log.debug("Subscribing %s to %s" % (connection, destination))
         self._topics[destination].add(connection)
 
-    @synchronized
+    @synchronized(lock)
     def unsubscribe(self, connection, destination):
         """
         Unsubscribes a connection from the specified topic destination. 
@@ -93,7 +95,7 @@ class TopicManager(object):
         if not self._topics[destination]:
             del self._topics[destination]
 
-    @synchronized
+    @synchronized(lock)
     def disconnect(self, connection):
         """
         Removes a subscriber connection.
@@ -109,7 +111,7 @@ class TopicManager(object):
                 # This won't trigger RuntimeError, since we're using keys()
                 del self._topics[dest]
 
-    @synchronized
+    @synchronized(lock)
     def send(self, message):
         """
         Sends a message to all subscribers of destination.

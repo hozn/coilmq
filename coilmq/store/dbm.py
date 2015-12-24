@@ -41,6 +41,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+lock = threading.RLock()
+
 
 def make_dbm():
     """
@@ -140,7 +142,7 @@ class DbmQueue(QueueStore):
         self.frame_store = shelve.open(os.path.join(
             self.data_dir, 'frames'), writeback=False)
 
-    @synchronized
+    @synchronized(lock)
     def enqueue(self, destination, frame):
         """
         Store message (frame) for specified destinationination.
@@ -169,7 +171,7 @@ class DbmQueue(QueueStore):
         self._opcount += 1
         self._sync()
 
-    @synchronized
+    @synchronized(lock)
     def dequeue(self, destination):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
@@ -194,7 +196,7 @@ class DbmQueue(QueueStore):
 
         return frame
 
-    @synchronized
+    @synchronized(lock)
     def has_frames(self, destination):
         """
         Whether specified queue has any frames.
@@ -207,7 +209,7 @@ class DbmQueue(QueueStore):
         """
         return (destination in self.queue_metadata) and bool(self.queue_metadata[destination]['frames'])
 
-    @synchronized
+    @synchronized(lock)
     def size(self, destination):
         """
         Size of the queue for specified destination.
@@ -223,7 +225,7 @@ class DbmQueue(QueueStore):
         else:
             return len(self.queue_metadata[destination]['frames'])
 
-    @synchronized
+    @synchronized(lock)
     def close(self):
         """
         Closes the databases, freeing any resources (and flushing any unsaved changes to disk).
@@ -231,7 +233,7 @@ class DbmQueue(QueueStore):
         self.queue_metadata.close()
         self.frame_store.close()
 
-    @synchronized
+    @synchronized(lock)
     def destinations(self):
         """
         Provides a list of destinations (queue "addresses") available.

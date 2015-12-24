@@ -4,6 +4,8 @@ Tools to facilitate developing thread-safe components.
 
 import abc
 import threading
+import functools
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,27 +21,23 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-def synchronized(func):
-    """
-    Decorator to lock and unlock a method (Phillip J. Eby).
+def synchronized(lock):
+    def synchronize(func):
+        """
+        Decorator to lock and unlock a method (Phillip J. Eby).
 
-    This function is to be used with object instance methods; the object must
-    have a _lock variable (of type C{threading.Lock} or C{threading.RLock}).
+        This function is to be used with object instance methods; the object must
+        have a _lock variable (of type C{threading.Lock} or C{threading.RLock}).
 
-    @param func: Method to decorate
-    @type func: C{callable}
-    """
-
-    def wrapper(self, *__args, **__kw):
-        self._lock.acquire()
-        try:
-            return func(self, *__args, **__kw)
-        finally:
-            self._lock.release()
-    wrapper.__name__ = func.__name__
-    wrapper.__dict__ = func.__dict__
-    wrapper.__doc__ = func.__doc__
-    return wrapper
+        @param func: Method to decorate
+        @type func: C{callable}
+        """
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with lock:
+                return func(*args, **kwargs)
+        return wrapper
+    return synchronize
 
 
 class CoilTimerBase(object):

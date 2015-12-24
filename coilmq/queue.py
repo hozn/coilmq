@@ -26,6 +26,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+lock = threading.RLock()
+
 
 class QueueManager(object):
     """
@@ -93,7 +95,7 @@ class QueueManager(object):
         self._transaction_frames = defaultdict(lambda: defaultdict(list))
         self._pending = {}
 
-    @synchronized
+    @synchronized(lock)
     def close(self):
         """
         Closes all resources/backends associated with this queue manager.
@@ -108,7 +110,7 @@ class QueueManager(object):
         if hasattr(self.queue_scheduler, 'close'):
             self.queue_scheduler.close()
 
-    @synchronized
+    @synchronized(lock)
     def subscriber_count(self, destination=None):
         """
         Returns a count of the number of subscribers.
@@ -128,7 +130,7 @@ class QueueManager(object):
                 total += len(self._queues[k])
             return total
 
-    @synchronized
+    @synchronized(lock)
     def subscribe(self, connection, destination):
         """
         Subscribes a connection to the specified destination (topic or queue). 
@@ -143,7 +145,7 @@ class QueueManager(object):
         self._queues[destination].add(connection)
         self._send_backlog(connection, destination)
 
-    @synchronized
+    @synchronized(lock)
     def unsubscribe(self, connection, destination):
         """
         Unsubscribes a connection from a destination (topic or queue).
@@ -161,7 +163,7 @@ class QueueManager(object):
         if not self._queues[destination]:
             del self._queues[destination]
 
-    @synchronized
+    @synchronized(lock)
     def disconnect(self, connection):
         """
         Removes a subscriber connection, ensuring that any pending commands get requeued.
@@ -183,7 +185,7 @@ class QueueManager(object):
                 # This won't trigger RuntimeError, since we're using keys()
                 del self._queues[dest]
 
-    @synchronized
+    @synchronized(lock)
     def send(self, message):
         """
         Sends a MESSAGE frame to an eligible subscriber connection.
@@ -219,7 +221,7 @@ class QueueManager(object):
                            (message, selected))
             self._send_frame(selected, message)
 
-    @synchronized
+    @synchronized(lock)
     def ack(self, connection, frame, transaction=None):
         """
         Acknowledge receipt of a message.
@@ -256,7 +258,7 @@ class QueueManager(object):
         else:
             self.log.debug("No pending messages for %s" % connection)
 
-    @synchronized
+    @synchronized(lock)
     def resend_transaction_frames(self, connection, transaction):
         """
         Resend the messages that were ACK'd in specified transaction.
@@ -272,7 +274,7 @@ class QueueManager(object):
         for frame in self._transaction_frames[connection][transaction]:
             self.send(frame)
 
-    @synchronized
+    @synchronized(lock)
     def clear_transaction_frames(self, connection, transaction):
         """
         Clears out the queued ACK frames for specified transaction. 
