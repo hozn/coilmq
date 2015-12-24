@@ -37,7 +37,7 @@ class QueueStore(object):
 
     def __init__(self):
         """
-        A base constructor that sets up logging and the lock used by synchronized decorator.
+        A base constructor that sets up logging.
 
         If you extend this class, you should either call this method or at minimum make sure these values
         get set.

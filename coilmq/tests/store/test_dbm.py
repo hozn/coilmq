@@ -10,7 +10,7 @@ import time
 from coilmq.util.frames import Frame
 from coilmq.store.dbm import DbmQueue
 
-from coilmq.tests.store import CommonQueueTestsMixin
+from coilmq.tests.store import CommonQueueTest
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -27,7 +27,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class DbmQueueTest(unittest.TestCase, CommonQueueTestsMixin):
+class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
     def setUp(self):
         self.data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
