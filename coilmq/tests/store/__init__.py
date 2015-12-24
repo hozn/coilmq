@@ -1,6 +1,7 @@
 """
 Queue storage tests.
 """
+import unittest
 import uuid
 
 from coilmq.util.frames import Frame
@@ -20,7 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class CommonQueueTestsMixin(object):
+class CommonQueueTest(object):
     """
     An abstract set of base tests for queue storage engines.
 
@@ -73,17 +74,17 @@ class CommonQueueTestsMixin(object):
                        'message-id': str(uuid.uuid4())}, body='message-3')
         self.store.enqueue(dest, frame3)
 
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 2
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 2)
 
         rframe1 = self.store.dequeue(dest)
-        assert frame1 == rframe1
+        self.assertEqual(frame1, rframe1)
 
         rframe2 = self.store.dequeue(dest)
-        assert frame3 == rframe2
+        self.assertEqual(frame3, rframe2)
 
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
+        self.assertFalse(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 0)
 
     def test_dequeue_order(self):
         """ Test the order that frames are returned by dequeue() method. """
@@ -101,26 +102,25 @@ class CommonQueueTestsMixin(object):
                        'message-id': str(uuid.uuid4())}, body='message-3')
         self.store.enqueue(dest, frame3)
 
-        assert self.store.has_frames(dest) == True
-        assert self.store.size(dest) == 3
+        self.assertTrue(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 3)
 
         rframe1 = self.store.dequeue(dest)
-        assert frame1 == rframe1
+        self.assertEqual(frame1, rframe1)
 
         rframe2 = self.store.dequeue(dest)
-        assert frame2 == rframe2
+        self.assertEqual(frame2, rframe2)
 
         rframe3 = self.store.dequeue(dest)
-        assert frame3 == rframe3
+        self.assertEqual(frame3, rframe3)
 
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
+        self.assertFalse(self.store.has_frames(dest))
+        self.assertEqual(self.store.size(dest), 0)
 
     def test_dequeue_empty(self):
         """ Test dequeue() with empty queue. """
 
-        r = self.store.dequeue('/queue/nonexist')
-        assert r is None
+        self.assertIsNone(self.store.dequeue('/queue/nonexist'))
 
-        assert self.store.has_frames('/queue/nonexist') == False
-        assert self.store.size('/queue/nonexist') == 0
+        self.assertFalse(self.store.has_frames('/queue/nonexist'))
+        self.assertEqual(self.store.size('/queue/nonexist'), 0)

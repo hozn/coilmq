@@ -15,7 +15,7 @@ from coilmq.store.sa import meta, model
 from coilmq.store.sa import init_model
 from coilmq.store.sa import SAQueue
 
-from coilmq.tests.store import CommonQueueTestsMixin
+from coilmq.tests.store import CommonQueueTest
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -32,7 +32,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SAQueueTest(unittest.TestCase, CommonQueueTestsMixin):
+class SAQueueTest(CommonQueueTest, unittest.TestCase):
 
     def setUp(self):
         engine = create_engine('sqlite:///:memory:', echo=True)

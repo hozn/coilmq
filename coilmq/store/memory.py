@@ -1,6 +1,7 @@
 """
 Queue storage module that uses thread-safe, in-memory data structures.  
 """
+import threading
 from collections import defaultdict, deque
 
 from coilmq.store import QueueStore
@@ -20,6 +21,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+lock = threading.RLock()
+
 
 class MemoryQueue(QueueStore):
     """
@@ -36,18 +39,18 @@ class MemoryQueue(QueueStore):
         QueueStore.__init__(self)
         self._messages = defaultdict(deque)
 
-    @synchronized
+    @synchronized(lock)
     def enqueue(self, destination, frame):
         self._messages[destination].appendleft(frame)
 
-    @synchronized
+    @synchronized(lock)
     def dequeue(self, destination):
         try:
             return self._messages[destination].pop()
         except IndexError:
             return None
 
-    @synchronized
+    @synchronized(lock)
     def size(self, destination):
         """
         Size of the queue for specified destination.
@@ -57,12 +60,12 @@ class MemoryQueue(QueueStore):
         """
         return len(self._messages[destination])
 
-    @synchronized
+    @synchronized(lock)
     def has_frames(self, destination):
         """ Whether this queue has frames for the specified destination. """
         return bool(self._messages[destination])
 
-    @synchronized
+    @synchronized(lock)
     def destinations(self):
         """
         Provides a list of destinations (queue "addresses") available.

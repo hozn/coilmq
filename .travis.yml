@@ -7,8 +7,9 @@ python:
 #  - "nightly" # currently points to 3.6-dev
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
-  - pip install -r test_requirements.txt
+  - pip install --upgrade pip
+  - pip install -v -r requirements.txt
+  - pip install -v -r test_requirements.txt
   - pip install coveralls
 # command to run tests
 script: py.test -v

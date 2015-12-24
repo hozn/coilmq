@@ -21,6 +21,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+lock = threading.RLock()
+
 
 class QueueStore(object):
     """
@@ -35,17 +37,16 @@ class QueueStore(object):
 
     def __init__(self):
         """
-        A base constructor that sets up logging and the lock used by synchronized decorator.
+        A base constructor that sets up logging.
 
         If you extend this class, you should either call this method or at minimum make sure these values
         get set.
         """
         self.log = logging.getLogger('%s.%s' % (
             self.__module__, self.__class__.__name__))
-        self._lock = threading.RLock()
 
     @abc.abstractmethod
-    @synchronized
+    @synchronized(lock)
     def enqueue(self, destination, frame):
         """
         Store message (frame) for specified destinationination.
@@ -58,7 +59,7 @@ class QueueStore(object):
         """
 
     @abc.abstractmethod
-    @synchronized
+    @synchronized(lock)
     def dequeue(self, destination):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
@@ -70,7 +71,7 @@ class QueueStore(object):
         @rtype: C{stompclient.frame.Frame} 
         """
 
-    @synchronized
+    @synchronized(lock)
     def requeue(self, destination, frame):
         """
         Requeue a message (frame) for storing at specified destinationination.
@@ -83,7 +84,7 @@ class QueueStore(object):
         """
         self.enqueue(destination, frame)
 
-    @synchronized
+    @synchronized(lock)
     def size(self, destination):
         """
         Size of the queue for specified destination.
@@ -96,7 +97,7 @@ class QueueStore(object):
         """
         raise NotImplementedError()
 
-    @synchronized
+    @synchronized(lock)
     def has_frames(self, destination):
         """
         Whether specified destination has any frames.
@@ -112,7 +113,7 @@ class QueueStore(object):
         """
         return self.size(destination) > 0
 
-    @synchronized
+    @synchronized(lock)
     def destinations(self):
         """
         Provides a set of destinations (queue "addresses") available.
@@ -122,7 +123,7 @@ class QueueStore(object):
         """
         raise NotImplementedError()
 
-    @synchronized
+    @synchronized(lock)
     def close(self):
         """
         May be implemented to perform any necessary cleanup operations when store is closed.
