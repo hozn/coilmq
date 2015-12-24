@@ -18,8 +18,8 @@ Jump over to [Getting Started Guide](https://github.com/hozn/coilmq/wiki/Getting
 
 Current features
 ================
-* STOPM v1.0
-* Works on different versions of Python (2.7, 3.4, 3.5)
+* Support for STOPM v{1.0, 1.1, 1.2}
+* Works on Python {2.7, 3.4, 3.5}
 * Extendable via custom components
 
 Status and Goals
@@ -28,11 +28,9 @@ The project is currently in beta state and the tip branch in repository should a
 
 At a high-level, this project aims to:
 
-* Provide a correct and functional STOMP implementation (see note below on v1.1).
+* Provide a correct and functional STOMP implementation
 * Be well documented.
 * Be easy to extend. (e.g. write new auth backend, queue storage)
 * Be well tested.
-
-Note that as of 3/31/2011 there is a version 1.1 of the STOMP protocol. Currently this is not supported by CoilMQ (but the plan is to add support).
 
 Take a look at the [Roadmap](https://github.com/hozn/coilmq/wiki/Roadmap) for more details.
