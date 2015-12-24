@@ -10,7 +10,7 @@ except ImportError:
 
 from coilmq.store import QueueStore
 from coilmq.util.concurrency import synchronized
-from coilmq.util.frames import Frame
+from coilmq.config import config
 
 __authors__ = ('"Hans Lellelid" <hans@xmpl.org>', '"Alexander Zhukov" <zhukovaa90@gmail.com>')
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -27,6 +27,10 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 lock = threading.RLock()
+
+
+def make_redis_store(cfg=None):
+    return RedisQueueStore(redis_conn=redis.Redis(**(cfg or config)['redis']))
 
 
 class RedisQueueStore(QueueStore):
