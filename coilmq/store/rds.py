@@ -30,7 +30,8 @@ lock = threading.RLock()
 
 
 def make_redis_store(cfg=None):
-    return RedisQueueStore(redis_conn=redis.Redis(**(cfg or config)['redis']))
+    return RedisQueueStore(
+        redis_conn=redis.Redis(**dict((cfg or config).items('redis'))))
 
 
 class RedisQueueStore(QueueStore):
