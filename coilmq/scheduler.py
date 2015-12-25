@@ -64,7 +64,7 @@ class QueuePriorityScheduler(object):
         @return: A selected queue destination (name) or None if queues C{dict} is empty.
         @rtype: C{str}
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class RandomSubscriberScheduler(SubscriberPriorityScheduler):

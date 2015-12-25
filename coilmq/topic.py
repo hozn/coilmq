@@ -61,7 +61,7 @@ class TopicManager(object):
 
         (Currently this is simply here for API conformity w/ L{coilmq.queue.QueueManager}.)
         """
-        self.log.info("Shutting down topic manager.")
+        self.log.info("Shutting down topic manager.")  # pragma: no cover
 
     @synchronized(lock)
     def subscribe(self, connection, destination):

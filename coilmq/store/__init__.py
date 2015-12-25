@@ -121,7 +121,7 @@ class QueueStore(object):
         @return: A list of the detinations available.
         @rtype: C{set}
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @synchronized(lock)
     def close(self):
