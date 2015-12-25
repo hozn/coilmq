@@ -53,7 +53,7 @@ setup(
     package_data={'coilmq': ['config/*.cfg*', 'tests/resources/*']},
     zip_safe=False,  # We use resource_filename for logging configuration and some unit tests.
     include_package_data=True,
-    tests_require=read('requirements/build.txt').splitlines(),
+    tests_require=read('requirements/test.txt').splitlines(),
     cmdclass={'test': PyTest},
     install_requires=read('requirements/prod.txt').splitlines(),
     extras_require={
