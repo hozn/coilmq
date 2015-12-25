@@ -83,11 +83,11 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                         self.engine.process_frame(frame)
                         if not self.engine.connected:
                             raise ClientDisconnected()
-                except socket.timeout:
+                except socket.timeout:  # pragma: no cover
                     pass
         except ClientDisconnected:
             self.log.debug("Client disconnected, discontinuing read loop.")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             self.log.error("Error receiving data (unbinding): %s" % e)
             self.engine.unbind()
             raise
@@ -108,7 +108,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         @type frame: C{stompclient.frame.Frame}
         """
         packed = frame.pack()
-        if self.debug:
+        if self.debug:  # pragma: no cover
             self.log.debug("SEND: %r" % packed)
         self.request.sendall(packed)
 

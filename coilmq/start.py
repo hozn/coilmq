@@ -146,7 +146,7 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
     except (KeyboardInterrupt, SystemExit):
         logger.info("Stomp server stopped by user interrupt.")
         raise SystemExit()
-    except Exception as e:
+    except Exception as e:  # pragma: no cover
         logger.error("Stomp server stopped due to error: %s" % e)
         logger.exception(e)
         raise SystemExit()

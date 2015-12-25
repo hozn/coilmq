@@ -37,43 +37,43 @@ class STOMP(object):
 
     @abc.abstractmethod
     def process_frame(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def connect(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def send(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def subscribe(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def unsubscribe(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def begin(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def commit(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def abort(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def ack(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def disconnect(self, frame):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class STOMP10(STOMP):
@@ -109,7 +109,7 @@ class STOMP10(STOMP):
             self.engine.log.exception(e)
             try:
                 self.engine.connection.send_frame(ErrorFrame(str(e), str(e)))
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 self.engine.log.error("Could not send error frame: %s" % e)
                 self.engine.log.exception(e)
         else:

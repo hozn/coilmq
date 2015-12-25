@@ -1,6 +1,6 @@
 try:
     import redis
-except ImportError:
+except ImportError:  # pragma: no cover
     import sys; sys.exit('please, install redis-py package to use redis-store')
 import threading
 try:
