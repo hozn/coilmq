@@ -1,8 +1,8 @@
 import socket
 
 from coilmq.protocol import STOMP11
-from coilmq.tests.protocol import ProtocolBaseTestCase
 from coilmq.util import frames
+from tests.protocol import ProtocolBaseTestCase
 
 
 class STOMP12TestCase(ProtocolBaseTestCase):

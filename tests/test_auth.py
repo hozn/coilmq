@@ -49,7 +49,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test the loading store from config file path.
         """
-        filename = resource_filename('coilmq.tests.resources', 'auth.ini')
+        filename = resource_filename('tests.resources', 'auth.ini')
         auth = SimpleAuthenticator()
         auth.from_configfile(filename)
         assert auth.authenticate('juniper', 'b3rr1es') == True
@@ -61,7 +61,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store from file-like object.
         """
-        with open(resource_filename('coilmq.tests.resources', 'auth.ini'), 'r') as fp:
+        with open(resource_filename('tests.resources', 'auth.ini'), 'r') as fp:
             auth = SimpleAuthenticator()
             auth.from_configfile(fp)
 
@@ -74,8 +74,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store with invalid file path.
         """
-        filename = resource_filename(
-            'coilmq.tests.resources', 'auth-invlaid.ini')
+        filename = resource_filename('tests.resources', 'auth-invlaid.ini')
         auth = SimpleAuthenticator()
         try:
             auth.from_configfile(filename)

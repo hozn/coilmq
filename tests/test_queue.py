@@ -4,12 +4,11 @@ Tests for queue-related classes.
 import unittest
 import uuid
 
-from coilmq.util.frames import Frame
-from coilmq.util import frames
 from coilmq.queue import QueueManager
 from coilmq.store.memory import MemoryQueue
-
-from coilmq.tests.mock import MockConnection
+from coilmq.util import frames
+from coilmq.util.frames import Frame
+from tests.mock import MockConnection
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

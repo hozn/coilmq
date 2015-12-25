@@ -1,21 +1,16 @@
 """
 Test SQLAlchemy storage.
 """
-import unittest
-import tempfile
-import shutil
-import uuid
-import time
 import datetime
+import unittest
 
 from sqlalchemy import create_engine
 
-from coilmq.util.frames import Frame
-from coilmq.store.sa import meta, model
-from coilmq.store.sa import init_model
 from coilmq.store.sa import SAQueue
-
-from coilmq.tests.store import CommonQueueTest
+from coilmq.store.sa import init_model
+from coilmq.store.sa import meta, model
+from coilmq.util.frames import Frame
+from tests.store import CommonQueueTest
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
