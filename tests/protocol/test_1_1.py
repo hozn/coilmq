@@ -2,9 +2,9 @@ import time
 from contextlib import contextmanager
 
 from coilmq.protocol import STOMP11
-from coilmq.tests.protocol import ProtocolBaseTestCase
-from coilmq.util.frames import Frame, ErrorFrame
 from coilmq.util import frames
+from coilmq.util.frames import Frame, ErrorFrame
+from tests.protocol import ProtocolBaseTestCase
 
 
 class STOMP11TestCase(ProtocolBaseTestCase):

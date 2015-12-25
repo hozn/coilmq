@@ -7,8 +7,7 @@ import os.path
 import shutil
 
 from coilmq.store.dbm import DbmQueue
-
-from coilmq.tests.test_queue import QueueManagerTest
+from tests.test_queue import QueueManagerTest
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

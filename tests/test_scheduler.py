@@ -4,7 +4,7 @@ Tests for the scheduler implementation.
 import unittest
 
 from coilmq.scheduler import FavorReliableSubscriberScheduler
-from coilmq.tests.mock import MockConnection
+from tests.mock import MockConnection
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

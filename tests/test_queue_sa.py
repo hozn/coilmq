@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Functional tests that use a SQLite storage backends and default
-scheduler implementations.
+Test of the QueueManager when using a SQLite (SQLAlchemy) backend (store).
 """
 import os
 import os.path
 
 from sqlalchemy import engine_from_config
 
-from coilmq.queue import QueueManager
-
 from coilmq.store.sa import SAQueue, init_model
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
-
-from coilmq.tests.functional.test_basic import BasicTest
+from tests.test_queue import QueueManagerTest
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -30,21 +25,22 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class BasicSqlAlchemyStoreTest(BasicTest):
+class SAQueueManagerTest(QueueManagerTest):
     """ Run all the tests from BasicTest using a SQLite database store. """
 
-    def _queuemanager(self):
+    def _queuestore(self):
         """
-        Returns the configured L{QueueManager} instance to use.
+        Returns the configured L{QueueStore} instance to use.
+
+        Can be overridden by subclasses that wish to change out any queue store parameters.
+
+        @rtype: L{QueueStore}
         """
         data_dir = os.path.join(os.getcwd(), 'data')
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
+
         configuration = {'qstore.sqlalchemy.url': 'sqlite:///data/coilmq.db'}
         engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
         init_model(engine, drop=True)
-        store = SAQueue()
-
-        return QueueManager(store=store,
-                            subscriber_scheduler=FavorReliableSubscriberScheduler(),
-                            queue_scheduler=RandomQueueScheduler())
+        return SAQueue()

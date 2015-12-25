@@ -4,11 +4,9 @@ Test memory queue storage.
 import unittest
 import uuid
 
-
-from coilmq.util.frames import Frame
 from coilmq.store.memory import MemoryQueue
-
-from coilmq.tests.store import CommonQueueTest
+from coilmq.util.frames import Frame
+from tests.store import CommonQueueTest
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

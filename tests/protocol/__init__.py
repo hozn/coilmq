@@ -1,9 +1,9 @@
 import unittest
 
 from coilmq.engine import StompEngine
-from coilmq.protocol import STOMP11, STOMP12
-from coilmq.tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, MockTopicManager)
+from coilmq.protocol import STOMP12
 from coilmq.util.frames import Frame
+from tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, MockTopicManager)
 
 
 class ProtocolBaseTestCase(unittest.TestCase):

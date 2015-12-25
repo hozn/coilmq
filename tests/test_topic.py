@@ -1,13 +1,13 @@
 """
 Tests for topic-related functionality.
 """
-import unittest
 import socket
+import unittest
 
+from coilmq.topic import TopicManager
 from coilmq.util import frames
 from coilmq.util.frames import Frame
-from coilmq.topic import TopicManager
-from coilmq.tests.mock import MockConnection
+from tests.mock import MockConnection
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

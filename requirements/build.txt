@@ -1,4 +1,7 @@
+-r prod.txt
+
 SQLAlchemy
 fakeredis
+mock
 pytest
 pytest-cov

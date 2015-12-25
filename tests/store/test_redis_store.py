@@ -12,7 +12,7 @@ try:
 except ImportError:
     import mock
 
-from coilmq.tests.store import CommonQueueTest
+from tests.store import CommonQueueTest
 from coilmq.store.rds import RedisQueueStore, make_redis_store
 
 
