@@ -1,3 +1,5 @@
 include docs/news.txt
 include coilmq/config/defaults.cfg
 include coilmq/config/coilmq.cfg-sample
+include coilmq/config/coilmq.cfg-sample
+recursive-include requirements *.txt
