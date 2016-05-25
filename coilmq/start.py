@@ -4,8 +4,6 @@ Entrypoint for starting the application.
 """
 import os
 import logging
-
-
 import time
 import threading
 from contextlib import contextmanager
