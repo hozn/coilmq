@@ -2,13 +2,22 @@
 """
 Entrypoint for starting the application.
 """
+import os
 import logging
+
+
 import time
 import threading
 from contextlib import contextmanager
 
-import daemon as pydaemon
-import pid
+is_nt = os.name == 'nt'
+
+if not is_nt:
+    import daemon as pydaemon
+    import pid
+else:
+    pydaemon = pid = None
+
 import click
 
 from coilmq.config import config as global_config, init_config, init_logging, resolve_name
@@ -146,7 +155,7 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
     except (KeyboardInterrupt, SystemExit):
         logger.info("Stomp server stopped by user interrupt.")
         raise SystemExit()
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         logger.error("Stomp server stopped due to error: %s" % e)
         logger.exception(e)
         raise SystemExit()
@@ -168,6 +177,9 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
 
     if port is not None:
         global_config.set('coilmq', 'listen_port', str(port))
+		
+	if daemon and is_nt:
+	    warnings.warn("Daemon context is not available for NT platform")
 
     # in an on-daemon mode, we use a dummy context objectx
     # so we can use the same run-server code as the daemon version.
@@ -175,7 +187,7 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
                                      gid=gid,
                                      pidfile=pid.PidFile(pidname=pidfile) if pidfile else None,
                                      umask=int(umask, 8),
-                                     working_directory=rundir) if daemon else contextmanager(lambda: (yield))()
+                                     working_directory=rundir) if daemon and pydaemon else contextmanager(lambda: (yield))()
 
     context_serve(context, config, host, port, logfile, debug, daemon, uid, gid, pidfile, umask, rundir)
 
