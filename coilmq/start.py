@@ -2,13 +2,22 @@
 """
 Entrypoint for starting the application.
 """
+import os
 import logging
+
+
 import time
 import threading
 from contextlib import contextmanager
 
-import daemon as pydaemon
-import pid
+is_nt = os.name == 'nt'
+
+if not is_nt:
+    import daemon as pydaemon
+    import pid
+else:
+    pydaemon = pid = None
+
 import click
 
 from coilmq.config import config as global_config, init_config, init_logging, resolve_name
@@ -61,13 +70,13 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
 
     queue_store_factory = resolve_name(config.get('coilmq', 'qstore.factory'))
     subscriber_scheduler_factory = resolve_name(config.get(
-        'coilmq', 'scheduler.subscriber_priority_factory'))
+            'coilmq', 'scheduler.subscriber_priority_factory'))
     queue_scheduler_factory = resolve_name(config.get(
-        'coilmq', 'scheduler.queue_priority_factory'))
+            'coilmq', 'scheduler.queue_priority_factory'))
 
     if config.has_option('coilmq', 'auth.factory'):
         authenticator_factory = resolve_name(
-            config.get('coilmq', 'auth.factory'))
+                config.get('coilmq', 'auth.factory'))
         authenticator = authenticator_factory()
     else:
         authenticator = None
@@ -120,13 +129,13 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
 
             if debug:
                 poll_interval = float(global_config.get(
-                    'coilmq', 'debug.stats_poll_interval'))
+                        'coilmq', 'debug.stats_poll_interval'))
                 if poll_interval:  # Setting poll_interval to 0 effectively disables it.
                     def diagnostic_loop(server):
                         log = logger
                         while True:
                             log.debug(
-                                "Stats heartbeat -------------------------------")
+                                    "Stats heartbeat -------------------------------")
                             store = server.queue_manager.store
                             for dest in store.destinations():
                                 log.debug("Queue %s: size=%s, subscribers=%s" % (
@@ -137,7 +146,7 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
                             time.sleep(poll_interval)
 
                     diagnostic_thread = threading.Thread(
-                        target=diagnostic_loop, name='DiagnosticThread', args=(server,))
+                            target=diagnostic_loop, name='DiagnosticThread', args=(server,))
                     diagnostic_thread.daemon = True
                     diagnostic_thread.start()
 
@@ -146,7 +155,7 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
     except (KeyboardInterrupt, SystemExit):
         logger.info("Stomp server stopped by user interrupt.")
         raise SystemExit()
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         logger.error("Stomp server stopped due to error: %s" % e)
         logger.exception(e)
         raise SystemExit()
@@ -169,13 +178,16 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
     if port is not None:
         global_config.set('coilmq', 'listen_port', str(port))
 
+        if daemon and is_nt:
+            warnings.warn("Daemon context is not available for NT platform")
+
     # in an on-daemon mode, we use a dummy context objectx
     # so we can use the same run-server code as the daemon version.
     context = pydaemon.DaemonContext(uid=uid,
                                      gid=gid,
                                      pidfile=pid.PidFile(pidname=pidfile) if pidfile else None,
                                      umask=int(umask, 8),
-                                     working_directory=rundir) if daemon else contextmanager(lambda: (yield))()
+                                     working_directory=rundir) if daemon and pydaemon else contextmanager(lambda: (yield))()
 
     context_serve(context, config, host, port, logfile, debug, daemon, uid, gid, pidfile, umask, rundir)
 
