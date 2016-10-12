@@ -11,7 +11,16 @@ CoilMQ is a simple, configurable STOMP message broker (aka STOMP server) written
 Now!
 ====
 
+The perferable way to install the CoilMQ is via github, as it will contain the most recent code
+ 
+    $ pip install git+https://github.com/hozn/coilmq.git
+    
+But you can also intall it from PyPI
+
     $ pip install CoilMQ
+    
+Run CoilMQ
+
     $ coilmq -b 0.0.0.0 -p 61613
 
 Jump over to [Getting Started Guide](https://github.com/hozn/coilmq/wiki/Getting-Started) for the slightly longer version.
