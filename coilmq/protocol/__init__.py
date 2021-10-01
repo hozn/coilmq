@@ -307,7 +307,7 @@ class STOMP11(STOMP10):
             raise ProtocolError("No subscription specified for NACK command.")
 
     def _negotiate_protocol(self, frame, response):
-        client_versions = frame.headers.get('accept-version')
+        client_versions = frame.headers.get('accept-version', '1.0')
         if not client_versions:
             raise ProtocolError('No version specified')
         common = set(client_versions.split(',')) & self.SUPPORTED_VERSIONS
