@@ -285,7 +285,8 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.resend_transaction_frames(conn1, transaction='abc')
 
         self.assertEqual(len(conn1.frames), 3, "Expected 3 frames after re-transmit.")
-        self.assertTrue(self.qm._pending[conn1], "Expected 1 pending (waiting on ACK) frame.""")
+        pending = {s for s in self.qm._pending if s.connection == conn1}
+        self.assertEqual(len(pending), 1, "Expected 1 pending (waiting on ACK) frame.""")
 
     def test_disconnect_pending_frames(self):
         """ Test a queue disconnect when there are pending frames. """

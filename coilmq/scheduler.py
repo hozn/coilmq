@@ -35,13 +35,13 @@ class SubscriberPriorityScheduler(object):
         Chooses which subscriber (from list) should recieve specified message.
 
         @param subscribers: Collection of subscribed connections eligible to receive message. 
-        @type subscribers: C{list} of L{coilmq.server.StompConnection}
+        @type subscribers: C{list} of L{coilmq.subscription.Subscription}
 
         @param message: The message to be delivered. 
         @type message: L{stompclient.frame.Frame}
 
         @return: A selected subscriber from the list or None if no subscriber could be chosen (e.g. list is empty).
-        @rtype: L{coilmq.server.StompConnection}
+        @rtype: L{coilmq.subscription.Subscription}
         """
 
 
@@ -75,13 +75,13 @@ class RandomSubscriberScheduler(SubscriberPriorityScheduler):
         Chooses a random connection from subscribers to deliver specified message.
 
         @param subscribers: Collection of subscribed connections to destination. 
-        @type subscribers: C{list} of L{coilmq.server.StompConnection}
+        @type subscribers: C{list} of L{coilmq.subscription.Subscription}
 
         @param message: The message to be delivered. 
         @type message: L{stompclient.frame.Frame}
 
         @return: A random subscriber from the list or None if list is empty.
-        @rtype: L{coilmq.server.StompConnection}
+        @rtype: L{coilmq.subscription.Subscription}
         """
         if not subscribers:
             return None
@@ -99,18 +99,18 @@ class FavorReliableSubscriberScheduler(SubscriberPriorityScheduler):
         subscriber pool to deliver specified message.
 
         @param subscribers: Collection of subscribed connections to destination. 
-        @type subscribers: C{list} of L{coilmq.server.StompConnection}
+        @type subscribers: C{list} of L{coilmq.subscription.Subscription}
 
         @param message: The message to be delivered. 
         @type message: L{stompclient.frame.Frame}
 
         @return: A random subscriber from the list or None if list is empty.
-        @rtype: L{coilmq.server.StompConnection}
+        @rtype: L{coilmq.subscription.Subscription}
         """
         if not subscribers:
             return None
         reliable_subscribers = [
-            s for s in subscribers if s.reliable_subscriber]
+            s for s in subscribers if s.connection.reliable_subscriber]
         if reliable_subscribers:
             return random.choice(reliable_subscribers)
         else:

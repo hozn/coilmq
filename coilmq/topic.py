@@ -7,8 +7,7 @@ Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 import logging
 import threading
 import uuid
-from collections import defaultdict
-
+from coilmq.subscription import SubscriptionManager
 from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -39,8 +38,8 @@ class TopicManager(object):
     the technically correct approach and should increase the chance of this code being
     portable to non-GIL systems.
 
-    @ivar _topics: A dict of registered topics, keyed by destination.
-    @type _topics: C{dict} of C{str} to C{set} of L{coilmq.server.StompConnection}
+    @ivar _subscriptions: A dict of registered topics, keyed by destination.
+    @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.server.StompConnection}
     """
 
     def __init__(self):
@@ -50,7 +49,7 @@ class TopicManager(object):
         # Lock var is required for L{synchornized} decorator.
         self._lock = threading.RLock()
 
-        self._topics = defaultdict(set)
+        self._subscriptions = SubscriptionManager()
 
         # TODO: If we want durable topics, we'll need a store for topics.
 
@@ -64,7 +63,7 @@ class TopicManager(object):
         self.log.info("Shutting down topic manager.")  # pragma: no cover
 
     @synchronized(lock)
-    def subscribe(self, connection, destination):
+    def subscribe(self, connection, destination, id=None):
         """
         Subscribes a connection to the specified topic destination. 
 
@@ -75,10 +74,10 @@ class TopicManager(object):
         @type destination: C{str} 
         """
         self.log.debug("Subscribing %s to %s" % (connection, destination))
-        self._topics[destination].add(connection)
+        self._subscriptions.subscribe(connection, destination, id=id)
 
     @synchronized(lock)
-    def unsubscribe(self, connection, destination):
+    def unsubscribe(self, connection, destination, id=None):
         """
         Unsubscribes a connection from the specified topic destination. 
 
@@ -89,11 +88,7 @@ class TopicManager(object):
         @type destination: C{str} 
         """
         self.log.debug("Unsubscribing %s from %s" % (connection, destination))
-        if connection in self._topics[destination]:
-            self._topics[destination].remove(connection)
-
-        if not self._topics[destination]:
-            del self._topics[destination]
+        self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
     def disconnect(self, connection):
@@ -104,12 +99,7 @@ class TopicManager(object):
         @type connection: L{coilmq.server.StompConnection}
         """
         self.log.debug("Disconnecting %s" % connection)
-        for dest in list(self._topics.keys()):
-            if connection in self._topics[dest]:
-                self._topics[dest].remove(connection)
-            if not self._topics[dest]:
-                # This won't trigger RuntimeError, since we're using keys()
-                del self._topics[dest]
+        self._subscriptions.disconnect(connection)
 
     @synchronized(lock)
     def send(self, message):
@@ -130,9 +120,9 @@ class TopicManager(object):
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
         bad_subscribers = set()
-        for subscriber in self._topics[dest]:
+        for subscriber in self._subscriptions.subscribers(dest):
             try:
-                subscriber.send_frame(message)
+                subscriber.connection.send_frame(message)
             except:
                 self.log.exception(
                     "Error delivering message to subscriber %s; client will be disconnected." % subscriber)
@@ -140,5 +130,5 @@ class TopicManager(object):
                 # while iterating over it.
                 bad_subscribers.add(subscriber)
 
-        for subscriber in bad_subscribers:
-            self.disconnect(subscriber)
+        for s in bad_subscribers:
+            self.unsubscribe(s.connection, dest, id=s.id)

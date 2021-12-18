@@ -99,4 +99,5 @@ class TopicManagerTest(unittest.TestCase):
 
         # Make sure our bad client got disconnected
         # (This might be a bit too intimate.)
-        self.assertNotIn(bad_client, self.tm._topics[dest])
+        connections = {s.connection for s in self.tm._subscriptions.subscribers(dest)}
+        self.assertNotIn(bad_client, connections)

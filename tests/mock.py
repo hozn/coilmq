@@ -33,6 +33,13 @@ class MockConnection(object):
         self.frames = []
 
 
+class MockSubscription(object):
+
+    def __init__(self):
+        self.id = 0
+        self.connection = MockConnection()
+
+
 class MockAuthenticator(auth.Authenticator):
     LOGIN = 'foo'
     PASSCODE = 'bar'
