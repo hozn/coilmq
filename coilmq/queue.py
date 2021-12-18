@@ -128,7 +128,7 @@ class QueueManager(object):
         return self._subscriptions.subscriber_count(destination=destination)
 
     @synchronized(lock)
-    def subscribe(self, connection, destination):
+    def subscribe(self, connection, destination, id=None):
         """
         Subscribes a connection to the specified destination (topic or queue). 
 
@@ -139,11 +139,11 @@ class QueueManager(object):
         @type destination: C{str} 
         """
         self.log.debug("Subscribing %s to %s" % (connection, destination))
-        subscription = self._subscriptions.subscribe(connection, destination)
+        subscription = self._subscriptions.subscribe(connection, destination, id=id)
         self._send_backlog(subscription, destination)
 
     @synchronized(lock)
-    def unsubscribe(self, connection, destination):
+    def unsubscribe(self, connection, destination, id=None):
         """
         Unsubscribes a connection from a destination (topic or queue).
 
@@ -154,7 +154,7 @@ class QueueManager(object):
         @type destination: C{str} 
         """
         self.log.debug("Unsubscribing %s from %s" % (connection, destination))
-        self._subscriptions.unsubscribe(connection, destination)
+        self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
     def disconnect(self, connection):
@@ -209,7 +209,7 @@ class QueueManager(object):
             self._send_frame(selected, message)
 
     @synchronized(lock)
-    def ack(self, connection, frame, transaction=None):
+    def ack(self, connection, frame, transaction=None, id=None):
         """
         Acknowledge receipt of a message.
 
@@ -225,7 +225,7 @@ class QueueManager(object):
         """
         self.log.debug("ACK %s for %s" % (frame, connection))
 
-        subscription = Subscription.from_frame(frame, connection)
+        subscription = Subscription.factory(connection=connection, id=id)
         pending_frame = self._pending.get(subscription, None)
 
         if pending_frame is not None:

@@ -62,10 +62,10 @@ class MockQueueManager(object):
     def disconnect(self, connection):
         pass
 
-    def subscribe(self, conn, dest):
+    def subscribe(self, conn, dest, id=None):
         self.queues[dest].add(conn)
 
-    def unsubscribe(self, conn, dest):
+    def unsubscribe(self, conn, dest, id=None):
         if dest in self.queues:
             self.queues[dest].remove(conn)
 
@@ -115,10 +115,10 @@ class MockTopicManager(object):
         self.topics = defaultdict(set)
         self.messages = []
 
-    def subscribe(self, conn, dest):
+    def subscribe(self, conn, dest, id=None):
         self.topics[dest].add(conn)
 
-    def unsubscribe(self, conn, dest):
+    def unsubscribe(self, conn, dest, id=None):
         if dest in self.topics:
             self.topics[dest].remove(conn)
 
