@@ -235,7 +235,7 @@ class STOMP10(STOMP):
         """
         Handles the ACK command: Acknowledges receipt of a message.
         """
-        if not frame.message_id:
+        if "message-id" not in frame.headers:
             raise ProtocolError("No message-id specified for ACK command.")
         self.engine.queue_manager.ack(self.engine.connection, frame, id=frame.headers.get("id"))
 

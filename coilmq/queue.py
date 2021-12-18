@@ -231,9 +231,10 @@ class QueueManager(object):
         if pending_frame is not None:
             # Make sure that the frame being acknowledged matches
             # the expected frame
-            if pending_frame.headers.get('message-id') != frame.headers.get('message-id'):
+            message_id = frame.headers.get('message-id')
+            if pending_frame.headers.get('message-id') != message_id:
                 self.log.warning(
-                    "Got a ACK for unexpected message-id: %s" % frame.message_id)
+                    "Got a ACK for unexpected message-id: %s", message_id)
                 self.store.requeue(pending_frame.destination, pending_frame)
                 # (The pending frame will be removed further down)
 

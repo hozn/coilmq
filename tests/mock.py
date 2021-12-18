@@ -77,7 +77,7 @@ class MockQueueManager(object):
         if transaction:
             self.transaction_frames[connection][transaction].append(frame)
 
-        self.acks.append(frame.message_id)
+        self.acks.append(frame.headers.get("message-id"))
 
     def resend_transaction_frames(self, connection, transaction):
         """ Resend the messages that were ACK'd in specified transaction.
