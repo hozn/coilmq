@@ -142,6 +142,8 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.subscribe(self.conn, dest)
 
         self.assertEqual(len(self.conn.frames), 1, "Expected frame to be delivered")
+        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        self.assertEqual(subscription, 0)
         self.assertEqual(self.conn.frames[0], f)
 
     def test_send_backlog_err_unreliable(self):
@@ -174,6 +176,10 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.subscribe(self.conn, dest)
 
         self.assertEqual(len(self.conn.frames), 2, "Expected frame to be delivered")
+        for frame in self.conn.frames:
+            subscription = frame.headers.pop("subscription", None)
+            self.assertEqual(subscription, 0)
+
         self.assertListEqual(list(self.conn.frames), [f2, f])
 
     def test_send_reliableFirst(self):
@@ -246,6 +252,8 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.ack(conn1, ack)
 
         self.assertEqual(len(conn1.frames), 2, "Expected 2 frames now, after ACK.")
+        subscription = conn1.frames[1].headers.pop("subscription", None)
+        self.assertEqual(subscription, 0)
         self.assertEqual(conn1.frames[1], m2)
 
     def test_ack_transaction(self):
@@ -280,6 +288,8 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.ack(conn1, ack, transaction='abc')
 
         self.assertEqual(len(conn1.frames), 2, "Expected 2 frames now, after ACK.")
+        subscription = conn1.frames[1].headers.pop("subscription", None)
+        self.assertEqual(subscription, 0)
         self.assertEqual(conn1.frames[1],  m2)
 
         self.qm.resend_transaction_frames(conn1, transaction='abc')

@@ -7,6 +7,7 @@ Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 import logging
 import threading
 import uuid
+from copy import deepcopy
 from coilmq.subscription import SubscriptionManager
 from coilmq.util.concurrency import synchronized
 
@@ -121,8 +122,10 @@ class TopicManager(object):
 
         bad_subscribers = set()
         for subscriber in self._subscriptions.subscribers(dest):
+            frame = deepcopy(message)
+            frame.headers["subscription"] = subscriber.id
             try:
-                subscriber.connection.send_frame(message)
+                subscriber.connection.send_frame(frame)
             except:
                 self.log.exception(
                     "Error delivering message to subscriber %s; client will be disconnected." % subscriber)

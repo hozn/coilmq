@@ -354,6 +354,9 @@ class QueueManager(object):
         assert subscription is not None
         assert frame is not None
 
+        if frame.cmd == "message":
+            frame.headers["subscription"] = subscription.id
+
         self.log.debug("Delivering frame %s to subscription %s" %
                        (frame, subscription))
 
