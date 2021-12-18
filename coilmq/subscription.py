@@ -13,7 +13,7 @@ class Subscription:
     id: Any
 
     @classmethod
-    def from_frame(cls, frame, connection):
+    def factory(cls, connection, id=None):
         """
         @param frame: STOMP frame.
         @type frame: L{coilmq.util.frames.Frame}
@@ -21,10 +21,14 @@ class Subscription:
         @param connection: The connection to subscribe.
         @type connection: L{coilmq.server.StompConnection}
 
+        @param id: The subscription identifier (introduced in STOMP 1.1).
+        @type id: C{Any}
+
         @return: The subscription.
         @rtype: C{Subscription}
         """
-        id = frame.headers.get("id", DEFAULT_SUBSCRIPTION_ID)
+        if id is None:
+            id = DEFAULT_SUBSCRIPTION_ID
         return cls(connection=connection, id=id)
 
 
