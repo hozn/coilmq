@@ -4,7 +4,7 @@ Tests for the scheduler implementation.
 import unittest
 
 from coilmq.scheduler import FavorReliableSubscriberScheduler
-from tests.mock import MockConnection
+from tests.mock import MockSubscription
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -29,13 +29,13 @@ class QueueDeliverySchedulerTest(unittest.TestCase):
 
         sched = FavorReliableSubscriberScheduler()
 
-        conn1 = MockConnection()
-        conn1.reliable_subscriber = True
+        sub1 = MockSubscription()
+        sub1.connection.reliable_subscriber = True
 
-        conn2 = MockConnection()
-        conn2.reliable_subscriber = False
+        sub2 = MockSubscription()
+        sub2.connection.reliable_subscriber = False
 
-        choice = sched.choice((conn1, conn2), None)
+        choice = sched.choice((sub1, sub2), None)
 
         self.assertIs(
-            choice, conn1, "Expected reliable connection to be selected.")
+            choice, sub1, "Expected reliable connection to be selected.")

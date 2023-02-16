@@ -40,6 +40,8 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
+        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        self.assertEqual(subscription, 0)
         self.assertEqual(self.conn.frames[0], f)
 
     def test_unsubscribe(self):
@@ -51,6 +53,8 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
+        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        self.assertEqual(subscription, 0)
         self.assertEqual(self.conn.frames[0], f)
 
         self.tm.unsubscribe(self.conn, dest)
@@ -95,8 +99,11 @@ class TopicManagerTest(unittest.TestCase):
 
         # Make sure out good client got the message.
         self.assertEqual(len(self.conn.frames), 1)
+        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        self.assertEqual(subscription, 0)
         self.assertEqual(self.conn.frames[0], f)
 
         # Make sure our bad client got disconnected
         # (This might be a bit too intimate.)
-        self.assertNotIn(bad_client, self.tm._topics[dest])
+        connections = {s.connection for s in self.tm._subscriptions.subscribers(dest)}
+        self.assertNotIn(bad_client, connections)

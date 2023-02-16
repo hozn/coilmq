@@ -170,10 +170,11 @@ class STOMP10(STOMP):
         if not dest:
             raise ProtocolError('Missing destination for SUBSCRIBE command.')
 
+        id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.subscribe(self.engine.connection, dest)
+            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
         else:
-            self.engine.topic_manager.subscribe(self.engine.connection, dest)
+            self.engine.topic_manager.subscribe(self.engine.connection, dest, id=id)
 
     def unsubscribe(self, frame):
         """
@@ -183,10 +184,11 @@ class STOMP10(STOMP):
         if not dest:
             raise ProtocolError('Missing destination for UNSUBSCRIBE command.')
 
+        id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.unsubscribe(self.engine.connection, dest)
+            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
         else:
-            self.engine.topic_manager.unsubscribe(self.engine.connection, dest)
+            self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
 
     def begin(self, frame):
         """
@@ -233,9 +235,9 @@ class STOMP10(STOMP):
         """
         Handles the ACK command: Acknowledges receipt of a message.
         """
-        if not frame.message_id:
+        if "message-id" not in frame.headers:
             raise ProtocolError("No message-id specified for ACK command.")
-        self.engine.queue_manager.ack(self.engine.connection, frame)
+        self.engine.queue_manager.ack(self.engine.connection, frame, id=frame.headers.get("id"))
 
     def disconnect(self, frame):
         """
@@ -325,6 +327,23 @@ class STOMP11(STOMP10):
                 self.engine.protocol = protocol_class(self.engine)
                 self.engine.protocol.connect(frame, response=response)
 
+    def subscribe(self, frame):
+        if "id" not in frame.headers:
+            raise ProtocolError("No 'id' specified for SUBSCRIBE command.")
+        super().subscribe(frame)
+
+    def unsubscribe(self, frame):
+        if "id" not in frame.headers:
+            raise ProtocolError("No 'id' specified for UNSUBSCRIBE command.")
+        super().unsubscribe(frame)
+
+    def ack(self, frame):
+        if "subscription" not in frame.headers:
+            raise ProtocolError("No 'subscription' specified for ACK command.")
+        if "message-id" not in frame.headers:
+            raise ProtocolError("No message-id specified for ACK command.")
+        self.engine.queue_manager.ack(self.engine.connection, frame, id=frame.headers["subscription"])
+
 
 class STOMP12(STOMP11):
 
@@ -337,6 +356,13 @@ class STOMP12(STOMP11):
         if host != socket.getfqdn():
             raise ProtocolError('Virtual hosting is not supported or host is unknown')
         super(STOMP12, self).connect(frame, response)
+
+    def ack(self, frame):
+        if "id" not in frame.headers:
+            raise ProtocolError("No 'id' specified for ACK command.")
+        if "message-id" not in frame.headers:
+            raise ProtocolError("No message-id specified for ACK command.")
+        self.engine.queue_manager.ack(self.engine.connection, frame, id=frame.headers["id"])
 
 
 PROTOCOL_MAP = {'1.0': STOMP10, '1.1': STOMP11, '1.2': STOMP12}
