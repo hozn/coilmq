@@ -185,10 +185,10 @@ class TestStompClient(object):
         headers['destination'] = destination
         if set_content_length:
             headers['content-length'] = len(message)
-        self.send_frame(Frame('send', headers=headers, body=message))
+        self.send_frame(Frame(frames.SEND, headers=headers, body=message))
 
     def subscribe(self, destination):
-        self.send_frame(Frame('subscribe', headers={
+        self.send_frame(Frame(frames.SUBSCRIBE, headers={
                         'destination': destination}))
 
     def send_frame(self, frame):
@@ -223,7 +223,7 @@ class TestStompClient(object):
         # print "Read loop has been quit! for %s" % id(self)
 
     def disconnect(self):
-        self.send_frame(Frame('disconnect'))
+        self.send_frame(Frame(frames.DISCONNECT))
 
     def close(self):
         if not self.connected:

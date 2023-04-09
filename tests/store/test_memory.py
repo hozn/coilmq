@@ -5,6 +5,7 @@ import unittest
 import uuid
 
 from coilmq.store.memory import MemoryQueue
+from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest
 
@@ -31,7 +32,7 @@ class MemoryQueueTest(CommonQueueTest, unittest.TestCase):
     def test_dequeue_identity(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = Frame('MESSAGE', headers={
+        frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
 

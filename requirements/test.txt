@@ -3,3 +3,4 @@ fakeredis
 mock
 pytest
 pytest-cov
+dataclasses

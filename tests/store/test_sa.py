@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from coilmq.store.sa import SAQueue
 from coilmq.store.sa import init_model
 from coilmq.store.sa import meta, model
+from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest
 
@@ -41,15 +42,15 @@ class SAQueueTest(CommonQueueTest, unittest.TestCase):
         """ Test the order that frames are returned by dequeue() method. """
         dest = '/queue/foo'
 
-        frame1 = Frame('MESSAGE', headers={
+        frame1 = Frame(frames.MESSAGE, headers={
                        'message-id': 'id-1'}, body='message-1')
         self.store.enqueue(dest, frame1)
 
-        frame2 = Frame('MESSAGE', headers={
+        frame2 = Frame(frames.MESSAGE, headers={
                        'message-id': 'id-2'}, body='message-2')
         self.store.enqueue(dest, frame2)
 
-        frame3 = Frame('MESSAGE', headers={
+        frame3 = Frame(frames.MESSAGE, headers={
                        'message-id': 'id-3'}, body='message-3')
         self.store.enqueue(dest, frame3)
 
