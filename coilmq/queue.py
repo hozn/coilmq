@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 from coilmq.subscription import SubscriptionManager, Subscription
+from coilmq.util import frames
 from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -189,7 +190,7 @@ class QueueManager(object):
             raise ValueError(
                 "Cannot send frame with no destination: %s" % message)
 
-        message.cmd = 'message'
+        message.cmd = frames.MESSAGE
 
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
@@ -355,7 +356,7 @@ class QueueManager(object):
         assert subscription is not None
         assert frame is not None
 
-        if frame.cmd == "message":
+        if frame.cmd == frames.MESSAGE:
             frame.headers["subscription"] = subscription.id
 
         self.log.debug("Delivering frame %s to subscription %s" %

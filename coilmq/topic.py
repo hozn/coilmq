@@ -9,6 +9,7 @@ import threading
 import uuid
 from copy import deepcopy
 from coilmq.subscription import SubscriptionManager
+from coilmq.util import frames
 from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -116,7 +117,7 @@ class TopicManager(object):
             raise ValueError(
                 "Cannot send frame with no destination: %s" % message)
 
-        message.cmd = 'message'
+        message.cmd = frames.MESSAGE
 
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
