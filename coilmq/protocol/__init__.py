@@ -8,22 +8,6 @@ from coilmq.util import frames
 from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame, ConnectedFrame
 from coilmq.util.concurrency import CoilThreadingTimer
 
-SEND = 'SEND'
-CONNECT = 'CONNECT'
-MESSAGE = 'MESSAGE'
-ERROR = 'ERROR'
-CONNECTED = 'CONNECTED'
-SUBSCRIBE = 'SUBSCRIBE'
-UNSUBSCRIBE = 'UNSUBSCRIBE'
-BEGIN = 'BEGIN'
-COMMIT = 'COMMIT'
-ABORT = 'ABORT'
-ACK = 'ACK'
-DISCONNECT = 'DISCONNECT'
-
-VALID_COMMANDS = ['message', 'connect', 'connected', 'error', 'send',
-                  'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect', 'nack', 'stomp']
-
 
 class STOMP(object):
 
