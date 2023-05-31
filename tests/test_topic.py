@@ -72,7 +72,7 @@ class TopicManagerTest(unittest.TestCase):
 
         # Assert some side-effects
         self.assertIn('message-id', f.headers)
-        self.assertEqual(f.cmd, 'message')
+        self.assertEqual(f.cmd, frames.MESSAGE)
 
     def test_send_subscriber_timeout(self):
         """ Test a send command when one subscriber errs out. """
@@ -94,7 +94,7 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.subscribe(bad_client, dest)
         self.tm.subscribe(self.conn, dest)
 
-        f = Frame('message', headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
         # Make sure out good client got the message.

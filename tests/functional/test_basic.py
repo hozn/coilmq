@@ -42,20 +42,20 @@ class BasicTest(BaseFunctionalTestCase):
         c1 = self._new_client(connect=False)
         c1.connect()
         r = c1.received_frames.get(timeout=1)
-        self.assertEqual(r.cmd, 'error')
+        self.assertEqual(r.cmd, frames.ERROR)
         self.assertIn(b'Auth', r.body)
 
         c2 = self._new_client(connect=False)
         c2.connect(headers={'login': 'user', 'passcode': 'pass'})
         r2 = c2.received_frames.get(timeout=1)
 
-        self.assertEqual(r2.cmd.lower(), 'connected')
+        self.assertEqual(r2.cmd, frames.CONNECTED)
 
         c3 = self._new_client(connect=False)
         c3.connect(headers={'login': 'user', 'passcode': 'pass-invalid'})
         r3 = c3.received_frames.get(timeout=1)
 
-        self.assertEqual(r3.cmd, 'error')
+        self.assertEqual(r3.cmd, frames.ERROR)
 
     def test_send_receipt(self):
         c1 = self._new_client()
@@ -73,7 +73,7 @@ class BasicTest(BaseFunctionalTestCase):
         self.assertEqual(c2.received_frames.qsize(), 0)
 
         r = c1.received_frames.get()
-        self.assertEqual(r.cmd, 'message')
+        self.assertEqual(r.cmd, frames.MESSAGE)
         self.assertEqual(r.body, b'A message')
 
     def test_disconnect(self):
@@ -101,7 +101,7 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send('/queue/foo', zlib.compress(message))
 
         res = c1.received_frames.get()
-        self.assertEqual(res.cmd, 'message')
+        self.assertEqual(res.cmd, frames.MESSAGE)
         self.assertEqual(zlib.decompress(res.body), message)
 
     def test_send_utf8(self):
@@ -119,5 +119,5 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send('/queue/foo', utf8msg)
 
         res = c1.received_frames.get()
-        self.assertEqual(res.cmd, 'message')
+        self.assertEqual(res.cmd, frames.MESSAGE)
         self.assertEqual(res.body, utf8msg)

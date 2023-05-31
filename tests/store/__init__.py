@@ -4,6 +4,7 @@ Queue storage tests.
 import unittest
 import uuid
 
+from coilmq.util import frames
 from coilmq.util.frames import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -31,7 +32,7 @@ class CommonQueueTest(object):
     def test_enqueue(self):
         """ Test the enqueue() method. """
         dest = '/queue/foo'
-        frame = Frame('MESSAGE', headers={
+        frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
 
@@ -41,7 +42,7 @@ class CommonQueueTest(object):
     def test_dequeue(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = Frame('MESSAGE', headers={
+        frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
 
@@ -62,15 +63,15 @@ class CommonQueueTest(object):
         dest = '/queue/foo'
         notdest = '/queue/other'
 
-        frame1 = Frame('MESSAGE', headers={
+        frame1 = Frame(frames.MESSAGE, headers={
                        'message-id': str(uuid.uuid4())}, body='message-1')
         self.store.enqueue(dest, frame1)
 
-        frame2 = Frame('MESSAGE', headers={
+        frame2 = Frame(frames.MESSAGE, headers={
                        'message-id': str(uuid.uuid4())}, body='message-2')
         self.store.enqueue(notdest, frame2)
 
-        frame3 = Frame('MESSAGE', headers={
+        frame3 = Frame(frames.MESSAGE, headers={
                        'message-id': str(uuid.uuid4())}, body='message-3')
         self.store.enqueue(dest, frame3)
 
@@ -90,15 +91,15 @@ class CommonQueueTest(object):
         """ Test the order that frames are returned by dequeue() method. """
         dest = '/queue/foo'
 
-        frame1 = Frame('MESSAGE', headers={
+        frame1 = Frame(frames.MESSAGE, headers={
                        'message-id': str(uuid.uuid4())}, body='message-1')
         self.store.enqueue(dest, frame1)
 
-        frame2 = Frame('MESSAGE', headers={
+        frame2 = Frame(frames.MESSAGE, headers={
                        'message-id': str(uuid.uuid4())}, body='message-2')
         self.store.enqueue(dest, frame2)
 
-        frame3 = Frame('MESSAGE', headers={
+        frame3 = Frame(frames.MESSAGE, headers={
                        'message-id': str(uuid.uuid4())}, body='message-3')
         self.store.enqueue(dest, frame3)
 

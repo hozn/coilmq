@@ -8,6 +8,7 @@ import unittest
 import uuid
 
 from coilmq.store.dbm import DbmQueue
+from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest
 
@@ -39,7 +40,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
     def test_dequeue_identity(self):
         """ Test the dequeue() method. """
         dest = '/queue/foo'
-        frame = Frame('MESSAGE', headers={
+        frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
         self.store.enqueue(dest, frame)
 
@@ -63,7 +64,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             dest = '/queue/foo'
 
             for i in range(max_ops + 1):
-                frame = Frame('MESSAGE', headers={
+                frame = Frame(frames.MESSAGE, headers={
                               'message-id': str(uuid.uuid4())}, body='some data - %d' % i)
                 store.enqueue(dest, frame)
 
@@ -86,13 +87,13 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             store = DbmQueue(data_dir, checkpoint_timeout=0.5)
             dest = '/queue/foo'
 
-            frame = Frame('MESSAGE', headers={
+            frame = Frame(frames.MESSAGE, headers={
                           'message-id': str(uuid.uuid4())}, body='some data -1')
             store.enqueue(dest, frame)
 
             time.sleep(0.5)
 
-            frame = Frame('MESSAGE', headers={
+            frame = Frame(frames.MESSAGE, headers={
                           'message-id': str(uuid.uuid4())}, body='some data -2')
             store.enqueue(dest, frame)
 
@@ -114,7 +115,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
         try:
             store = DbmQueue(data_dir)
             dest = '/queue/foo'
-            frame = Frame('MESSAGE', headers={
+            frame = Frame(frames.MESSAGE, headers={
                           'message-id': str(uuid.uuid4())}, body='some data')
             store.enqueue(dest, frame)
             self.assertEqual(store.size(dest), 1)
@@ -135,7 +136,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
         try:
             store = DbmQueue(data_dir)
             dest = '/queue/foo'
-            frame = Frame('MESSAGE', headers={
+            frame = Frame(frames.MESSAGE, headers={
                           'message-id': str(uuid.uuid4())}, body='some data')
             store.enqueue(dest, frame)
             self.assertEqual(store.size(dest), 1)

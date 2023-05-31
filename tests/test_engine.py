@@ -4,6 +4,7 @@ Tests for the transport-agnostic engine module.
 import unittest
 
 from coilmq.engine import StompEngine
+from coilmq.util import frames
 from coilmq.util.frames import Frame, ReceiptFrame
 from tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, MockTopicManager)
 
@@ -39,20 +40,20 @@ class EngineTest(unittest.TestCase):
 
     def _connect(self):
         """ Call the engine connect() method so that we have a valid 'session'. """
-        self.engine.process_frame(Frame('CONNECT'))
+        self.engine.process_frame(Frame(frames.CONNECT))
 
     def assertErrorFrame(self, frame, msgsub):
         """ Assert that the passed in frame is an error frame and that message contains specified
         string.
         """
-        assert frame.cmd.lower() == 'error'
+        assert frame.cmd == frames.ERROR
         assert msgsub.lower() in frame.headers['message'].lower()
 
     def test_connect_no_auth(self):
         """ Test the CONNECT command with no auth required. """
 
         assert self.engine.connected == False
-        self.engine.process_frame(Frame('CONNECT'))
+        self.engine.process_frame(Frame(frames.CONNECT))
         assert self.engine.connected == True
 
     def test_connect_auth(self):
@@ -60,11 +61,11 @@ class EngineTest(unittest.TestCase):
         self.engine.authenticator = self.auth
 
         assert self.engine.connected == False
-        self.engine.process_frame(Frame('CONNECT'))
+        self.engine.process_frame(Frame(frames.CONNECT))
         self.assertErrorFrame(self.conn.frames[-1], 'Auth')
         assert self.engine.connected == False
 
-        self.engine.process_frame(Frame('CONNECT', headers={'login': MockAuthenticator.LOGIN,
+        self.engine.process_frame(Frame(frames.CONNECT, headers={'login': MockAuthenticator.LOGIN,
                                                             'passcode': MockAuthenticator.PASSCODE}))
         assert self.engine.connected == True
 
@@ -72,28 +73,28 @@ class EngineTest(unittest.TestCase):
         """ Test subscribing to topics and queues w/ no ACK. """
         self._connect()
         self.engine.process_frame(
-            Frame('SUBSCRIBE', headers={'destination': '/queue/bar'}))
+            Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar'}))
         assert self.conn in self.qm.queues['/queue/bar']
 
         self.engine.process_frame(
-            Frame('SUBSCRIBE', headers={'destination': '/foo/bar'}))
+            Frame(frames.SUBSCRIBE, headers={'destination': '/foo/bar'}))
         assert self.conn in self.tm.topics['/foo/bar']
 
     def test_send(self):
         """ Test sending to a topic and queue. """
         self._connect()
 
-        msg = Frame('SEND', headers={
+        msg = Frame(frames.SEND, headers={
                     'destination': '/queue/foo'}, body='QUEUEMSG-BODY')
         self.engine.process_frame(msg)
         self.assertEqual(msg, self.qm.messages[-1])
 
-        msg = Frame('SEND', headers={
+        msg = Frame(frames.SEND, headers={
                     'destination': '/topic/foo'}, body='TOPICMSG-BODY')
         self.engine.process_frame(msg)
         self.assertEqual(msg, self.tm.messages[-1])
 
-        msg = Frame('SEND', headers={}, body='TOPICMSG-BODY')
+        msg = Frame(frames.SEND, headers={}, body='TOPICMSG-BODY')
         self.engine.process_frame(msg)
         self.assertErrorFrame(self.conn.frames[-1], 'Missing destination')
 
@@ -102,7 +103,7 @@ class EngineTest(unittest.TestCase):
         self._connect()
 
         receipt_id = 'FOOBAR'
-        msg = Frame('SEND', headers={
+        msg = Frame(frames.SEND, headers={
                     'destination': '/queue/foo', 'receipt': receipt_id}, body='QUEUEMSG-BODY')
         self.engine.process_frame(msg)
         rframe = self.conn.frames[-1]
@@ -110,7 +111,7 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(receipt_id, rframe.headers.get('receipt-id'))
 
         receipt_id = 'FOOBAR2'
-        self.engine.process_frame(Frame('SUBSCRIBE', headers={
+        self.engine.process_frame(Frame(frames.SUBSCRIBE, headers={
                                   'destination': '/queue/bar', 'receipt': receipt_id}))
         rframe = self.conn.frames[-1]
         self.assertIsInstance(rframe, ReceiptFrame)
@@ -119,7 +120,7 @@ class EngineTest(unittest.TestCase):
     def test_subscribe_ack(self):
         """ Test subscribing to a queue with ack=true """
         self._connect()
-        self.engine.process_frame(Frame('SUBSCRIBE', headers={'destination': '/queue/bar',
+        self.engine.process_frame(Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar',
                                                               'ack': 'client'}))
         assert self.conn.reliable_subscriber == True
         assert self.conn in self.qm.queues['/queue/bar']
@@ -128,22 +129,22 @@ class EngineTest(unittest.TestCase):
         """ Test the UNSUBSCRIBE command. """
         self._connect()
         self.engine.process_frame(
-            Frame('SUBSCRIBE', headers={'destination': '/queue/bar'}))
+            Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar'}))
         assert self.conn in self.qm.queues['/queue/bar']
 
         self.engine.process_frame(
-            Frame('UNSUBSCRIBE', headers={'destination': '/queue/bar'}))
+            Frame(frames.UNSUBSCRIBE, headers={'destination': '/queue/bar'}))
         assert self.conn not in self.qm.queues['/queue/bar']
 
         self.engine.process_frame(
-            Frame('UNSUBSCRIBE', headers={'destination': '/invalid'}))
+            Frame(frames.UNSUBSCRIBE, headers={'destination': '/invalid'}))
 
     def test_begin(self):
         """ Test transaction BEGIN. """
         self._connect()
 
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': 'abc'}))
+            Frame(frames.BEGIN, headers={'transaction': 'abc'}))
         assert 'abc' in self.engine.transactions
         assert len(self.engine.transactions['abc']) == 0
 
@@ -152,27 +153,27 @@ class EngineTest(unittest.TestCase):
         self._connect()
 
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': 'abc'}))
+            Frame(frames.BEGIN, headers={'transaction': 'abc'}))
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': '123'}))
+            Frame(frames.BEGIN, headers={'transaction': '123'}))
         self.engine.process_frame(Frame(
-            'SEND', headers={'destination': '/dest', 'transaction': 'abc'}, body='ASDF'))
+            frames.SEND, headers={'destination': '/dest', 'transaction': 'abc'}, body='ASDF'))
         self.engine.process_frame(Frame(
-            'SEND', headers={'destination': '/dest', 'transaction': 'abc'}, body='ASDF'))
+            frames.SEND, headers={'destination': '/dest', 'transaction': 'abc'}, body='ASDF'))
         self.engine.process_frame(Frame(
-            'SEND', headers={'destination': '/dest', 'transaction': '123'}, body='ASDF'))
+            frames.SEND, headers={'destination': '/dest', 'transaction': '123'}, body='ASDF'))
 
         assert len(self.tm.messages) == 0
 
         self.engine.process_frame(
-            Frame('COMMIT', headers={'transaction': 'abc'}))
+            Frame(frames.COMMIT, headers={'transaction': 'abc'}))
 
         assert len(self.tm.messages) == 2
 
         assert len(self.engine.transactions) == 1
 
         self.engine.process_frame(
-            Frame('COMMIT', headers={'transaction': '123'}))
+            Frame(frames.COMMIT, headers={'transaction': '123'}))
         assert len(self.tm.messages) == 3
 
         assert len(self.engine.transactions) == 0
@@ -182,25 +183,25 @@ class EngineTest(unittest.TestCase):
         self._connect()
 
         # Send a message with invalid transaction
-        f = Frame('SEND', headers={
+        f = Frame(frames.SEND, headers={
                   'destination': '/dest', 'transaction': '123'}, body='ASDF')
         self.engine.process_frame(f)
         self.assertErrorFrame(self.conn.frames[-1], 'invalid transaction')
 
         # Attempt to commit invalid transaction
         self.engine.process_frame(
-            Frame('COMMIT', headers={'transaction': 'abc'}))
+            Frame(frames.COMMIT, headers={'transaction': 'abc'}))
 
         # Attempt to commit already-committed transaction
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': 'abc'}))
+            Frame(frames.BEGIN, headers={'transaction': 'abc'}))
         self.engine.process_frame(Frame(
-            'SEND', headers={'destination': '/dest', 'transaction': 'abc'}, body='FOO'))
+            frames.SEND, headers={'destination': '/dest', 'transaction': 'abc'}, body='FOO'))
         self.engine.process_frame(
-            Frame('COMMIT', headers={'transaction': 'abc'}))
+            Frame(frames.COMMIT, headers={'transaction': 'abc'}))
 
         self.engine.process_frame(
-            Frame('COMMIT', headers={'transaction': 'abc'}))
+            Frame(frames.COMMIT, headers={'transaction': 'abc'}))
         self.assertErrorFrame(self.conn.frames[-1], 'invalid transaction')
 
     def test_abort(self):
@@ -208,24 +209,24 @@ class EngineTest(unittest.TestCase):
         self._connect()
 
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': 'abc'}))
+            Frame(frames.BEGIN, headers={'transaction': 'abc'}))
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': '123'}))
+            Frame(frames.BEGIN, headers={'transaction': '123'}))
 
-        f1 = Frame('SEND', headers={
+        f1 = Frame(frames.SEND, headers={
                    'destination': '/dest', 'transaction': 'abc'}, body='ASDF')
         self.engine.process_frame(f1)
-        f2 = Frame('SEND', headers={
+        f2 = Frame(frames.SEND, headers={
                    'destination': '/dest', 'transaction': 'abc'}, body='ASDF')
         self.engine.process_frame(f2)
-        f3 = Frame('SEND', headers={
+        f3 = Frame(frames.SEND, headers={
                    'destination': '/dest', 'transaction': '123'}, body='ASDF')
         self.engine.process_frame(f3)
 
         assert len(self.tm.messages) == 0
 
         self.engine.process_frame(
-            Frame('ABORT', headers={'transaction': 'abc'}))
+            Frame(frames.ABORT, headers={'transaction': 'abc'}))
         assert len(self.tm.messages) == 0
 
         assert len(self.engine.transactions) == 1
@@ -235,15 +236,15 @@ class EngineTest(unittest.TestCase):
         self._connect()
 
         self.engine.process_frame(
-            Frame('ABORT', headers={'transaction': 'abc'}))
+            Frame(frames.ABORT, headers={'transaction': 'abc'}))
 
         self.assertErrorFrame(self.conn.frames[-1], 'invalid transaction')
 
         self.engine.process_frame(
-            Frame('BEGIN', headers={'transaction': 'abc'}))
+            Frame(frames.BEGIN, headers={'transaction': 'abc'}))
         self.engine.process_frame(
-            Frame('ABORT', headers={'transaction': 'abc'}))
+            Frame(frames.ABORT, headers={'transaction': 'abc'}))
 
         self.engine.process_frame(
-            Frame('ABORT', headers={'transaction': 'abc2'}))
+            Frame(frames.ABORT, headers={'transaction': 'abc2'}))
         self.assertErrorFrame(self.conn.frames[-1], 'invalid transaction')

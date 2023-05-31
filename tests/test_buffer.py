@@ -46,7 +46,7 @@ class TestFrameBuffer(unittest.TestCase):
         """ Test extracting a single frame. """
         sb = FrameBuffer()
         m1 = self.createMessage(
-            'connect', {'session': uuid.uuid4()}, 'This is the body')
+            frames.CONNECT, {'session': uuid.uuid4()}, 'This is the body')
         sb.append(m1)
         msg = sb.extract_frame()
         self.assertIsInstance(msg, Frame)
@@ -56,7 +56,7 @@ class TestFrameBuffer(unittest.TestCase):
         """ Test extracting a binary frame. """
         sb = FrameBuffer()
         binmsg = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
-        m1 = self.createMessage('send', OrderedDict({'content-length': len(binmsg), 'x-other-header': 'value'}), binmsg
+        m1 = self.createMessage(frames.SEND, OrderedDict({'content-length': len(binmsg), 'x-other-header': 'value'}), binmsg
                                 )
         sb.append(m1)
         msg = sb.extract_frame()

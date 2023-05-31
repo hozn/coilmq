@@ -8,22 +8,6 @@ from coilmq.util import frames
 from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame, ConnectedFrame
 from coilmq.util.concurrency import CoilThreadingTimer
 
-SEND = 'SEND'
-CONNECT = 'CONNECT'
-MESSAGE = 'MESSAGE'
-ERROR = 'ERROR'
-CONNECTED = 'CONNECTED'
-SUBSCRIBE = 'SUBSCRIBE'
-UNSUBSCRIBE = 'UNSUBSCRIBE'
-BEGIN = 'BEGIN'
-COMMIT = 'COMMIT'
-ABORT = 'ABORT'
-ACK = 'ACK'
-DISCONNECT = 'DISCONNECT'
-
-VALID_COMMANDS = ['message', 'connect', 'connected', 'error', 'send',
-                  'subscribe', 'unsubscribe', 'begin', 'commit', 'abort', 'ack', 'disconnect', 'nack', 'stomp']
-
 
 class STOMP(object):
 
@@ -85,12 +69,11 @@ class STOMP10(STOMP):
         @param frame: The frame that was received.
         @type frame: C{stompclient.frame.Frame}
         """
-        cmd_method = frame.cmd.lower()
 
-        if not cmd_method in VALID_COMMANDS:
+        if frame.cmd not in frames.VALID_COMMANDS:
             raise ProtocolError("Invalid STOMP command: {}".format(frame.cmd))
 
-        method = getattr(self, cmd_method, None)
+        method = getattr(self, frame.cmd.lower(), None)
 
         if not self.engine.connected and method not in (self.connect, self.stomp):
             raise ProtocolError("Not connected.")
