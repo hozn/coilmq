@@ -334,7 +334,7 @@ class FrameBuffer(object):
             f = Frame.from_buffer(self._buffer)
             self._pointer = self._buffer.tell()
         except (IncompleteFrame, EmptyBuffer):
-            self._buffer.seek(self._pointer, 0)
+            self._buffer.seek(0, 2)
             return None
 
         return f

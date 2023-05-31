@@ -121,3 +121,28 @@ class BasicTest(BaseFunctionalTestCase):
         res = c1.received_frames.get()
         self.assertEqual(res.cmd, frames.MESSAGE)
         self.assertEqual(res.body, utf8msg)
+
+
+    def test_send_large_message(self):
+        """
+        Test sending a large message after a short one.
+        """
+        c1 = self._new_client()
+        c1.subscribe('/queue/foo')
+
+        shortmessage = 'x'
+        longmessage = 'y' * 1024 * 16
+
+        c2 = self._new_client()
+
+        c2.send('/queue/foo', shortmessage)
+
+        res = c1.received_frames.get()
+        self.assertEqual(res.cmd, 'message')
+        self.assertEqual(res.body, shortmessage)
+
+        c2.send('/queue/foo', longmessage)
+
+        res2 = c1.received_frames.get()
+        self.assertEqual(res2.cmd, 'message')
+        self.assertEqual(res2.body, longmessage)
