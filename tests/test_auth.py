@@ -3,11 +3,7 @@ Tests for authenticators.
 """
 import os
 import unittest
-try:
-    from io import StringIO
-    unicode = str
-except ImportError:
-    from StringIO import StringIO
+from io import StringIO
 
 from pkg_resources import resource_stream, resource_filename
 

@@ -9,17 +9,12 @@ documentation this is likely a BAD storage module to use if you are expecting to
 large frames.
 """
 import threading
-import logging
 import os
 import os.path
 import shelve
 from collections import deque
 from datetime import datetime, timedelta
-
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 
 from coilmq.store import QueueStore
@@ -33,7 +28,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -104,7 +99,7 @@ class DbmQueue(QueueStore):
     @type checkpoint_operations: C{int}
 
     @ivar checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
-    @type checkpoint_timeout: C{float}
+    @type checkpoint_timeout: C{timedelta}
     """
 
     def __init__(self, data_dir, checkpoint_operations=100, checkpoint_timeout=30):
@@ -145,12 +140,12 @@ class DbmQueue(QueueStore):
     @synchronized(lock)
     def enqueue(self, destination, frame):
         """
-        Store message (frame) for specified destinationination.
+        Store message (frame) for specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
         message_id = frame.headers.get('message-id')
@@ -176,7 +171,7 @@ class DbmQueue(QueueStore):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
@@ -201,7 +196,7 @@ class DbmQueue(QueueStore):
         """
         Whether specified queue has any frames.
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: Whether there are any frames in the specified queue.
@@ -238,17 +233,17 @@ class DbmQueue(QueueStore):
         """
         Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the detinations available.
+        @return: A list of the destinations available.
         @rtype: C{set}
         """
         return set(self.queue_metadata.keys())
 
     def _sync(self):
         """
-        Synchronize the cached data with the underlyind database.
+        Synchronize the cached data with the underlying database.
 
         Uses an internal transaction counter and compares to the checkpoint_operations
-        and checkpoint_timeout paramters to determine whether to persist the memory store.
+        and checkpoint_timeout parameters to determine whether to persist the memory store.
 
         In this implementation, this method wraps calls to C{shelve.Shelf#sync}. 
         """

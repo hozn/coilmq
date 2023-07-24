@@ -15,9 +15,6 @@ class Subscription:
     @classmethod
     def factory(cls, connection, id=None):
         """
-        @param frame: STOMP frame.
-        @type frame: L{coilmq.util.frames.Frame}
-
         @param connection: The connection to subscribe.
         @type connection: L{coilmq.server.StompConnection}
 
