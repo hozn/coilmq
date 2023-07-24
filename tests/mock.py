@@ -24,6 +24,7 @@ class MockConnection(object):
 
     def __init__(self):
         self.frames = []
+        self.heartbeat_count = 0
         self.reliable_subscriber = False
 
     def send_frame(self, frame):
@@ -31,6 +32,10 @@ class MockConnection(object):
 
     def reset(self):
         self.frames = []
+        self.heartbeat_count = 0
+
+    def send_heartbeat(self):
+        self.heartbeat_count += 1
 
 
 class MockSubscription(object):
