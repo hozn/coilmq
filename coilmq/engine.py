@@ -92,3 +92,4 @@ class StompEngine(object):
         self.connected = False
         self.queue_manager.disconnect(self.connection)
         self.topic_manager.disconnect(self.connection)
+        self.protocol.disable_heartbeat()

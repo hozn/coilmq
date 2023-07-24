@@ -77,14 +77,23 @@ class CoilThreadingTimer(CoilTimerBase):
     def __init__(self, *args, **kwargs):
         super(CoilThreadingTimer, self).__init__(*args, **kwargs)
         self._running = False
+        self._timers = []
+
+    def _reset_timers(self):
+        for timer in self._timers:
+            if timer:
+                timer.cancel()
+        self._timers = [None] * len(self.jobs)
 
     def run(self):
-        def run_job(interval, callback):
+        def run_job(index, interval, callback):
             if self._running:
-                threading.Timer(interval, run_job, args=(interval, callback)).start()
+                self._timers[index] = threading.Timer(period, run_job, (index, interval, callback)).start()
                 callback()
-        for period, job in self.jobs:
-            run_job(period, job)
+
+        self._reset_timers()
+        for job_index, (period, job) in enumerate(self.jobs):
+            run_job(job_index, period, job)
 
     def start(self):
         self._running = True
@@ -92,5 +101,4 @@ class CoilThreadingTimer(CoilTimerBase):
 
     def stop(self):
         self._running = False
-
-
+        self._reset_timers()
