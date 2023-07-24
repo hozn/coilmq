@@ -18,7 +18,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,7 @@ class TopicManager(object):
     Class that manages distribution of messages to topic subscribers.
 
     This class uses C{threading.RLock} to guard the public methods.  This is probably
-    a bit excessive, given 1) the actomic nature of basic C{dict} read/write operations 
+    a bit excessive, given 1) the atomic nature of basic C{dict} read/write operations
     and  2) the fact that most of the internal data structures are keying off of the 
     STOMP connection, which is going to be thread-isolated.  That said, this seems like 
     the technically correct approach and should increase the chance of this code being

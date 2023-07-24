@@ -5,7 +5,7 @@ import datetime
 
 from coilmq.exception import ProtocolError, AuthError
 from coilmq.util import frames
-from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame, ConnectedFrame
+from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame
 from coilmq.util.concurrency import CoilThreadingTimer
 
 
@@ -166,11 +166,11 @@ class STOMP10(STOMP):
         if not dest:
             raise ProtocolError('Missing destination for SUBSCRIBE command.')
 
-        id = frame.headers.get('id')
+        subscription_id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
+            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=subscription_id)
         else:
-            self.engine.topic_manager.subscribe(self.engine.connection, dest, id=id)
+            self.engine.topic_manager.subscribe(self.engine.connection, dest, id=subscription_id)
 
     def unsubscribe(self, frame):
         """
@@ -180,15 +180,15 @@ class STOMP10(STOMP):
         if not dest:
             raise ProtocolError('Missing destination for UNSUBSCRIBE command.')
 
-        id = frame.headers.get('id')
+        subscription_id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=subscription_id)
         else:
-            self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
+            self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=subscription_id)
 
     def begin(self, frame):
         """
-        Handles BEGING command: Starts a new transaction.
+        Handles BEGIN command: Starts a new transaction.
         """
         if not frame.transaction:
             raise ProtocolError("Missing transaction for BEGIN command.")
@@ -308,6 +308,9 @@ class STOMP11(STOMP10):
             raise ProtocolError("No message-id specified for NACK command.")
         if not frame.headers.get('subscription'):
             raise ProtocolError("No subscription specified for NACK command.")
+
+        raise NotImplementedError('Nack implementation incomplete')
+        # ToDo: self.engine.queue_manager.nack()
 
     def _negotiate_protocol(self, frame, response):
         client_versions = frame.headers.get('accept-version', '1.0')

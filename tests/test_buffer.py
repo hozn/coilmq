@@ -7,8 +7,6 @@ import io
 import zlib
 from collections import OrderedDict
 
-import six
-
 from coilmq.util.frames import Frame, FrameBuffer, parse_headers, parse_body, IncompleteFrame, BodyNotTerminated
 from coilmq.util import frames
 
@@ -121,13 +119,13 @@ class FrameTestCase(unittest.TestCase):
         cmd, headers = parse_headers(buff)
         body = parse_body(buff, headers)
 
-        self.assertIsInstance(cmd, six.string_types)
+        self.assertIsInstance(cmd, str)
         self.assertEqual(cmd, frames.CONNECT)
         self.assertEqual(headers['session'],
                          '207567f3-cce7-4a0a-930b-46fc394dd53d')
 
         for e in [cmd] + list(headers.keys()) + list(headers.values()):
-            self.assertIsInstance(e, six.string_types)
+            self.assertIsInstance(e, str)
 
     def test_parse_frame_incomplete_body(self):
         buff = io.BytesIO(b'CONNECT\ncontent-length:1000\n\n0123456789\x00')
