@@ -59,6 +59,14 @@ class STOMP(object):
     def disconnect(self, frame):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def process_heartbeat(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def disable_heartbeat(self):
+        raise NotImplementedError
+
 
 class STOMP10(STOMP):
 
@@ -69,7 +77,6 @@ class STOMP10(STOMP):
         @param frame: The frame that was received.
         @type frame: C{stompclient.frame.Frame}
         """
-
         if frame.cmd not in frames.VALID_COMMANDS:
             raise ProtocolError("Invalid STOMP command: {}".format(frame.cmd))
 
@@ -83,7 +90,7 @@ class STOMP10(STOMP):
             if not transaction or method in (self.begin, self.commit, self.abort):
                 method(frame)
             else:
-                if not transaction in self.engine.transactions:
+                if transaction not in self.engine.transactions:
                     raise ProtocolError(
                         "Invalid transaction specified: %s" % transaction)
                 self.engine.transactions[transaction].append(frame)
@@ -105,6 +112,12 @@ class STOMP10(STOMP):
             if frame.headers.get('receipt') and method != self.connect:
                 self.engine.connection.send_frame(ReceiptFrame(
                     receipt=frame.headers.get('receipt')))
+
+    def process_heartbeat(self):
+        pass
+
+    def disable_heartbeat(self):
+        pass
 
     def connect(self, frame, response=None):
         """
@@ -252,26 +265,31 @@ class STOMP11(STOMP10):
     def enable_heartbeat(self, cx, cy, response):
         if self.send_heartbeat_interval and cy:
             self.send_heartbeat_interval = max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cy))
-            self.timer.schedule(max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cy)).total_seconds(), self.send_heartbeat)
+            self.timer.schedule(self.send_heartbeat_interval.total_seconds(), self.send_heartbeat)
         if self.receive_heartbeat_interval and cx:
-            self.timer.schedule(max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cx)).total_seconds(),
-                                self.receive_heartbeat)
+            self.receive_heartbeat_interval = max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cx))
+            self.timer.schedule(self.receive_heartbeat_interval.total_seconds(), self.check_receive_heartbeat)
         self.timer.start()
-        response.headers['heart-beat'] = '{0},{1}'.format(int(self.send_heartbeat_interval.microseconds / 1000),
-                                                          int(self.receive_heartbeat_interval.microseconds / 1000))
+        response.headers['heart-beat'] = '{0},{1}'.format(int(self.send_heartbeat_interval / datetime.timedelta(milliseconds=1)),
+                                                          int(self.receive_heartbeat_interval / datetime.timedelta(milliseconds=1)))
 
     def disable_heartbeat(self):
         self.timer.stop()
 
     def send_heartbeat(self):
-        # screw it, just send an error frame
-        self.engine.connection.send_frame(ErrorFrame('heartbeat'))
+        if not self.engine.connected:
+            return
+        self.engine.connection.send_heartbeat()
+        self.last_hb_sent = datetime.datetime.now()
 
-    def receive_heartbeat(self):
+    def check_receive_heartbeat(self):
         ago = datetime.datetime.now() - self.last_hb
-        if ago > self.receive_heartbeat_interval:
+        if ago > (self.receive_heartbeat_interval * 2):
             self.engine.log.debug("No heartbeat was received for {0} seconds".format(ago.total_seconds()))
             self.engine.unbind()
+
+    def process_heartbeat(self):
+        self.last_hb = datetime.datetime.now()
 
     def connect(self, frame, response=None):
         connected_frame = Frame(frames.CONNECTED)
