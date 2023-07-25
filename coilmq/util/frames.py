@@ -1,10 +1,7 @@
-from functools import partial
 import re
 import logging
 from collections import OrderedDict
 import io
-
-import six
 
 SEND = 'SEND'
 CONNECT = 'CONNECT'
@@ -42,9 +39,13 @@ class EmptyBuffer(Exception):
 def parse_headers(buff):
     """
     Parses buffer and returns command and headers as strings
+
+    @param buff: Buffer containing frame
+    @type buff: C{io.BytesIO}
+
     """
     preamble_lines = list(map(
-        lambda x: six.u(x).decode(),
+        lambda x: x.decode(),
         iter(lambda: buff.readline().strip(), b''))
     )
     if not preamble_lines:
@@ -53,12 +54,21 @@ def parse_headers(buff):
 
 
 def parse_body(buff, headers):
+    """
+
+    @param buff: Buffer containing frame
+    @type buff: C{io.BytesIO}
+
+    @param headers: Dictionary of headers
+    @type headers: C{dict}
+
+    """
     content_length = int(headers.get('content-length', -1))
     body = buff.read(content_length)
     if content_length >= 0:
         if len(body) < content_length:
             raise IncompleteFrame()
-        terminator = six.u(buff.read(1)).decode()
+        terminator = buff.read(1).decode()
         if not terminator:
             raise BodyNotTerminated()
     else:
@@ -90,8 +100,7 @@ class Frame(object):
         return '{{cmd={0},headers=[{1}],body={2}}}'.format(
             self.cmd,
             self.headers,
-            self.body if isinstance(
-                self.body, six.binary_type) else six.b(self.body)
+            self.body if isinstance(self.body, bytes) else self.body.encode()
         )
 
     def __eq__(self, other):
@@ -127,7 +136,11 @@ class Frame(object):
                        for key, value in self.headers.items())
 
         # Frame is Command + Header + EOF marker.
-        return six.b("{0}\n{1}\n".format(self.cmd, "".join(headerparts))) + (self.body if isinstance(self.body, six.binary_type) else six.b(self.body)) + six.b('\x00')
+        return (
+            "{0}\n{1}\n".format(self.cmd, "".join(headerparts)).encode() +
+            (self.body if isinstance(self.body, bytes) else self.body.encode()) +
+            '\x00'.encode()
+        )
 
 
 class ConnectedFrame(Frame):
@@ -152,7 +165,7 @@ class HeaderValue(object):
     An descriptor class that can be used when a calculated header value is needed.
 
     This class is a descriptor, implementing  __get__ to return the calculated value.
-    While according to  U{http://docs.codehaus.org/display/STOMP/Character+Encoding} there
+    While according to  U{https://docs.codehaus.org/display/STOMP/Character+Encoding} there
     seems to some general idea about having UTF-8 as the character encoding for headers;
     however the C{stomper} lib does not support this currently.
 
@@ -272,14 +285,14 @@ class FrameBuffer(object):
         @return: Number of bytes in the internal buffer.
         @rtype: C{int}
         """
-        return len(self._buffer)
+        return self._buffer.getbuffer().nbytes
 
     def buffer_empty(self):
         """
         @return: C{True} if buffer is empty, C{False} otherwise.
         @rtype: C{bool}
         """
-        return not bool(self._buffer)
+        return self._buffer.getbuffer().nbytes > 0
 
     def append(self, data):
         """

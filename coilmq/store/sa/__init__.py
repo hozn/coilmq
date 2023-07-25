@@ -3,27 +3,12 @@ Queue storage module that uses SQLAlchemy to access queue information and frames
 
 
 """
-import threading
-import logging
-import os
-import os.path
-import shelve
-from collections import deque
-from datetime import datetime, timedelta
-
-# try:
-#     from configparser import ConfigParser
-# except ImportError:
-#     from ConfigParser import ConfigParser
-
 from sqlalchemy import engine_from_config, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import select, func, distinct
 
 from coilmq.store import QueueStore
 from coilmq.config import config
-from coilmq.exception import ConfigError
-from coilmq.util.concurrency import synchronized
 from coilmq.store.sa import meta, model
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -32,7 +17,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

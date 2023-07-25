@@ -5,8 +5,6 @@ scheduler implementations.
 """
 import zlib
 
-import six
-
 from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.util import frames
 from tests.functional import BaseFunctionalTestCase, Empty as QueueEmpty
@@ -96,7 +94,7 @@ class BasicTest(BaseFunctionalTestCase):
 
         # Read some random binary data.
         # (This should be cross-platform.)
-        message = six.b('This is the message that will be compressed.')
+        message = 'This is the message that will be compressed.'.encode()
         c2 = self._new_client()
         c2.send('/queue/foo', zlib.compress(message))
 
