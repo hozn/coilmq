@@ -38,6 +38,9 @@ class SubscriptionManager:
         self._subscriptions = defaultdict(set)
         self._id_destinations: dict = {}  # For lookup if subscribing with an id
 
+    def destination_for_id(self, id: str):
+        return self._id_destinations.get(id)
+
     async def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified destination.
