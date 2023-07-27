@@ -7,14 +7,13 @@ import datetime
 from coilmq.exception import ProtocolError, AuthError
 from coilmq.util import frames
 from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame, ConnectedFrame
-from coilmq.engine import StompEngine
 
 
 class STOMP(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, engine: StompEngine):
+    def __init__(self, engine):
         self.engine = engine
 
     def stomp(self, frame):
@@ -171,7 +170,7 @@ class STOMP10(STOMP):
         dest = self._check_required_header(frame, 'destination')
         id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
+            await self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
         else:
             await self.engine.topic_manager.subscribe(self.engine.connection, dest, id=id)
 
@@ -184,10 +183,17 @@ class STOMP10(STOMP):
         if not dest and not id:
             raise ProtocolError(f'One of `destination` or `id` header are required for `{frame.cmd}` command')
 
-        if dest.startswith('/queue/'):
-            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+        if not dest:
+            # Try unsubscribing both
+            if self.engine.queue_manager:
+                await self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+            if self.engine.topic_manager:
+                await self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
         else:
-            await self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
+            if dest.startswith('/queue/'):
+                await self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+            else:
+                await self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
 
     async def begin(self, frame: Frame):
         """
@@ -250,7 +256,7 @@ class STOMP11(STOMP10):
 
     def __init__(
             self,
-            engine: StompEngine,
+            engine,
             send_heartbeat_interval: int = 100,
             receive_heartbeat_interval: int = 100,
             *args, **kwargs

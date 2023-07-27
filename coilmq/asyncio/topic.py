@@ -32,7 +32,7 @@ class TopicManager(object):
 
 
     @ivar _subscriptions: A dict of registered topics, keyed by destination.
-    @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.server.StompConnection}
+    @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.asyncio.server.StompConnection}
     """
 
     def __init__(self):
@@ -56,7 +56,7 @@ class TopicManager(object):
         Subscribes a connection to the specified topic destination. 
 
         @param connection: The client connection to subscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: L{coilmq.asyncio.server.StompConnection}
 
         @param destination: The topic destination (e.g. '/topic/foo')
         @type destination: C{str}
@@ -72,7 +72,7 @@ class TopicManager(object):
         Unsubscribes a connection from the specified topic destination. 
 
         @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: L{coilmq.asyncio.server.StompConnection}
 
         @param destination: The topic destination (e.g. '/topic/foo') (optional)
         @type destination: C{str}
@@ -91,7 +91,7 @@ class TopicManager(object):
         Removes a subscriber connection.
 
         @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: L{coilmq.asyncio.server.StompConnection}
         """
         self.log.debug("Disconnecting %s" % connection)
         await self._subscriptions.disconnect(connection)
@@ -102,7 +102,7 @@ class TopicManager(object):
 
         @param message: The message frame.  (The frame will be modified to set command 
                             to MESSAGE and set a message id.)
-        @type message: L{stompclient.frame.Frame}
+        @type message: L{coilmq.util.frames.Frame}
         """
         dest = message.headers.get('destination')
         if not dest:
@@ -114,7 +114,7 @@ class TopicManager(object):
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
         bad_subscribers = set()
-        for subscriber in self._subscriptions.subscribers(dest):
+        for subscriber in await self._subscriptions.subscribers(dest):
             frame = deepcopy(message)
             if subscriber.id != DEFAULT_SUBSCRIPTION_ID:
                 frame.headers["subscription"] = subscriber.id
