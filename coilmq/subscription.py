@@ -4,22 +4,22 @@ from collections import defaultdict
 from typing import Any
 from coilmq.server import StompConnection
 
-DEFAULT_SUBSCRIPTION_ID = 0
+DEFAULT_SUBSCRIPTION_ID = 'coilmq_default'
 
 
 @dataclass(frozen=True)
 class Subscription:
     connection: StompConnection
-    id: Any
+    id: str
 
     @classmethod
-    def factory(cls, connection, id=None):
+    def factory(cls, connection: StompConnection, id: str = None):
         """
         @param connection: The connection to subscribe.
         @type connection: L{coilmq.server.StompConnection}
 
-        @param id: The subscription identifier (introduced in STOMP 1.1).
-        @type id: C{Any}
+        @param id: The subscription identifier (optional in STOMP 1.0, required in 1.1+).
+        @type id: C{str}
 
         @return: The subscription.
         @rtype: C{Subscription}
@@ -36,42 +36,48 @@ class SubscriptionManager:
         @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.subscription.Subscription}
         """
         self._subscriptions = defaultdict(set)
+        self._id_destinations: dict = {}  # For lookup if subscribing with an id
 
-    def subscribe(self, connection, destination, id=None):
+    def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified destination.
-
-        @param destination: The destination (e.g. '/queue/foo')
-        @type destination: C{str}
 
         @param connection: The connection to subscribe.
         @type connection: L{coilmq.server.StompConnection}
 
+        @param destination: The destination (e.g. '/queue/foo')
+        @type destination: C{str}
+
         @param id: subscription identifier (optional)
-        @type id: C{int}
+        @type id: C{str}
 
         @return: The subscription.
         @rtype: C{Subscription}
         """
         if id is None:
             id = DEFAULT_SUBSCRIPTION_ID
+        else:
+            self._id_destinations[id] = destination
         subscription = Subscription(connection=connection, id=id)
         self._subscriptions[destination].add(subscription)
         return subscription
 
-    def unsubscribe(self, connection, destination, id=None):
+    def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
         """
         Unsubscribes a connection from a destination.
 
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
 
-        @param destination: The topic/queue destination (e.g. '/queue/foo')
+        @param destination: The topic/queue destination (e.g. '/queue/foo') (optional)
         @type destination: C{str}
 
         @param id: subscription identifier (optional)
-        @type id: C{int}
+        @type id: C{str}
         """
+        if id and not destination:
+            destination = self._id_destinations.get(id)
+
         subscriptions = self._subscriptions.get(destination, None)
         if subscriptions is None:
             return
@@ -85,7 +91,7 @@ class SubscriptionManager:
         if not subscriptions:
             del self._subscriptions[destination]
 
-    def disconnect(self, connection):
+    def disconnect(self, connection: StompConnection):
         """
         Removes a client connection.
 
@@ -103,7 +109,7 @@ class SubscriptionManager:
             else:
                 del self._subscriptions[destination]
 
-    def subscriber_count(self, destination=None):
+    def subscriber_count(self, destination: str = None) -> int:
         """
         Returns a count of the number of subscribers.
 
@@ -121,7 +127,7 @@ class SubscriptionManager:
         else:
             return sum(map(len, self._subscriptions.values()))
 
-    def subscribers(self, destination):
+    def subscribers(self, destination: str):
         """
         Returns subscribers to a single destination.
 

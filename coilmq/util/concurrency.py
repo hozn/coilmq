@@ -88,7 +88,8 @@ class CoilThreadingTimer(CoilTimerBase):
     def run(self):
         def run_job(index, interval, callback):
             if self._running:
-                self._timers[index] = threading.Timer(period, run_job, (index, interval, callback)).start()
+                self._timers[index] = threading.Timer(period, run_job, (index, interval, callback))
+                self._timers[index].start()
                 callback()
 
         self._reset_timers()

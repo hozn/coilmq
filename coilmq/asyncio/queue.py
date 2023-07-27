@@ -8,9 +8,11 @@ import logging
 import uuid
 from collections import defaultdict
 
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
-from coilmq.asyncio.subscription import SubscriptionManager, Subscription
-from coilmq.util import frames
+from coilmq.server import StompConnection
+from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler, QueuePriorityScheduler, SubscriberPriorityScheduler
+from coilmq.asyncio.store import QueueStore
+from coilmq.asyncio.subscription import SubscriptionManager, Subscription, DEFAULT_SUBSCRIPTION_ID
+from coilmq.util.frames import MESSAGE, Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -60,7 +62,12 @@ class QueueManager(object):
     @type _transaction_frames: C{dict} of L{coilmq.asyncio.subscription.Subscription} to C{dict} of C{str} to C{stompclient.frame.Frame}
     """
 
-    def __init__(self, store, subscriber_scheduler=None, queue_scheduler=None):
+    def __init__(
+            self,
+            store: QueueStore,
+            subscriber_scheduler: SubscriberPriorityScheduler = None,
+            queue_scheduler: QueuePriorityScheduler = None,
+    ):
         """
         @param store: The queue storage backend.
         @type store: L{coilmq.asyncio.store.QueueStore}
@@ -107,7 +114,7 @@ class QueueManager(object):
         if hasattr(self.queue_scheduler, 'close'):
             self.queue_scheduler.close()
 
-    async def subscriber_count(self, destination=None):
+    async def subscriber_count(self, destination: str = None):
         """
         Returns a count of the number of subscribers.
 
@@ -122,7 +129,7 @@ class QueueManager(object):
         """
         return await self._subscriptions.subscriber_count(destination=destination)
 
-    async def subscribe(self, connection, destination, id=None):
+    async def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified destination (topic or queue). 
 
@@ -130,26 +137,35 @@ class QueueManager(object):
         @type connection: L{coilmq.asyncio.server.StompConnection}
 
         @param destination: The topic/queue destination (e.g. '/queue/foo')
-        @type destination: C{str} 
+        @type destination: C{str}
+
+        @param id: subscription identifier (optional)
+        @type id: C{str}
         """
         self.log.debug("Subscribing %s to %s" % (connection, destination))
         subscription = await self._subscriptions.subscribe(connection, destination, id=id)
         await self._send_backlog(subscription, destination)
 
-    async def unsubscribe(self, connection, destination, id=None):
+    async def unsubscribe(self, connection:StompConnection, destination: str, id: str = None):
         """
         Unsubscribes a connection from a destination (topic or queue).
 
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.asyncio.server.StompConnection}
 
-        @param destination: The topic/queue destination (e.g. '/queue/foo')
-        @type destination: C{str} 
+        @param destination: The topic/queue destination (e.g. '/queue/foo') (optional)
+        @type destination: C{str}
+
+        @param id: subscription identifier (optional)
+        @type id: C{str}
         """
-        self.log.debug("Unsubscribing %s from %s" % (connection, destination))
+        if id and not destination:
+            self.log.debug("Unsubscribing %s for id %s" % (connection, id))
+        else:
+            self.log.debug("Unsubscribing %s from %s" % (connection, destination))
         await self._subscriptions.unsubscribe(connection, destination, id=id)
 
-    async def disconnect(self, connection):
+    async def disconnect(self, connection: StompConnection):
         """
         Removes a subscriber connection, ensuring that any pending commands get requeued.
 
@@ -164,7 +180,7 @@ class QueueManager(object):
                 del self._pending[subscription]
         await self._subscriptions.disconnect(connection)
 
-    async def send(self, message):
+    async def send(self, message: Frame):
         """
         Sends a MESSAGE frame to an eligible subscriber connection.
 
@@ -180,7 +196,7 @@ class QueueManager(object):
             raise ValueError(
                 "Cannot send frame with no destination: %s" % message)
 
-        message.cmd = frames.MESSAGE
+        message.cmd = MESSAGE
 
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
@@ -199,7 +215,7 @@ class QueueManager(object):
                            (message, selected))
             await self._send_frame(selected, message)
 
-    async def ack(self, connection, frame, transaction=None, id=None):
+    async def ack(self, connection: StompConnection, frame: Frame, transaction: str = None, id: str = None):
         """
         Acknowledge receipt of a message.
 
@@ -236,7 +252,7 @@ class QueueManager(object):
         else:
             self.log.debug("No pending messages for %s" % subscription)
 
-    async def resend_transaction_frames(self, connection, transaction):
+    async def resend_transaction_frames(self, connection: StompConnection, transaction: str):
         """
         Resend the messages that were ACK'd in specified transaction.
 
@@ -253,7 +269,7 @@ class QueueManager(object):
                 for frame in frames[transaction]:
                     await self.send(frame)
 
-    async def clear_transaction_frames(self, connection, transaction):
+    async def clear_transaction_frames(self, connection: StompConnection, transaction: str):
         """
         Clears out the queued ACK frames for specified transaction. 
 
@@ -273,7 +289,7 @@ class QueueManager(object):
                     # There may not have been any ACK frames for this transaction.
                     pass
 
-    async def _send_backlog(self, subscription, destination=None):
+    async def _send_backlog(self, subscription: Subscription, destination: str = None):
         """
         Sends any queued-up messages for the (optionally) specified destination to subscription.
 
@@ -294,9 +310,12 @@ class QueueManager(object):
         """
         if destination is None:
             # Find all destinations that have frames and that contain this subscription.
-            eligible_subscriptions = dict((dest, s) for (dest, s) in self._subscriptions.all_subscribers()
+            eligible_subscriptions = dict((dest, s) for (dest, s) in await self._subscriptions.all_subscribers()
                                     if subscription in s and self.store.has_frames(dest))
-            destination = self.queue_scheduler.choice(eligible_subscriptions, subscription)
+            destination = self.queue_scheduler.choice(
+                eligible_subscriptions,
+                subscription,
+            )
             if destination is None:
                 self.log.debug(
                     "No eligible queues (with frames) for subscriber %s" % subscription)
@@ -325,7 +344,7 @@ class QueueManager(object):
                     await self.store.requeue(destination, frame)
                     raise
 
-    async def _send_frame(self, subscription, frame):
+    async def _send_frame(self, subscription: Subscription, frame: Frame):
         """
         Sends a frame to a specific subscription.
 
@@ -341,7 +360,7 @@ class QueueManager(object):
         assert subscription is not None
         assert frame is not None
 
-        if frame.cmd == frames.MESSAGE:
+        if frame.cmd == MESSAGE and subscription.id != DEFAULT_SUBSCRIPTION_ID:
             frame.headers["subscription"] = subscription.id
 
         self.log.debug("Delivering frame %s to subscription %s" %

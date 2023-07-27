@@ -7,8 +7,9 @@ Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 import logging
 import uuid
 from copy import deepcopy
-from coilmq.asyncio.subscription import SubscriptionManager
-from coilmq.util import frames
+from coilmq.server import StompConnection
+from coilmq.asyncio.subscription import SubscriptionManager, DEFAULT_SUBSCRIPTION_ID
+from coilmq.util.frames import MESSAGE, Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -50,7 +51,7 @@ class TopicManager(object):
         """
         self.log.info("Shutting down topic manager.")  # pragma: no cover
 
-    async def subscribe(self, connection, destination, id=None):
+    async def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified topic destination. 
 
@@ -58,25 +59,34 @@ class TopicManager(object):
         @type connection: L{coilmq.server.StompConnection}
 
         @param destination: The topic destination (e.g. '/topic/foo')
-        @type destination: C{str} 
+        @type destination: C{str}
+
+        @param id: subscription identifier (optional)
+        @type id: C{str}
         """
         self.log.debug("Subscribing %s to %s" % (connection, destination))
         await self._subscriptions.subscribe(connection, destination, id=id)
 
-    async def unsubscribe(self, connection, destination, id=None):
+    async def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
         """
         Unsubscribes a connection from the specified topic destination. 
 
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
 
-        @param destination: The topic destination (e.g. '/topic/foo')
-        @type destination: C{str} 
+        @param destination: The topic destination (e.g. '/topic/foo') (optional)
+        @type destination: C{str}
+
+        @param id: subscription identifier (optional)
+        @type id: C{str}
         """
-        self.log.debug("Unsubscribing %s from %s" % (connection, destination))
+        if id and not destination:
+            self.log.debug("Unsubscribing %s for id %s" % (connection, id))
+        else:
+            self.log.debug("Unsubscribing %s from %s" % (connection, destination))
         await self._subscriptions.unsubscribe(connection, destination, id=id)
 
-    async def disconnect(self, connection):
+    async def disconnect(self, connection: StompConnection):
         """
         Removes a subscriber connection.
 
@@ -86,7 +96,7 @@ class TopicManager(object):
         self.log.debug("Disconnecting %s" % connection)
         await self._subscriptions.disconnect(connection)
 
-    async def send(self, message):
+    async def send(self, message: Frame):
         """
         Sends a message to all subscribers of destination.
 
@@ -99,14 +109,15 @@ class TopicManager(object):
             raise ValueError(
                 "Cannot send frame with no destination: %s" % message)
 
-        message.cmd = frames.MESSAGE
+        message.cmd = MESSAGE
 
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
         bad_subscribers = set()
         for subscriber in self._subscriptions.subscribers(dest):
             frame = deepcopy(message)
-            frame.headers["subscription"] = subscriber.id
+            if subscriber.id != DEFAULT_SUBSCRIPTION_ID:
+                frame.headers["subscription"] = subscriber.id
             try:
                 await subscriber.connection.send_frame(frame)
             except:

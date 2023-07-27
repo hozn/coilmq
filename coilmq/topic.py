@@ -2,14 +2,15 @@
 Non-durable topic support functionality.
 
 This code is inspired by the design of the Ruby stompserver project, by 
-Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
+Patrick Hurley and Lionel Bouton.  See https://stompserver.rubyforge.org/
 """
 import logging
 import threading
 import uuid
 from copy import deepcopy
-from coilmq.subscription import SubscriptionManager
-from coilmq.util import frames
+from coilmq.server import StompConnection
+from coilmq.subscription import SubscriptionManager, DEFAULT_SUBSCRIPTION_ID
+from coilmq.util.frames import MESSAGE, Frame
 from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -65,7 +66,7 @@ class TopicManager(object):
         self.log.info("Shutting down topic manager.")  # pragma: no cover
 
     @synchronized(lock)
-    def subscribe(self, connection, destination, id=None):
+    def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified topic destination. 
 
@@ -73,27 +74,36 @@ class TopicManager(object):
         @type connection: L{coilmq.server.StompConnection}
 
         @param destination: The topic destination (e.g. '/topic/foo')
-        @type destination: C{str} 
+        @type destination: C{str}
+
+        @param id: subscription identifier (optional)
+        @type id: C{str}
         """
         self.log.debug("Subscribing %s to %s" % (connection, destination))
         self._subscriptions.subscribe(connection, destination, id=id)
 
     @synchronized(lock)
-    def unsubscribe(self, connection, destination, id=None):
+    def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
         """
         Unsubscribes a connection from the specified topic destination. 
 
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
 
-        @param destination: The topic destination (e.g. '/topic/foo')
-        @type destination: C{str} 
+        @param destination: The topic destination (e.g. '/topic/foo') (optional)
+        @type destination: C{str}
+
+        @param id: subscription identifier (optional)
+        @type id: C{str}
         """
-        self.log.debug("Unsubscribing %s from %s" % (connection, destination))
+        if id and not destination:
+            self.log.debug("Unsubscribing %s for id %s" % (connection, id))
+        else:
+            self.log.debug("Unsubscribing %s from %s" % (connection, destination))
         self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
-    def disconnect(self, connection):
+    def disconnect(self, connection: StompConnection):
         """
         Removes a subscriber connection.
 
@@ -104,7 +114,7 @@ class TopicManager(object):
         self._subscriptions.disconnect(connection)
 
     @synchronized(lock)
-    def send(self, message):
+    def send(self, message: Frame):
         """
         Sends a message to all subscribers of destination.
 
@@ -117,14 +127,15 @@ class TopicManager(object):
             raise ValueError(
                 "Cannot send frame with no destination: %s" % message)
 
-        message.cmd = frames.MESSAGE
+        message.cmd = MESSAGE
 
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
         bad_subscribers = set()
         for subscriber in self._subscriptions.subscribers(dest):
             frame = deepcopy(message)
-            frame.headers["subscription"] = subscriber.id
+            if subscriber.id != DEFAULT_SUBSCRIPTION_ID:
+                frame.headers["subscription"] = subscriber.id
             try:
                 subscriber.connection.send_frame(frame)
             except:

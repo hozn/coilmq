@@ -60,6 +60,7 @@ class MockQueueManager(object):
 
     def reset(self):
         self.queues = defaultdict(set)
+        self._id_destinations: dict = {}  # For lookup if subscribing with an id
         self.acks = []
         self.messages = []
         self.transaction_frames = defaultdict(lambda: defaultdict(list))
@@ -68,9 +69,14 @@ class MockQueueManager(object):
         pass
 
     def subscribe(self, conn, dest, id=None):
+        print(f'Subscribing with dest {dest}, id {id}')
+        if id:
+            self._id_destinations[id] = dest
         self.queues[dest].add(conn)
 
     def unsubscribe(self, conn, dest, id=None):
+        if id and not dest:
+            dest = self._id_destinations[id]
         if dest in self.queues:
             self.queues[dest].remove(conn)
 
@@ -117,13 +123,19 @@ class MockTopicManager(object):
         self.reset()
 
     def reset(self):
+        self._id_destinations: dict = {}  # For lookup if subscribing with an id
         self.topics = defaultdict(set)
         self.messages = []
 
     def subscribe(self, conn, dest, id=None):
+        if id:
+            self._id_destinations[id] = dest
         self.topics[dest].add(conn)
 
     def unsubscribe(self, conn, dest, id=None):
+        if id and not dest:
+            dest = self._id_destinations[id]
+            print(f'dest from id: {dest}')
         if dest in self.topics:
             self.topics[dest].remove(conn)
 
