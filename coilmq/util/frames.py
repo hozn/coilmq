@@ -293,7 +293,7 @@ class FrameBuffer(object):
         @return: C{True} if buffer is empty, C{False} otherwise.
         @rtype: C{bool}
         """
-        return self._buffer.getbuffer().nbytes > 0
+        return self._buffer.getbuffer().nbytes == 0
 
     def append(self, data):
         """
