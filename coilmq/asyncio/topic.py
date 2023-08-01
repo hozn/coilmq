@@ -2,16 +2,14 @@
 Non-durable topic support functionality.
 
 This code is inspired by the design of the Ruby stompserver project, by 
-Patrick Hurley and Lionel Bouton.  See https://stompserver.rubyforge.org/
+Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 """
 import logging
-import threading
 import uuid
 from copy import deepcopy
 from coilmq.server import StompConnection
-from coilmq.subscription import SubscriptionManager, DEFAULT_SUBSCRIPTION_ID
+from coilmq.asyncio.subscription import SubscriptionManager, DEFAULT_SUBSCRIPTION_ID
 from coilmq.util.frames import MESSAGE, Frame
-from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -19,7 +17,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  https://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,37 +25,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-lock = threading.RLock()
-
 
 class TopicManager(object):
     """
     Class that manages distribution of messages to topic subscribers.
 
-    This class uses C{threading.RLock} to guard the public methods.  This is probably
-    a bit excessive, given 1) the atomic nature of basic C{dict} read/write operations
-    and  2) the fact that most of the internal data structures are keying off of the 
-    STOMP connection, which is going to be thread-isolated.  That said, this seems like 
-    the technically correct approach and should increase the chance of this code being
-    portable to non-GIL systems.
 
     @ivar _subscriptions: A dict of registered topics, keyed by destination.
-    @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.server.StompConnection}
+    @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.asyncio.server.StompConnection}
     """
 
     def __init__(self):
         self.log = logging.getLogger(
             '%s.%s' % (__name__, self.__class__.__name__))
 
-        # Lock var is required for L{synchornized} decorator.
-        self._lock = threading.RLock()
-
         self._subscriptions = SubscriptionManager()
 
         # TODO: If we want durable topics, we'll need a store for topics.
 
-    @synchronized(lock)
-    def close(self):
+    async def close(self):
         """
         Closes all resources associated with this topic manager.
 
@@ -65,13 +51,12 @@ class TopicManager(object):
         """
         self.log.info("Shutting down topic manager.")  # pragma: no cover
 
-    @synchronized(lock)
-    def subscribe(self, connection: StompConnection, destination: str, id: str = None):
+    async def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified topic destination. 
 
         @param connection: The client connection to subscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: L{coilmq.asyncio.server.StompConnection}
 
         @param destination: The topic destination (e.g. '/topic/foo')
         @type destination: C{str}
@@ -80,15 +65,14 @@ class TopicManager(object):
         @type id: C{str}
         """
         self.log.debug("Subscribing %s to %s" % (connection, destination))
-        self._subscriptions.subscribe(connection, destination, id=id)
+        await self._subscriptions.subscribe(connection, destination, id=id)
 
-    @synchronized(lock)
-    def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
+    async def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
         """
         Unsubscribes a connection from the specified topic destination. 
 
         @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: L{coilmq.asyncio.server.StompConnection}
 
         @param destination: The topic destination (e.g. '/topic/foo') (optional)
         @type destination: C{str}
@@ -100,27 +84,25 @@ class TopicManager(object):
             self.log.debug("Unsubscribing %s for id %s" % (connection, id))
         else:
             self.log.debug("Unsubscribing %s from %s" % (connection, destination))
-        self._subscriptions.unsubscribe(connection, destination, id=id)
+        await self._subscriptions.unsubscribe(connection, destination, id=id)
 
-    @synchronized(lock)
-    def disconnect(self, connection: StompConnection):
+    async def disconnect(self, connection: StompConnection):
         """
         Removes a subscriber connection.
 
         @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: L{coilmq.asyncio.server.StompConnection}
         """
         self.log.debug("Disconnecting %s" % connection)
-        self._subscriptions.disconnect(connection)
+        await self._subscriptions.disconnect(connection)
 
-    @synchronized(lock)
-    def send(self, message: Frame):
+    async def send(self, message: Frame):
         """
         Sends a message to all subscribers of destination.
 
         @param message: The message frame.  (The frame will be modified to set command 
                             to MESSAGE and set a message id.)
-        @type message: L{stompclient.frame.Frame}
+        @type message: L{coilmq.util.frames.Frame}
         """
         dest = message.headers.get('destination')
         if not dest:
@@ -132,12 +114,12 @@ class TopicManager(object):
         message.headers.setdefault('message-id', str(uuid.uuid4()))
 
         bad_subscribers = set()
-        for subscriber in self._subscriptions.subscribers(dest):
+        for subscriber in await self._subscriptions.subscribers(dest):
             frame = deepcopy(message)
             if subscriber.id != DEFAULT_SUBSCRIPTION_ID:
                 frame.headers["subscription"] = subscriber.id
             try:
-                subscriber.connection.send_frame(frame)
+                await subscriber.connection.send_frame(frame)
             except:
                 self.log.exception(
                     "Error delivering message to subscriber %s; client will be disconnected." % subscriber)
@@ -146,4 +128,4 @@ class TopicManager(object):
                 bad_subscribers.add(subscriber)
 
         for s in bad_subscribers:
-            self.unsubscribe(s.connection, dest, id=s.id)
+            await self.unsubscribe(s.connection, dest, id=s.id)

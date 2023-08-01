@@ -12,7 +12,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,7 +44,7 @@ class CoilTimerBase(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.jobs = []
 
     def schedule(self, period, callback):
@@ -77,14 +77,24 @@ class CoilThreadingTimer(CoilTimerBase):
     def __init__(self, *args, **kwargs):
         super(CoilThreadingTimer, self).__init__(*args, **kwargs)
         self._running = False
+        self._timers = []
+
+    def _reset_timers(self):
+        for timer in self._timers:
+            if timer:
+                timer.cancel()
+        self._timers = [None] * len(self.jobs)
 
     def run(self):
-        def run_job(interval, callback):
+        def run_job(index, interval, callback):
             if self._running:
-                threading.Timer(interval, run_job, args=(interval, callback)).start()
+                self._timers[index] = threading.Timer(period, run_job, (index, interval, callback))
+                self._timers[index].start()
                 callback()
-        for period, job in self.jobs:
-            run_job(period, job)
+
+        self._reset_timers()
+        for job_index, (period, job) in enumerate(self.jobs):
+            run_job(job_index, period, job)
 
     def start(self):
         self._running = True
@@ -92,5 +102,4 @@ class CoilThreadingTimer(CoilTimerBase):
 
     def stop(self):
         self._running = False
-
-
+        self._reset_timers()

@@ -3,9 +3,6 @@ Storage containers for durable queues and (planned) durable topics.
 """
 import abc
 import logging
-import threading
-
-from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -20,8 +17,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-
-lock = threading.RLock()
 
 
 class QueueStore(object):
@@ -46,46 +41,42 @@ class QueueStore(object):
             self.__module__, self.__class__.__name__))
 
     @abc.abstractmethod
-    @synchronized(lock)
-    def enqueue(self, destination, frame):
+    async def enqueue(self, destination, frame):
         """
-        Store message (frame) for specified destinationination.
+        Store message (frame) for specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
 
     @abc.abstractmethod
-    @synchronized(lock)
-    def dequeue(self, destination):
+    async def dequeue(self, destination):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
         @rtype: C{stompclient.frame.Frame} 
         """
 
-    @synchronized(lock)
-    def requeue(self, destination, frame):
+    async def requeue(self, destination, frame):
         """
-        Requeue a message (frame) for storing at specified destinationination.
+        Requeue a message (frame) for storing at specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
-        self.enqueue(destination, frame)
+        await self.enqueue(destination, frame)
 
-    @synchronized(lock)
-    def size(self, destination):
+    async def size(self, destination):
         """
         Size of the queue for specified destination.
 
@@ -97,8 +88,7 @@ class QueueStore(object):
         """
         raise NotImplementedError()
 
-    @synchronized(lock)
-    def has_frames(self, destination):
+    async def has_frames(self, destination):
         """
         Whether specified destination has any frames.
 
@@ -111,10 +101,9 @@ class QueueStore(object):
         @return: The number of frames in specified queue.
         @rtype: C{int}
         """
-        return self.size(destination) > 0
+        return await self.size(destination) > 0
 
-    @synchronized(lock)
-    def destinations(self):
+    async def destinations(self):
         """
         Provides a set of destinations (queue "addresses") available.
 
@@ -123,8 +112,7 @@ class QueueStore(object):
         """
         raise NotImplementedError
 
-    @synchronized(lock)
-    def close(self):
+    async def close(self):
         """
         May be implemented to perform any necessary cleanup operations when store is closed.
         """
@@ -132,7 +120,7 @@ class QueueStore(object):
 
     # This is intentionally not synchronized, since it does not directly
     # expose any shared data.
-    def frames(self, destination):
+    async def frames(self, destination):
         """
         Returns an iterator for frames in specified queue.
 

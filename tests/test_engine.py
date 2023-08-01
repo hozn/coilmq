@@ -96,7 +96,7 @@ class EngineTest(unittest.TestCase):
 
         msg = Frame(frames.SEND, headers={}, body='TOPICMSG-BODY')
         self.engine.process_frame(msg)
-        self.assertErrorFrame(self.conn.frames[-1], 'Missing destination')
+        self.assertErrorFrame(self.conn.frames[-1], '`destination` header is required for `SEND` command')
 
     def test_receipt(self):
         """ Test pushing frames with a receipt specified. """
@@ -138,6 +138,20 @@ class EngineTest(unittest.TestCase):
 
         self.engine.process_frame(
             Frame(frames.UNSUBSCRIBE, headers={'destination': '/invalid'}))
+
+    def test_unsubscribe_id_only(self):
+        """ Test the UNSUBSCRIBE command. """
+        self._connect()
+        self.engine.process_frame(
+            Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar', 'id': 'sub_id_1'}))
+        assert self.conn in self.qm.queues['/queue/bar']
+
+        self.engine.process_frame(
+            Frame(frames.UNSUBSCRIBE, headers={'id': 'sub_id_1'}))
+        assert self.conn not in self.qm.queues['/queue/bar']
+
+        self.engine.process_frame(
+            Frame(frames.UNSUBSCRIBE, headers={'id': 'invalid'}))
 
     def test_begin(self):
         """ Test transaction BEGIN. """

@@ -2,7 +2,7 @@ import itertools
 from dataclasses import dataclass
 from collections import defaultdict
 from typing import Any
-from coilmq.server import StompConnection
+from coilmq.asyncio.server import StompConnection
 
 DEFAULT_SUBSCRIPTION_ID = 'coilmq_default'
 
@@ -41,7 +41,7 @@ class SubscriptionManager:
     def destination_for_id(self, id: str):
         return self._id_destinations.get(id)
 
-    def subscribe(self, connection: StompConnection, destination: str, id: str = None):
+    async def subscribe(self, connection: StompConnection, destination: str, id: str = None):
         """
         Subscribes a connection to the specified destination.
 
@@ -65,9 +65,10 @@ class SubscriptionManager:
         self._subscriptions[destination].add(subscription)
         return subscription
 
-    def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
+    async def unsubscribe(self, connection: StompConnection, destination: str = None, id: str = None):
         """
         Unsubscribes a connection from a destination.
+        One of destination, or id must be provided
 
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
@@ -94,7 +95,7 @@ class SubscriptionManager:
         if not subscriptions:
             del self._subscriptions[destination]
 
-    def disconnect(self, connection: StompConnection):
+    async def disconnect(self, connection: StompConnection):
         """
         Removes a client connection.
 
@@ -112,7 +113,7 @@ class SubscriptionManager:
             else:
                 del self._subscriptions[destination]
 
-    def subscriber_count(self, destination: str = None) -> int:
+    async def subscriber_count(self, destination: str = None) -> int:
         """
         Returns a count of the number of subscribers.
 
@@ -130,7 +131,7 @@ class SubscriptionManager:
         else:
             return sum(map(len, self._subscriptions.values()))
 
-    def subscribers(self, destination: str):
+    async def subscribers(self, destination: str):
         """
         Returns subscribers to a single destination.
 
@@ -142,8 +143,9 @@ class SubscriptionManager:
         """
         return self._subscriptions.get(destination, set())
 
-    def all_subscribers(self):
+    async def all_subscribers(self):
         """
         Yields all subscribers.
         """
-        yield from itertools.chain(self._subscriptions.items())
+        for x in itertools.chain(self._subscriptions.items()):
+            yield x

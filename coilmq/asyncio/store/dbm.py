@@ -8,7 +8,6 @@ Because of how the `shelve` module works (and how we're using it) and caveats in
 documentation this is likely a BAD storage module to use if you are expecting to traffic in
 large frames.
 """
-import threading
 import os
 import os.path
 import shelve
@@ -20,7 +19,6 @@ from configparser import ConfigParser, NoOptionError
 from coilmq.store import QueueStore
 from coilmq.config import config
 from coilmq.exception import ConfigError
-from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -36,7 +34,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-lock = threading.RLock()
 
 
 def make_dbm():
@@ -137,8 +134,7 @@ class DbmQueue(QueueStore):
         self.frame_store = shelve.open(os.path.join(
             self.data_dir, 'frames'), writeback=False)
 
-    @synchronized(lock)
-    def enqueue(self, destination, frame):
+    async def enqueue(self, destination, frame):
         """
         Store message (frame) for specified destination.
 
@@ -164,10 +160,9 @@ class DbmQueue(QueueStore):
         self.frame_store[message_id] = frame
 
         self._opcount += 1
-        self._sync()
+        await self._sync()
 
-    @synchronized(lock)
-    def dequeue(self, destination):
+    async def dequeue(self, destination):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
@@ -187,12 +182,11 @@ class DbmQueue(QueueStore):
         del self.frame_store[message_id]
 
         self._opcount += 1
-        self._sync()
+        await self._sync()
 
         return frame
 
-    @synchronized(lock)
-    def has_frames(self, destination):
+    async def has_frames(self, destination):
         """
         Whether specified queue has any frames.
 
@@ -204,8 +198,7 @@ class DbmQueue(QueueStore):
         """
         return (destination in self.queue_metadata) and bool(self.queue_metadata[destination]['frames'])
 
-    @synchronized(lock)
-    def size(self, destination):
+    async def size(self, destination):
         """
         Size of the queue for specified destination.
 
@@ -220,16 +213,14 @@ class DbmQueue(QueueStore):
         else:
             return len(self.queue_metadata[destination]['frames'])
 
-    @synchronized(lock)
-    def close(self):
+    async def close(self):
         """
         Closes the databases, freeing any resources (and flushing any unsaved changes to disk).
         """
         self.queue_metadata.close()
         self.frame_store.close()
 
-    @synchronized(lock)
-    def destinations(self):
+    async def destinations(self):
         """
         Provides a list of destinations (queue "addresses") available.
 
@@ -238,7 +229,7 @@ class DbmQueue(QueueStore):
         """
         return set(self.queue_metadata.keys())
 
-    def _sync(self):
+    async def _sync(self):
         """
         Synchronize the cached data with the underlying database.
 

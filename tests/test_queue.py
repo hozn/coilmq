@@ -79,6 +79,24 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(len(self.conn.frames), 1)
         self.assertEqual(len(self.store.frames(dest)), 1)
 
+    def test_unsubscribe_id_only(self):
+        """ Test unsubscribing a connection from the queue. """
+        dest = '/queue/dest'
+
+        self.qm.subscribe(self.conn, dest, id='sub_id_1')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        self.qm.send(f)
+
+        self.assertEqual(len(self.conn.frames), 1)
+        self.assertEqual(self.conn.frames[0], f)
+
+        self.qm.unsubscribe(self.conn, id='sub_id_1')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        self.qm.send(f)
+
+        self.assertEqual(len(self.conn.frames), 1)
+        self.assertEqual(len(self.store.frames(dest)), 1)
+
     def send_simple(self):
         """ Test a basic send command. """
         dest = '/queue/dest'
@@ -139,11 +157,12 @@ class QueueManagerTest(unittest.TestCase):
         # The message will have been requeued at this point, so add a valid
         # subscriber
 
-        self.qm.subscribe(self.conn, dest)
+        self.qm.subscribe(self.conn, dest, id='sub_id_1')
 
         self.assertEqual(len(self.conn.frames), 1, "Expected frame to be delivered")
+        # N.B. subscription header is only sent if the subscribe included an id
         subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
+        self.assertEqual(subscription, 'sub_id_1')
         self.assertEqual(self.conn.frames[0], f)
 
     def test_send_backlog_err_unreliable(self):
@@ -176,9 +195,10 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.subscribe(self.conn, dest)
 
         self.assertEqual(len(self.conn.frames), 2, "Expected frame to be delivered")
-        for frame in self.conn.frames:
-            subscription = frame.headers.pop("subscription", None)
-            self.assertEqual(subscription, 0)
+        # N.B. subscription header is only sent if the subscribe included an id
+        # for frame in self.conn.frames:
+        #     subscription = frame.headers.pop("subscription", None)
+        #     self.assertEqual(subscription, 0)
 
         self.assertListEqual(list(self.conn.frames), [f2, f])
 
@@ -232,7 +252,7 @@ class QueueManagerTest(unittest.TestCase):
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
 
-        self.qm.subscribe(conn1, dest)
+        self.qm.subscribe(conn1, dest, id='sub_id_1')
 
         m1 = Frame(frames.MESSAGE, headers={
                    'destination': dest}, body='Message body (1)')
@@ -247,13 +267,17 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(len(conn1.frames), 1)
         self.assertEqual(conn1.frames[0], m1)
 
-        ack = Frame(frames.ACK, headers={'destination': dest,
-                                    'message-id': m1.headers['message-id']})
-        self.qm.ack(conn1, ack)
+        ack = Frame(frames.ACK, headers={
+            'destination': dest,
+            'message-id': m1.headers['message-id'],
+            'subscription': 'sub_id_1',
+        })
+        self.qm.ack(conn1, ack, id='sub_id_1')
 
         self.assertEqual(len(conn1.frames), 2, "Expected 2 frames now, after ACK.")
+        # N.B. subscription header is only sent if the subscribe included an id
         subscription = conn1.frames[1].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
+        self.assertEqual(subscription, 'sub_id_1')
         self.assertEqual(conn1.frames[1], m2)
 
     def test_ack_transaction(self):
@@ -288,8 +312,9 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.ack(conn1, ack, transaction='abc')
 
         self.assertEqual(len(conn1.frames), 2, "Expected 2 frames now, after ACK.")
-        subscription = conn1.frames[1].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
+        # N.B. subscription header is only sent if the subscribe included an id
+        #subscription = conn1.frames[1].headers.pop("subscription", None)
+        #self.assertEqual(subscription, 0)
         self.assertEqual(conn1.frames[1],  m2)
 
         self.qm.resend_transaction_frames(conn1, transaction='abc')
