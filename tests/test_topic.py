@@ -31,7 +31,7 @@ class TopicManagerTest(unittest.TestCase):
         self.tm = TopicManager()
         self.conn = MockConnection()
 
-    def test_subscribe(self):
+    def test_subscribe_no_id(self):
         """ Test subscribing a connection to the topic. """
         dest = '/topic/dest'
 
@@ -40,8 +40,24 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
+        # N.B. subscription header is only sent if the subscribe included an id
+        # subscription = self.conn.frames[0].headers.pop("subscription", None)
+        # self.assertEqual(subscription, 0)
+        assert 'subscription' not in self.conn.frames[0].headers
+        self.assertEqual(self.conn.frames[0], f)
+
+    def test_subscribe_with_id(self):
+        """ Test subscribing a connection to the topic. """
+        dest = '/topic/dest'
+
+        self.tm.subscribe(self.conn, dest, id='sub_id_1')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        self.tm.send(f)
+
+        self.assertEqual(len(self.conn.frames), 1)
+        # N.B. subscription header is only sent if the subscribe included an id
         subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
+        self.assertEqual(subscription, 'sub_id_1')
         self.assertEqual(self.conn.frames[0], f)
 
     def test_unsubscribe(self):
@@ -53,11 +69,32 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
+        # N.B. subscription header is only sent if the subscribe included an id
+        # subscription = self.conn.frames[0].headers.pop("subscription", None)
+        # self.assertEqual(subscription, 0)
+        assert 'subscription' not in self.conn.frames[0].headers
         self.assertEqual(self.conn.frames[0], f)
 
         self.tm.unsubscribe(self.conn, dest)
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        self.tm.send(f)
+
+        self.assertEqual(len(self.conn.frames), 1)
+
+    def test_unsubscribe_id_only(self):
+        """ Test unsubscribing a connection from the queue. """
+        dest = '/topic/dest'
+
+        self.tm.subscribe(self.conn, dest, id='sub_id_1')
+        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        self.tm.send(f)
+
+        self.assertEqual(len(self.conn.frames), 1)
+        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        self.assertEqual(subscription, 'sub_id_1')
+        self.assertEqual(self.conn.frames[0], f)
+
+        self.tm.unsubscribe(self.conn, id='sub_id_1')
         f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
         self.tm.send(f)
 
@@ -99,8 +136,10 @@ class TopicManagerTest(unittest.TestCase):
 
         # Make sure out good client got the message.
         self.assertEqual(len(self.conn.frames), 1)
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
+        # N.B. subscription header is only sent if the subscribe included an id
+        # subscription = self.conn.frames[0].headers.pop("subscription", None)
+        # self.assertEqual(subscription, 0)
+        assert 'subscription' not in self.conn.frames[0].headers
         self.assertEqual(self.conn.frames[0], f)
 
         # Make sure our bad client got disconnected

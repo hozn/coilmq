@@ -1,11 +1,7 @@
 import unittest
 
 import fakeredis
-
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 try:
     from unittest import mock

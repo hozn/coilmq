@@ -1,6 +1,3 @@
-
-from coilmq.protocol import STOMP10
-
 """
 Core STOMP server logic, abstracted from socket transport implementation.
 
@@ -16,10 +13,14 @@ if the underlying storage implementations were processor intensive (e.g. databas
 access).  For the default memory storage engines, this shouldn't be a problem.
 
 This code is inspired by the design of the Ruby stompserver project, by 
-Patrick Hurley and Lionel Bouton.  See https://stompserver.rubyforge.org/
+Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 """
 import logging
 from collections import defaultdict
+from typing import Type
+
+from coilmq.asyncio.protocol import STOMP10
+from coilmq.asyncio.server import StompConnection
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -27,7 +28,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  https://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,17 +46,17 @@ class StompEngine(object):
     uses the attached connection to send frames to connected clients.
 
     @ivar connection: The connection (aka "protocol") backing this engine.
-    @type connection: L{coilmq.server.StompConnection}
+    @type connection: C[StompConnection]
 
     @ivar authenticator: An C{Authenticator} implementation to use.  Setting this value
                             will implicitly cause authentication to be required.
     @type authenticator: L{coilmq.auth.Authenticator}
 
     @ivar queue_manager: The C{QueueManager} implementation to use.
-    @type queue_manager: L{coilmq.queue.QueueManager}
+    @type queue_manager: L{coilmq.asyncio.queue.QueueManager}
 
     @ivar topic_manager: The C{TopicManager} implementation to use.
-    @type topic_manager: L{coilmq.topic.TopicManager}
+    @type topic_manager: L{coilmq.asyncio.topic.TopicManager}
 
     @ivar transactions: Active transactions for this connection.
     @type transactions: C{dict} of C{str} to C{list} 
@@ -64,7 +65,7 @@ class StompEngine(object):
     @type connected: C{bool}
     """
 
-    def __init__(self, connection, authenticator, queue_manager, topic_manager, protocol=STOMP10):
+    def __init__(self, connection: Type[StompConnection], authenticator, queue_manager, topic_manager, protocol=STOMP10):
         """
         @param connection: The stomp connection backing this engine.
         @type connection: L{coilmq.server.StompConnection}
@@ -80,15 +81,16 @@ class StompEngine(object):
 
         self.protocol = protocol(self)
 
-    def process_frame(self, frame):
-        self.protocol.process_frame(frame)
+    async def process_frame(self, frame):
+        await self.protocol.process_frame(frame)
 
-    def unbind(self):
+    async def unbind(self):
         """
         Unbinds this connection from queue and topic managers (freeing up resources)
         and resets state.
         """
         self.connected = False
-        self.queue_manager.disconnect(self.connection)
-        self.topic_manager.disconnect(self.connection)
-        self.protocol.disable_heartbeat()
+        if self.queue_manager:
+            await self.queue_manager.disconnect(self.connection)
+        await self.topic_manager.disconnect(self.connection)
+        await self.protocol.disable_heartbeat()

@@ -14,23 +14,17 @@ config.getint('listen_port')
 import os.path
 import logging
 import logging.config
-import warnings
-import io
 
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 
-from pkg_resources import resource_filename, resource_stream
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -100,14 +94,14 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
         logging.config.fileConfig(configfile)
         if logfile:
             msg = "Config file conflicts with explicitly specified logfile; config file takes precedence."
-            logging.warn(msg)
+            logging.warning(msg)
     else:
-        format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
+        log_format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
         if logfile:
             logging.basicConfig(
-                filename=logfile, level=loglevel, format=format)
+                filename=logfile, level=loglevel, format=log_format)
         else:
-            logging.basicConfig(level=loglevel, format=format)
+            logging.basicConfig(level=loglevel, format=log_format)
 
 
 def resolve_name(name):

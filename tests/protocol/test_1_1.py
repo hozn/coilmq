@@ -25,8 +25,7 @@ class STOMP11TestCase(ProtocolBaseTestCase):
         with self.with_heartbeat(self.engine.protocol):
             self.engine.process_frame(Frame(frames.CONNECT, headers={'heart-beat': '0,100', 'accept-version': '1.1'}))
             time.sleep(0.53)
-            heartbeats = [frame for frame in self.conn.frames if frame.headers.get('message') == 'heartbeat']
-            self.assertAlmostEqual(len(heartbeats), 5, delta=1)
+            self.assertAlmostEqual(self.conn.heartbeat_count, 5, delta=1)
 
     def test_no_heartbeat_from_client(self):
         with self.with_heartbeat(STOMP11(self.engine, receive_heartbeat_interval=50)):

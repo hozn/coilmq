@@ -1,12 +1,12 @@
 import abc
+import asyncio
 import uuid
 import socket
 import datetime
 
 from coilmq.exception import ProtocolError, AuthError
 from coilmq.util import frames
-from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame
-from coilmq.util.concurrency import CoilThreadingTimer
+from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame, ConnectedFrame
 
 
 class STOMP(object):
@@ -20,51 +20,51 @@ class STOMP(object):
         self.connect(frame)
 
     @abc.abstractmethod
-    def process_frame(self, frame):
+    async def process_frame(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def connect(self, frame):
+    async def connect(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def send(self, frame):
+    async def send(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def subscribe(self, frame):
+    async def subscribe(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def unsubscribe(self, frame):
+    async def unsubscribe(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def begin(self, frame):
+    async def begin(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def commit(self, frame):
+    async def commit(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def abort(self, frame):
+    async def abort(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def ack(self, frame):
+    async def ack(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def disconnect(self, frame):
+    async def disconnect(self, frame):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def process_heartbeat(self):
+    async def process_heartbeat(self):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def disable_heartbeat(self):
+    async def disable_heartbeat(self):
         raise NotImplementedError
 
 
@@ -79,7 +79,7 @@ class STOMP10(STOMP):
         if transaction not in self.engine.transactions:
             raise ProtocolError(f"Invalid transaction: {transaction}")
 
-    def process_frame(self, frame: Frame):
+    async def process_frame(self, frame: Frame):
         """
         Dispatches a received frame to the appropriate internal method.
 
@@ -97,16 +97,16 @@ class STOMP10(STOMP):
         try:
             transaction = frame.headers.get('transaction')
             if not transaction or method in (self.begin, self.commit, self.abort):
-                method(frame)
+                await method(frame)
             else:
                 if transaction not in self.engine.transactions:
                     raise ProtocolError(f"Invalid transaction specified: {transaction}")
                 self.engine.transactions[transaction].append(frame)
         except Exception as e:
-            self.engine.log.error("Error processing STOMP frame: %s" % e)
+            self.engine.log.error(f"Error processing STOMP frame: %s" % e)
             self.engine.log.exception(e)
             try:
-                self.engine.connection.send_frame(ErrorFrame(str(e), str(e)))
+                await self.engine.connection.send_frame(ErrorFrame(str(e), str(e)))
             except Exception as e:  # pragma: no cover
                 self.engine.log.error("Could not send error frame: %s" % e)
                 self.engine.log.exception(e)
@@ -118,16 +118,16 @@ class STOMP10(STOMP):
             # frame.
             # import pdb; pdb.set_trace()
             if frame.headers.get('receipt') and method != self.connect:
-                self.engine.connection.send_frame(ReceiptFrame(
+                await self.engine.connection.send_frame(ReceiptFrame(
                     receipt=frame.headers.get('receipt')))
 
-    def process_heartbeat(self):
+    async def process_heartbeat(self):
         pass
 
-    def disable_heartbeat(self):
+    async def disable_heartbeat(self):
         pass
 
-    def connect(self, frame: Frame, response=None):
+    async def connect(self, frame: Frame, response=None):
         """
         Handle CONNECT command: Establishes a new connection and checks auth (if applicable).
         """
@@ -137,7 +137,7 @@ class STOMP10(STOMP):
             login = frame.headers.get('login')
             passcode = frame.headers.get('passcode')
             if not self.engine.authenticator.authenticate(login, passcode):
-                raise AuthError("Authentication failed for %s" % login)
+                raise AuthError(f"Authentication failed for {login}")
 
         self.engine.connected = True
 
@@ -146,9 +146,9 @@ class STOMP10(STOMP):
 
         # TODO: Do we want to do anything special to track sessions?
         # (Actually, I don't think the spec actually does anything with this at all.)
-        self.engine.connection.send_frame(response)
+        await self.engine.connection.send_frame(response)
 
-    def send(self, frame: Frame):
+    async def send(self, frame: Frame):
         """
         Handle the SEND command: Delivers a message to a queue or topic (default).
         """
@@ -158,7 +158,7 @@ class STOMP10(STOMP):
         else:
             self.engine.topic_manager.send(frame)
 
-    def subscribe(self, frame: Frame):
+    async def subscribe(self, frame: Frame):
         """
         Handle the SUBSCRIBE command: Adds this connection to destination.
         """
@@ -170,11 +170,11 @@ class STOMP10(STOMP):
         dest = self._check_required_header(frame, 'destination')
         id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
+            await self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
         else:
-            self.engine.topic_manager.subscribe(self.engine.connection, dest, id=id)
+            await self.engine.topic_manager.subscribe(self.engine.connection, dest, id=id)
 
-    def unsubscribe(self, frame: Frame):
+    async def unsubscribe(self, frame: Frame):
         """
         Handle the UNSUBSCRIBE command: Removes this connection from destination.
         """
@@ -185,22 +185,24 @@ class STOMP10(STOMP):
 
         if not dest:
             # Try unsubscribing both
-            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
-            self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
+            if self.engine.queue_manager:
+                await self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+            if self.engine.topic_manager:
+                await self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
         else:
             if dest.startswith('/queue/'):
-                self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+                await self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
             else:
-                self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
+                await self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
 
-    def begin(self, frame: Frame):
+    async def begin(self, frame: Frame):
         """
         Handles BEGIN command: Starts a new transaction.
         """
         transaction = self._check_required_header(frame, 'transaction')
         self.engine.transactions[transaction] = []
 
-    def commit(self, frame: Frame):
+    async def commit(self, frame: Frame):
         """
         Handles COMMIT command: Commits specified transaction.
         """
@@ -209,7 +211,7 @@ class STOMP10(STOMP):
 
         for tframe in self.engine.transactions[transaction]:
             del tframe.headers['transaction']
-            self.process_frame(tframe)
+            await self.process_frame(tframe)
 
         self.engine.queue_manager.clear_transaction_frames(
             self.engine.connection,
@@ -217,7 +219,7 @@ class STOMP10(STOMP):
         )
         del self.engine.transactions[transaction]
 
-    def abort(self, frame: Frame):
+    async def abort(self, frame: Frame):
         """
         Handles ABORT command: Rolls back specified transaction.
         """
@@ -230,14 +232,14 @@ class STOMP10(STOMP):
         )
         del self.engine.transactions[transaction]
 
-    def ack(self, frame: Frame):
+    async def ack(self, frame: Frame):
         """
         Handles the ACK command: Acknowledges receipt of a message.
         """
         self._check_required_header(frame, 'message-id')
         self.engine.queue_manager.ack(self.engine.connection, frame, id=frame.headers.get("id"))
 
-    def disconnect(self, frame: Frame):
+    async def disconnect(self, frame: Frame):
         """
         Handles the DISCONNECT command: Unbinds the connection.
 
@@ -245,7 +247,7 @@ class STOMP10(STOMP):
         relied upon.
         """
         self.engine.log.debug("Disconnect")
-        self.engine.unbind()
+        await self.engine.unbind()
 
 
 class STOMP11(STOMP10):
@@ -262,7 +264,6 @@ class STOMP11(STOMP10):
         super(STOMP11, self).__init__(engine)
         self.last_hb = datetime.datetime.now()
         self.last_hb_sent = datetime.datetime.now()
-        self.timer = CoilThreadingTimer()
 
         # flags to control heartbeating
         self.send_hb = self.receive_hb = False
@@ -270,46 +271,63 @@ class STOMP11(STOMP10):
         self.send_heartbeat_interval = datetime.timedelta(milliseconds=send_heartbeat_interval)
         self.receive_heartbeat_interval = datetime.timedelta(milliseconds=receive_heartbeat_interval)
 
-    def enable_heartbeat(self, cx: int, cy: int, response: Frame):
+        self.send_heartbeat_task = None
+        self.receive_heartbeat_task = None
+
+
+    async def enable_heartbeat(self, cx: int, cy: int, response: Frame):
+        async def repeat_at_interval(coro, interval_secs):
+            while True:
+                await coro()
+                await asyncio.sleep(interval_secs)
+
+
         if self.send_heartbeat_interval and cy:
             self.send_heartbeat_interval = max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cy))
-            self.timer.schedule(self.send_heartbeat_interval.total_seconds(), self.send_heartbeat)
+            self.send_heartbeat_task = asyncio.create_task(
+                repeat_at_interval(self.send_heartbeat, self.send_heartbeat_interval.total_seconds())
+            )
+
         if self.receive_heartbeat_interval and cx:
             self.receive_heartbeat_interval = max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cx))
-            self.timer.schedule(self.receive_heartbeat_interval.total_seconds(), self.check_receive_heartbeat)
-        self.timer.start()
+            self.receive_heartbeat_task = asyncio.create_task(
+                repeat_at_interval(self.check_receive_heartbeat, self.receive_heartbeat_interval.total_seconds())
+            )
         response.headers['heart-beat'] = '{0},{1}'.format(
             int(self.send_heartbeat_interval / datetime.timedelta(milliseconds=1)),
             int(self.receive_heartbeat_interval / datetime.timedelta(milliseconds=1)),
         )
 
-    def disable_heartbeat(self):
-        self.timer.stop()
+    async def disable_heartbeat(self):
+        if self.receive_heartbeat_task:
+            self.receive_heartbeat_task.cancel()
+        if self.receive_heartbeat_task:
+            self.receive_heartbeat_task.cancel()
 
-    def send_heartbeat(self):
+    async def send_heartbeat(self):
         if not self.engine.connected:
             return
-        self.engine.connection.send_heartbeat()
+        await self.engine.connection.send_heartbeat()
         self.last_hb_sent = datetime.datetime.now()
 
-    def check_receive_heartbeat(self):
+    async def check_receive_heartbeat(self):
         ago = datetime.datetime.now() - self.last_hb
         if ago > (self.receive_heartbeat_interval * 2):
             self.engine.log.debug(f"No heartbeat was received for {ago.total_seconds()} seconds")
-            self.engine.unbind()
+            await self.engine.unbind()
 
-    def process_heartbeat(self):
+    async def process_heartbeat(self):
         self.last_hb = datetime.datetime.now()
 
-    def connect(self, frame: Frame, response: Frame = None):
+    async def connect(self, frame: Frame, response: Frame = None):
         connected_frame = Frame(frames.CONNECTED)
-        self._negotiate_protocol(frame, connected_frame)
+        await self._negotiate_protocol(frame, connected_frame)
         heart_beat = frame.headers.get('heart-beat', '0,0')
         if heart_beat:
-            self.enable_heartbeat(*map(int, heart_beat.split(',')), response=connected_frame)
-        super(STOMP11, self).connect(frame, response=connected_frame)
+            await self.enable_heartbeat(*map(int, heart_beat.split(',')), response=connected_frame)
+        await super(STOMP11, self).connect(frame, response=connected_frame)
 
-    def nack(self, frame: Frame):
+    async def nack(self, frame: Frame):
         """
         Handles the NACK command: Unacknowledges receipt of a message.
         For now, this is just a placeholder to implement this version of the protocol
@@ -318,16 +336,16 @@ class STOMP11(STOMP10):
         self._check_required_header(frame, 'subscription')
 
         raise NotImplementedError('Nack implementation incomplete')
-        # ToDo: self.engine.queue_manager.nack()
+        # ToDo: await self.engine.queue_manager.nack()
 
-    def _negotiate_protocol(self, frame: Frame, response: Frame):
+    async def _negotiate_protocol(self, frame: Frame, response: Frame):
         client_versions = frame.headers.get('accept-version', '1.0')
         if not client_versions:
             raise ProtocolError('No protocol accept-version specified')
         common = set(client_versions.split(',')) & self.SUPPORTED_VERSIONS
         if not common:
             versions = ','.join(self.SUPPORTED_VERSIONS)
-            self.engine.connection.send_frame(Frame(
+            await self.engine.connection.send_frame(Frame(
                     frames.ERROR,
                     headers={'version': versions, 'content-type': frames.TEXT_PLAIN},
                     body=f'Supported protocol versions are {versions}'
@@ -337,17 +355,17 @@ class STOMP11(STOMP10):
             protocol_class = PROTOCOL_MAP[response.headers['version']]
             if type(self) is not protocol_class:
                 self.engine.protocol = protocol_class(self.engine)
-                self.engine.protocol.connect(frame, response=response)
+                await self.engine.protocol.connect(frame, response=response)
 
-    def subscribe(self, frame: Frame):
+    async def subscribe(self, frame: Frame):
         self._check_required_header(frame, 'id')
-        super().subscribe(frame)
+        await super().subscribe(frame)
 
-    def unsubscribe(self, frame: Frame):
+    async def unsubscribe(self, frame: Frame):
         self._check_required_header(frame, 'id')
-        super().unsubscribe(frame)
+        await super().unsubscribe(frame)
 
-    def ack(self, frame: Frame):
+    async def ack(self, frame: Frame):
         self._check_required_header(frame, 'message-id')
         subscription = self._check_required_header(frame, 'subscription')
         self.engine.queue_manager.ack(self.engine.connection, frame, id=subscription)
@@ -357,13 +375,13 @@ class STOMP12(STOMP11):
 
     SUPPORTED_VERSIONS = STOMP11.SUPPORTED_VERSIONS.union({'1.2', })
 
-    def connect(self, frame: Frame, response: Frame = None):
+    async def connect(self, frame: Frame, response: Frame = None):
         host = self._check_required_header(frame, 'host')
         if host != socket.getfqdn():
             raise ProtocolError('Virtual hosting is not supported or host is unknown')
-        super(STOMP12, self).connect(frame, response)
+        await super(STOMP12, self).connect(frame, response)
 
-    def ack(self, frame: Frame):
+    async def ack(self, frame: Frame):
         id = self._check_required_header(frame, 'id')
         self._check_required_header(frame, 'message-id')
         self.engine.queue_manager.ack(self.engine.connection, frame, id=id)
