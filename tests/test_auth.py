@@ -9,7 +9,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from pkg_resources import resource_stream, resource_filename
+from pkg_resources import resource_filename
 
 from coilmq.auth.simple import SimpleAuthenticator
 
