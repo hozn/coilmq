@@ -23,7 +23,6 @@ except ImportError:
     from ConfigParser import ConfigParser
 
 
-from pkg_resources import resource_filename, resource_stream
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
