@@ -8,7 +8,10 @@ try:
     unicode = str
 except ImportError:
     from StringIO import StringIO
-from importlib.resources import as_file, files
+try:
+    from importlib.resources import as_file, files
+except ImportError:
+    from importlib_resources import as_file, files
 
 from coilmq.auth.simple import SimpleAuthenticator
 
