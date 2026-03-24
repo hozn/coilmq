@@ -8,8 +8,10 @@ try:
     unicode = str
 except ImportError:
     from StringIO import StringIO
-
-from pkg_resources import resource_stream, resource_filename
+try:
+    from importlib.resources import as_file, files
+except ImportError:
+    from importlib_resources import as_file, files
 
 from coilmq.auth.simple import SimpleAuthenticator
 
@@ -49,9 +51,9 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test the loading store from config file path.
         """
-        filename = resource_filename('tests.resources', 'auth.ini')
         auth = SimpleAuthenticator()
-        auth.from_configfile(filename)
+        with as_file(files('tests.resources').joinpath('auth.ini')) as filename:
+            auth.from_configfile(filename)
         assert auth.authenticate('juniper', 'b3rr1es') == True
         assert auth.authenticate('oak', 'ac$rrubrum') == True
         assert auth.authenticate('pinetree', 'str0bus') == True
@@ -61,9 +63,10 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store from file-like object.
         """
-        with open(resource_filename('tests.resources', 'auth.ini'), 'r') as fp:
-            auth = SimpleAuthenticator()
-            auth.from_configfile(fp)
+        auth = SimpleAuthenticator()
+        with as_file(files('tests.resources').joinpath('auth.ini')) as filename:
+            with filename.open() as fp:
+                auth.from_configfile(fp)
 
         assert auth.authenticate('juniper', 'b3rr1es') == True
         assert auth.authenticate('oak', 'ac$rrubrum') == True
@@ -74,13 +77,13 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store with invalid file path.
         """
-        filename = resource_filename('tests.resources', 'auth-invlaid.ini')
         auth = SimpleAuthenticator()
-        try:
-            auth.from_configfile(filename)
-            self.fail("Expected error with invalid filename.")
-        except ValueError as e:
-            pass
+        with as_file(files('tests.resources').joinpath('auth-invlaid.ini')) as filename:
+            try:
+                auth.from_configfile(filename)
+                self.fail("Expected error with invalid filename.")
+            except ValueError as e:
+                pass
 
     def test_from_configfile_fp_invalid(self):
         """
