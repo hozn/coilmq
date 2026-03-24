@@ -3,6 +3,16 @@ News: CoilMQ
 
 .. contents::
 
+Unreleased
+----------
+* Removed uses of `pkg_resources` (issue 39)
+
+1.0.1
+-----
+
+1.0.0
+-----
+
 0.6.1
 -----
 * Error with one subscriber causes topic messages not to be delivered to 
