@@ -61,11 +61,9 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         Test loading store from file-like object.
         """
         auth = SimpleAuthenticator()
-        with (
-            as_file(files('tests.resources').joinpath('auth.ini')) as filename,
-            filename.open() as fp,
-        ):
-            auth.from_configfile(fp)
+        with as_file(files('tests.resources').joinpath('auth.ini')) as filename:
+            with filename.open() as fp:
+                auth.from_configfile(fp)
 
         assert auth.authenticate('juniper', 'b3rr1es') == True
         assert auth.authenticate('oak', 'ac$rrubrum') == True
