@@ -82,7 +82,7 @@ def parse_body(buff, headers):
     return body
 
 
-class Frame(object):
+class Frame:
     """
     A STOMP frame (or message).
 
@@ -155,12 +155,12 @@ class ConnectedFrame(Frame):
         @param session: The (throw-away) session ID to include in response.
         @type session: C{str}
         """
-        super(ConnectedFrame, self).__init__(
+        super().__init__(
             cmd=CONNECTED, headers=extra_headers or {})
         self.headers['session'] = session
 
 
-class HeaderValue(object):
+class HeaderValue:
     """
     An descriptor class that can be used when a calculated header value is needed.
 
@@ -211,7 +211,7 @@ class ErrorFrame(Frame):
         @param body: The message body bytes.
         @type body: C{str}
         """
-        super(ErrorFrame, self).__init__(cmd=ERROR,
+        super().__init__(cmd=ERROR,
                                          headers=extra_headers or {}, body=body)
         self.headers['message'] = message
         self.headers[
@@ -229,12 +229,12 @@ class ReceiptFrame(Frame):
         @param receipt: The receipt message ID.
         @type receipt: C{str}
         """
-        super(ReceiptFrame, self).__init__(
+        super().__init__(
             'RECEIPT', headers=extra_headers or {})
         self.headers['receipt-id'] = receipt
 
 
-class FrameBuffer(object):
+class FrameBuffer:
     """
     A customized version of the StompBuffer class from Stomper project that returns frame objects
     and supports iteration.

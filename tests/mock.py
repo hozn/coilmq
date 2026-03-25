@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class MockConnection(object):
+class MockConnection:
 
     def __init__(self):
         self.frames = []
@@ -33,7 +33,7 @@ class MockConnection(object):
         self.frames = []
 
 
-class MockSubscription(object):
+class MockSubscription:
 
     def __init__(self):
         self.id = 0
@@ -48,7 +48,7 @@ class MockAuthenticator(auth.Authenticator):
         return (login == self.LOGIN and passcode == self.PASSCODE)
 
 
-class MockQueueManager(object):
+class MockQueueManager:
 
     def __init__(self):
         self.reset()
@@ -106,7 +106,7 @@ class MockQueueManager(object):
             pass
 
 
-class MockTopicManager(object):
+class MockTopicManager:
 
     def __init__(self):
         self.reset()

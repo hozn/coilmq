@@ -77,7 +77,7 @@ class TopicManagerTest(unittest.TestCase):
     def test_send_subscriber_timeout(self):
         """ Test a send command when one subscriber errs out. """
 
-        class TimeoutConnection(object):
+        class TimeoutConnection:
             reliable_subscriber = False
 
             def send_frame(self, frame):

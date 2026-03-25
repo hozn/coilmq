@@ -8,7 +8,7 @@ from tests.protocol import ProtocolBaseTestCase
 class STOMP12TestCase(ProtocolBaseTestCase):
 
     def setUp(self):
-        super(STOMP12TestCase, self).setUp()
+        super().setUp()
         self.host = socket.getfqdn()
 
     def test_host_valid(self):

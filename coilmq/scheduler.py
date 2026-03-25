@@ -25,7 +25,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SubscriberPriorityScheduler(object):
+class SubscriberPriorityScheduler:
     """ Abstract base class for choosing which recipient (subscriber) should receive a message. """
     __metaclass__ = abc.ABCMeta
 
@@ -45,7 +45,7 @@ class SubscriberPriorityScheduler(object):
         """
 
 
-class QueuePriorityScheduler(object):
+class QueuePriorityScheduler:
     """
     Abstract base class for objects that provide a way to prioritize the queues.
     """

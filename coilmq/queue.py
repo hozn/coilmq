@@ -31,7 +31,7 @@ limitations under the License."""
 lock = threading.RLock()
 
 
-class QueueManager(object):
+class QueueManager:
     """
     Class that manages distribution of messages to queue subscribers.
 

@@ -29,7 +29,7 @@ limitations under the License."""
 lock = threading.RLock()
 
 
-class TopicManager(object):
+class TopicManager:
     """
     Class that manages distribution of messages to topic subscribers.
 

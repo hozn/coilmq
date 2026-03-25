@@ -96,7 +96,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_send_err(self):
         """ Test sending a message when delivery results in error. """
 
-        class ExcThrowingConn(object):
+        class ExcThrowingConn:
             reliable_subscriber = True
 
             def send_frame(self, frame):
@@ -118,7 +118,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_send_backlog_err_reliable(self):
         """ Test errors when sending backlog to reliable subscriber. """
 
-        class ExcThrowingConn(object):
+        class ExcThrowingConn:
             reliable_subscriber = True
 
             def send_frame(self, frame):
@@ -149,7 +149,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_send_backlog_err_unreliable(self):
         """ Test errors when sending backlog to reliable subscriber. """
 
-        class ExcThrowingConn(object):
+        class ExcThrowingConn:
             reliable_subscriber = False
 
             def send_frame(self, frame):

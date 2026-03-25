@@ -22,7 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class CommonQueueTest(object):
+class CommonQueueTest:
     """
     An abstract set of base tests for queue storage engines.
 

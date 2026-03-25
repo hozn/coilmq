@@ -24,7 +24,7 @@ limitations under the License."""
 lock = threading.RLock()
 
 
-class QueueStore(object):
+class QueueStore(abc.ABC):
     """
     Abstract base class for queue storage. 
 
@@ -33,7 +33,6 @@ class QueueStore(object):
     @ivar log: A logger for this class.
     @type log: C{logging.Logger}
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         """
@@ -123,12 +122,11 @@ class QueueStore(object):
         """
         raise NotImplementedError
 
-    @synchronized(lock)
+    @synchronized(lock)  # noqa: B027
     def close(self):
         """
         May be implemented to perform any necessary cleanup operations when store is closed.
         """
-        pass
 
     # This is intentionally not synchronized, since it does not directly
     # expose any shared data.
@@ -146,7 +144,7 @@ class QueueStore(object):
         return QueueFrameIterator(self, destination)
 
 
-class QueueFrameIterator(object):
+class QueueFrameIterator:
     """
     Provides an C{iterable} over the frames for a specified destination in a queue.
 
@@ -177,7 +175,7 @@ class QueueFrameIterator(object):
         return self.store.size(self.destination)
 
 
-class TopicStore(object):
+class TopicStore:
     """
     Abstract base class for non-durable topic storage.
     """

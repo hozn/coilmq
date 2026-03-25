@@ -37,7 +37,7 @@ class RedisQueueStore(QueueStore):
         """The default connection parameters are: host='localhost', port=6379, db=0"""
         self.__db = redis_conn or redis.Redis()
         # self.key = '{0}:{1}'.format(namespace, name)
-        super(RedisQueueStore, self).__init__()
+        super().__init__()
 
     @synchronized(lock)
     def enqueue(self, destination, frame):

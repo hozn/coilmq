@@ -37,7 +37,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class StompEngine(object):
+class StompEngine:
     """ 
     The engine provides the core business logic that we use to respond to STOMP protocol
     messages.  

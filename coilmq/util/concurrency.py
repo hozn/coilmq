@@ -40,7 +40,7 @@ def synchronized(lock):
     return synchronize
 
 
-class CoilTimerBase(object):
+class CoilTimerBase:
 
     __metaclass__ = abc.ABCMeta
 
@@ -75,7 +75,7 @@ class CoilTimerBase(object):
 class CoilThreadingTimer(CoilTimerBase):
 
     def __init__(self, *args, **kwargs):
-        super(CoilThreadingTimer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._running = False
 
     def run(self):

@@ -9,9 +9,7 @@ from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame
 from coilmq.util.concurrency import CoilThreadingTimer
 
 
-class STOMP(object):
-
-    __metaclass__ = abc.ABCMeta
+class STOMP(abc.ABC):
 
     def __init__(self, engine):
         self.engine = engine
@@ -238,7 +236,7 @@ class STOMP11(STOMP10):
     SUPPORTED_VERSIONS = {'1.0', '1.1'}
 
     def __init__(self, engine, send_heartbeat_interval=100, receive_heartbeat_interval=100, *args, **kwargs):
-        super(STOMP11, self).__init__(engine)
+        super().__init__(engine)
         self.last_hb = datetime.datetime.now()
         self.last_hb_sent = datetime.datetime.now()
         self.timer = CoilThreadingTimer()
@@ -279,7 +277,7 @@ class STOMP11(STOMP10):
         heart_beat = frame.headers.get('heart-beat', '0,0')
         if heart_beat:
             self.enable_heartbeat(*map(int, heart_beat.split(',')), response=connected_frame)
-        super(STOMP11, self).connect(frame, response=connected_frame)
+        super().connect(frame, response=connected_frame)
 
     def nack(self, frame):
         """
@@ -341,7 +339,7 @@ class STOMP12(STOMP11):
             raise ProtocolError('"host" header is required')
         if host != socket.getfqdn():
             raise ProtocolError('Virtual hosting is not supported or host is unknown')
-        super(STOMP12, self).connect(frame, response)
+        super().connect(frame, response)
 
     def ack(self, frame):
         if "id" not in frame.headers:

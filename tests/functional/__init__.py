@@ -145,7 +145,7 @@ class TestStompServer(ThreadedStompServer):
         StompServer.server_activate(self)
 
 
-class TestStompClient(object):
+class TestStompClient:
     """
     A stomp client for use in testing.
 
