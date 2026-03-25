@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Functional tests that use the default memory-based storage backends and default
 scheduler implementations.
