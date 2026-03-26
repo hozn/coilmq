@@ -30,4 +30,4 @@ class STOMP12TestCase(ProtocolBaseTestCase):
         response = self.feed_frame(frames.CONNECT, {'host': self.host, 'accept-version': '1.1'})
         self.assertEqual(response.cmd, frames.CONNECTED)
         self.assertEqual(response.headers['version'], '1.1')
-        self.assertEqual(type(self.engine.protocol), STOMP11)
+        self.assertIsInstance(self.engine.protocol, STOMP11)
