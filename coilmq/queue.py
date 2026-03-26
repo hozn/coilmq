@@ -188,7 +188,7 @@ class QueueManager:
         dest = message.headers.get('destination')
         if not dest:
             raise ValueError(
-                "Cannot send frame with no destination: %s" % message)
+                f"Cannot send frame with no destination: {message}")
 
         message.cmd = frames.MESSAGE
 

@@ -69,7 +69,7 @@ class STOMP10(STOMP):
         """
 
         if frame.cmd not in frames.VALID_COMMANDS:
-            raise ProtocolError("Invalid STOMP command: {}".format(frame.cmd))
+            raise ProtocolError(f"Invalid STOMP command: {frame.cmd}")
 
         method = getattr(self, frame.cmd.lower(), None)
 
@@ -83,7 +83,7 @@ class STOMP10(STOMP):
             else:
                 if not transaction in self.engine.transactions:
                     raise ProtocolError(
-                        "Invalid transaction specified: %s" % transaction)
+                        f"Invalid transaction specified: {transaction}")
                 self.engine.transactions[transaction].append(frame)
         except Exception as e:
             self.engine.log.exception("Error processing STOMP frame")
@@ -112,7 +112,7 @@ class STOMP10(STOMP):
             login = frame.headers.get('login')
             passcode = frame.headers.get('passcode')
             if not self.engine.authenticator.authenticate(login, passcode):
-                raise AuthError("Authentication failed for %s" % login)
+                raise AuthError(f"Authentication failed for {login}")
 
         self.engine.connected = True
 
@@ -186,7 +186,7 @@ class STOMP10(STOMP):
             raise ProtocolError("Missing transaction for COMMIT command.")
 
         if not frame.transaction in self.engine.transactions:
-            raise ProtocolError("Invalid transaction: %s" % frame.transaction)
+            raise ProtocolError(f"Invalid transaction: {frame.transaction}")
 
         for tframe in self.engine.transactions[frame.transaction]:
             del tframe.headers['transaction']
@@ -204,7 +204,7 @@ class STOMP10(STOMP):
             raise ProtocolError("Missing transaction for ABORT command.")
 
         if not frame.transaction in self.engine.transactions:
-            raise ProtocolError("Invalid transaction: %s" % frame.transaction)
+            raise ProtocolError(f"Invalid transaction: {frame.transaction}")
 
         self.engine.queue_manager.resend_transaction_frames(
             self.engine.connection, frame.transaction)

@@ -187,7 +187,7 @@ class HeaderValue:
         @type calculator: C{callable}
         """
         if not callable(calculator):
-            raise ValueError("Non-callable param: %s" % calculator)
+            raise ValueError("Non-callable param: {calculator}")
         self.calc = calculator
 
     def __get__(self, obj, objtype):

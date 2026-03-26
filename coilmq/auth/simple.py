@@ -80,7 +80,7 @@ class SimpleAuthenticator(Authenticator):
         else:
             filesread = cfg.read(configfile)
             if not filesread:
-                raise ValueError('Could not parse auth file: %s' % configfile)
+                raise ValueError(f'Could not parse auth file: {configfile}')
 
         if not cfg.has_section('auth'):
             raise ValueError('Config file contains no [auth] section.')
