@@ -261,7 +261,7 @@ class FrameBuffer:
     # with a command followed by the headers, so the content-length header will
     # always be preceded by a newline.  It may not always proceeded by a
     # newline, though!
-    content_length_re = re.compile('\ncontent-length\s*:\s*(\d+)\s*(\n|$)')
+    content_length_re = re.compile('\ncontent-length\\s*:\\s*(\\d+)\\s*(\n|$)')
 
     def __init__(self):
         self._buffer = io.BytesIO()
