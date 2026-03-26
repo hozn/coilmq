@@ -314,32 +314,6 @@ class FrameBuffer:
         @return: The next complete frame in the buffer.
         @rtype: L{stomp.frame.Frame}
         """
-        # (mbytes, hbytes) = self._find_message_bytes(self.buffer)
-        # if not mbytes:
-        #     return None
-        #
-        # msgdata = self.buffer[:mbytes]
-        # self.buffer = self.buffer[mbytes:]
-        # hdata = msgdata[:hbytes]
-        # # Strip off any leading whitespace from headers; this is necessary, because
-        # # we do not (any longer) expect a trailing \n after the \x00 byte (which means
-        # # it will become a leading \n to the next frame).
-        # hdata = hdata.lstrip()
-        # elems = hdata.split('\n')
-        # cmd = elems.pop(0)
-        # headers = {}
-        #
-        # for e in elems:
-        #     try:
-        #         (k,v) = e.split(':', 1) # header values may contain ':' so specify maxsplit
-        #     except ValueError:
-        #         continue
-        #     headers[k.strip()] = v.strip()
-        #
-        # # hbytes points to the start of the '\n\n' at the end of the header,
-        # # so 2 bytes beyond this is the start of the body. The body EXCLUDES
-        # # the final byte, which is  '\x00'.
-        # body = msgdata[hbytes + 2:-1]
         self._buffer.seek(self._pointer, 0)
         try:
             f = Frame.from_buffer(self._buffer)

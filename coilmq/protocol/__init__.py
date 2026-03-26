@@ -97,7 +97,6 @@ class STOMP10(STOMP):
             # the RECEIPT frame should not be sent if there is an error frame.
             # Also we'll assume that a transaction should not preclude sending the receipt
             # frame.
-            # import pdb; pdb.set_trace()
             if frame.headers.get('receipt') and method != self.connect:
                 self.engine.connection.send_frame(ReceiptFrame(
                     receipt=frame.headers.get('receipt')))

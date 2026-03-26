@@ -39,7 +39,6 @@ class DBMQueueManagerTest(QueueManagerTest):
             shutil.rmtree(data_dir)
         os.makedirs(data_dir)
 
-        # data_dir = './data'
         cp_ops = 100
         cp_timeout = 20
         store = DbmQueue(data_dir, checkpoint_operations=cp_ops,
