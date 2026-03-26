@@ -108,7 +108,7 @@ class BasicTest(BaseFunctionalTestCase):
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
 
-        unicodemsg = u'我能吞下玻璃而不伤身体'
+        unicodemsg = '我能吞下玻璃而不伤身体'
         utf8msg = unicodemsg.encode('utf-8')
 
         c2 = self._new_client()

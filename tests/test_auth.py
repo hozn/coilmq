@@ -85,7 +85,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         """
         Test loading store with missing section in config.
         """
-        fp = StringIO(u"[invalid]\nusername=password")
+        fp = StringIO("[invalid]\nusername=password")
         auth = SimpleAuthenticator()
         try:
             auth.from_configfile(fp)
