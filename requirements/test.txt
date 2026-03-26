@@ -1,6 +1,5 @@
 SQLAlchemy<2
 fakeredis
-mock
 pytest
 pytest-cov
 dataclasses

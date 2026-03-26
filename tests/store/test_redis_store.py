@@ -2,11 +2,8 @@ import unittest
 
 import fakeredis
 from configparser import ConfigParser
+from unittest import mock
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 from tests.store import CommonQueueTest
 from coilmq.store.rds import RedisQueueStore, make_redis_store
