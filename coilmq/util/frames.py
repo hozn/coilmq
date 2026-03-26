@@ -2,6 +2,7 @@ import re
 import logging
 from collections import OrderedDict
 import io
+from itertools import starmap
 
 SEND = 'SEND'
 CONNECT = 'CONNECT'
@@ -126,16 +127,18 @@ class Frame:
 
         self.headers.setdefault('content-length', len(self.body))
 
-        # Convert and append any existing headers to a string as the
-        # protocol describes.
-        headerparts = ("{0}:{1}\n".format(key, value)
-                       for key, value in self.headers.items())
-
-        # Frame is Command + Header + EOF marker.
+        # See https://stomp.github.io/stomp-specification-1.1.html#Augmented_BNF
         return (
-            "{0}\n{1}\n".format(self.cmd, "".join(headerparts)).encode() +
+            # command LF
+            self.cmd.encode() + b"\n" +
+            # *( header LF )
+            "".join(starmap("{0}:{1}\n".format, self.headers.items())).encode() +
+            # LF
+            b"\n" +
+            # *OCTET
             (self.body if isinstance(self.body, bytes) else self.body.encode()) +
-            '\x00'.encode()
+            # NULL
+            b'\x00'
         )
 
 
