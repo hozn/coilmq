@@ -97,11 +97,7 @@ class Frame:
         self.body = body or ''
 
     def __str__(self):
-        return '{{cmd={0},headers=[{1}],body={2}}}'.format(
-            self.cmd,
-            self.headers,
-            self.body if isinstance(self.body, bytes) else self.body.encode()
-        )
+        return f'{{cmd={self.cmd},headers=[{self.headers}],body={self.body if isinstance(self.body, bytes) else self.body.encode()}}}'
 
     def __eq__(self, other):
         """ Override equality checking to test for matching command, headers, and body. """
@@ -200,7 +196,7 @@ class HeaderValue:
         self.calc = value
 
     def __repr__(self):
-        return '<%s calculator=%s>' % (self.__class__.__name__, self.calc)
+        return f'<{self.__class__.__name__} calculator={self.calc}>'
 
 
 class ErrorFrame(Frame):
@@ -218,7 +214,7 @@ class ErrorFrame(Frame):
             'content-length'] = HeaderValue(calculator=lambda: len(self.body))
 
     def __repr__(self):
-        return '<%s message=%r>' % (self.__class__.__name__, self.headers['message'])
+        return f'<{self.__class__.__name__} message={self.headers["message"]!r}>'
 
 
 class ReceiptFrame(Frame):
