@@ -6,6 +6,7 @@ News: CoilMQ
 Unreleased
 ----------
 * Removed uses of `pkg_resources` (issue 39)
+* Removed support for Python 2.7 through Python 3.7 (MR 37)
 
 1.0.1
 -----

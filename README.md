@@ -28,7 +28,7 @@ Jump over to [Getting Started Guide](https://github.com/hozn/coilmq/wiki/Getting
 Current features
 ================
 * Support for STOMP v{[1.0](http://stomp.github.io/stomp-specification-1.0.html), [1.1](http://stomp.github.io/stomp-specification-1.1.html), [1.2](http://stomp.github.io/stomp-specification-1.2.html)}
-* Works on Python {3.8, 3.9, 3.10, 3.11}
+* Works on Python 3.8+
 * {Redis, Memory, RDBM} message store options
 * Extendable via custom components
 
