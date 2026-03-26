@@ -12,6 +12,7 @@ init_config('/path/to/config.cfg')
 config.getint('listen_port')
 """
 import os.path
+import importlib
 import logging
 import logging.config
 
@@ -113,7 +114,7 @@ def resolve_name(name):
 
     >>> resolve_name('coilmq.store.memory.MemoryQueue')
     <class 'coilmq.store.memory.MemoryQueue'>
-    >>> t = resolve_name('coilmq.store.dbm.make_dbm')
+    >>> t = resolve_name('coilmq.store.dbm:make_dbm')
     >>> import inspect
     >>> inspect.isfunction(t)
     True
@@ -125,21 +126,11 @@ def resolve_name(name):
 
     @return: The resolved object (class, callable, etc.) or None if not found.
     """
-    if ':' in name:
-        # Normalize foo.bar.baz:main to foo.bar.baz.main
-        # (since our logic below will handle that)
-        name = '%s.%s' % tuple(name.split(':'))
+    sep_index = max(name.rfind(sep) for sep in (":", "."))
 
-    name = name.split('.')
+    module_name = name[:sep_index]
+    member_name = name[1 + sep_index:]
 
-    used = name.pop(0)
-    found = __import__(used)
-    for n in name:
-        used = used + '.' + n
-        try:
-            found = getattr(found, n)
-        except AttributeError:
-            __import__(used)
-            found = getattr(found, n)
+    module = importlib.import_module(module_name)
 
-    return found
+    return getattr(module, member_name)
