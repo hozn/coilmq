@@ -203,7 +203,7 @@ class TestStompClient:
         self.connected = True
         self.read_stopped.clear()
         t = threading.Thread(target=self._read_loop,
-                             name="client-receiver-%s" % hex(id(self)))
+                             name=f"client-receiver-{hex(id(self))}")
         t.start()
 
     def _read_loop(self):
