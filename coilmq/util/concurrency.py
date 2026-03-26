@@ -40,9 +40,7 @@ def synchronized(lock):
     return synchronize
 
 
-class CoilTimerBase:
-
-    __metaclass__ = abc.ABCMeta
+class CoilTimerBase(abc.ABC):
 
     def __init__(self, *args, **kwargs):
         self.jobs = []
