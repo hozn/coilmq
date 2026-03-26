@@ -1,5 +1,5 @@
 """
-Definition of the datamodel required for SA storage backend.
+Definition of the data model required for SA storage backend.
 """
 
 from sqlalchemy import Table, Column, BigInteger, String, PickleType, DateTime

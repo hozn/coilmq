@@ -74,7 +74,7 @@ class DbmQueue(QueueStore):
     appears that at least some of the underlying implementations that anydbm uses are not
     thread-safe
 
-    Due to some impedence mismatch between the types of data we need to store in queues
+    Due to some impedance mismatch between the types of data we need to store in queues
     (specifically lists) and the types of data that are best stored in DBM databases
     (specifically dicts), this class uses the `shelve` module to abstract away some
     of the ugliness.  The consequence of this is that we only persist objects periodically

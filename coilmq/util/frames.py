@@ -238,7 +238,7 @@ class FrameBuffer:
     A customized version of the StompBuffer class from Stomper project that returns frame objects
     and supports iteration.
 
-    This version of the parser also assumes that stomp messages with no content-lengh
+    This version of the parser also assumes that stomp messages with no content-length
     end in a simple \\x00 char, not \\x00\\n as is assumed by
     C{stomper.stompbuffer.StompBuffer}. Additionally, this class differs from Stomper version
     by conforming to PEP-8 coding style.
@@ -257,7 +257,7 @@ class FrameBuffer:
     command_re = re.compile('^(.+?)\n')
 
     # regexp to remove everything up to and including the first
-    # instance of '\x00' (used in resynching the buffer).
+    # instance of '\x00' (used in resyncing the buffer).
     sync_re = re.compile('^.*?\x00')
 
     # regexp to determine the content length. The buffer should always start

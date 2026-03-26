@@ -41,7 +41,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
     Base class for test cases provides the fixtures for setting up the multi-threaded
     unit test infrastructure.
 
-    We use a combination of C{threading.Event} and C{Queue.Queue} objects to faciliate
+    We use a combination of C{threading.Event} and C{Queue.Queue} objects to facilitate
     inter-thread communication and lock-stepping the assertions. 
     """
 

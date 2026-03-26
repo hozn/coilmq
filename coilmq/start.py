@@ -181,7 +181,7 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
         if daemon and is_nt:
             warnings.warn("Daemon context is not available for NT platform", stacklevel=2)
 
-    # in an on-daemon mode, we use a dummy context objectx
+    # in an on-daemon mode, we use a dummy context object
     # so we can use the same run-server code as the daemon version.
     context = pydaemon.DaemonContext(uid=uid,
                                      gid=gid,

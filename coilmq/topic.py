@@ -48,7 +48,7 @@ class TopicManager:
         self.log = logging.getLogger(
             f'{__name__}.{self.__class__.__name__}')
 
-        # Lock var is required for L{synchornized} decorator.
+        # Lock var is required for L{synchronized} decorator.
         self._lock = threading.RLock()
 
         self._subscriptions = SubscriptionManager()

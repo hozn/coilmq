@@ -74,7 +74,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         Test loading store with invalid file path.
         """
         auth = SimpleAuthenticator()
-        with as_file(files('tests.resources').joinpath('auth-invlaid.ini')) as filename:
+        with as_file(files('tests.resources').joinpath('auth-invalid.ini')) as filename:
             try:
                 auth.from_configfile(filename)
                 self.fail("Expected error with invalid filename.")

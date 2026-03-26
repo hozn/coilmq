@@ -78,7 +78,7 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
 
     @param configfile: The path to a configuration file.  This takes precedence over any explicitly
                         specified logfile/loglevel (but a warning will be logged if both are specified).
-                        If the file is not specified or does not exist annd no logfile was specified, 
+                        If the file is not specified or does not exist and no logfile was specified,
                         then the default.cfg configuration file will be used to initialize logging.
     @type configfile: C{str}
     """

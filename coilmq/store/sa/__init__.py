@@ -76,12 +76,12 @@ class SAQueue(QueueStore):
 
     def enqueue(self, destination, frame):
         """
-        Store message (frame) for specified destinationination.
+        Store message (frame) for specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
         session = meta.Session()
@@ -97,7 +97,7 @@ class SAQueue(QueueStore):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
@@ -137,7 +137,7 @@ class SAQueue(QueueStore):
         """
         Whether specified queue has any frames.
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: Whether there are any frames in the specified queue.
@@ -175,7 +175,7 @@ class SAQueue(QueueStore):
         """
         Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the detinations available.
+        @return: A list of the destinations available.
         @rtype: C{set}
         """
         session = meta.Session()
