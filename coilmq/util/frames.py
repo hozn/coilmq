@@ -340,6 +340,3 @@ class FrameBuffer:
         if not msg:
             raise StopIteration()
         return msg
-
-    def next(self):
-        return self.__next__()
