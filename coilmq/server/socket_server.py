@@ -2,7 +2,6 @@
 The default/recommended SocketServer-based server implementation. 
 """
 import logging
-import socket
 import threading
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 
@@ -80,7 +79,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                         self.engine.process_frame(frame)
                         if not self.engine.connected:
                             raise ClientDisconnected()
-                except socket.timeout:  # pragma: no cover
+                except TimeoutError:  # pragma: no cover
                     pass
         except ClientDisconnected:
             self.log.debug("Client disconnected, discontinuing read loop.")

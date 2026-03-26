@@ -1,7 +1,6 @@
 """
 Tests for topic-related functionality.
 """
-import socket
 import unittest
 
 from coilmq.topic import TopicManager
@@ -81,7 +80,7 @@ class TopicManagerTest(unittest.TestCase):
             reliable_subscriber = False
 
             def send_frame(self, frame):
-                raise socket.timeout("timed out")
+                raise TimeoutError("timed out")
 
             def reset(self):
                 pass
