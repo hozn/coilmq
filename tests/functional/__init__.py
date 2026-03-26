@@ -216,7 +216,6 @@ class TestStompClient:
                     self.log.debug("Processing frame: %s", frame)
                     self.received_frames.put(frame)
         self.read_stopped.set()
-        # print "Read loop has been quit! for %s" % id(self)
 
     def disconnect(self):
         self.send_frame(Frame(frames.DISCONNECT))
