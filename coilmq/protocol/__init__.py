@@ -253,8 +253,7 @@ class STOMP11(STOMP10):
             self.timer.schedule(max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cx)).total_seconds(),
                                 self.receive_heartbeat)
         self.timer.start()
-        response.headers['heart-beat'] = '{0},{1}'.format(int(self.send_heartbeat_interval.microseconds / 1000),
-                                                          int(self.receive_heartbeat_interval.microseconds / 1000))
+        response.headers['heart-beat'] = f'{int(self.send_heartbeat_interval.microseconds / 1000)},{int(self.receive_heartbeat_interval.microseconds / 1000)}'
 
     def disable_heartbeat(self):
         self.timer.stop()
@@ -300,7 +299,7 @@ class STOMP11(STOMP10):
             self.engine.connection.send_frame(Frame(
                     frames.ERROR,
                     headers={'version': versions, 'content-type': frames.TEXT_PLAIN},
-                    body='Supported protocol versions are {0}'.format(versions)
+                    body=f'Supported protocol versions are {versions}'
             ))
         else:
             response.headers['version'] = max(common)

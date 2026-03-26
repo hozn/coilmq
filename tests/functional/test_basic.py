@@ -93,7 +93,7 @@ class BasicTest(BaseFunctionalTestCase):
 
         # Read some random binary data.
         # (This should be cross-platform.)
-        message = 'This is the message that will be compressed.'.encode()
+        message = b'This is the message that will be compressed.'
         c2 = self._new_client()
         c2.send('/queue/foo', zlib.compress(message))
 
