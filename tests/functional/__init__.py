@@ -164,8 +164,7 @@ class TestStompClient:
         @param connect: Whether to connect socket to specified addr.
         @type connect: C{bool}
         """
-        self.log = logging.getLogger('%s.%s' % (
-            self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.sock = None
         self.addr = addr
         self.received_frames = Queue()

@@ -271,8 +271,7 @@ class FrameBuffer:
         self._buffer = io.BytesIO()
         self._pointer = 0
         self.debug = False
-        self.log = logging.getLogger('%s.%s' % (
-            self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
 
     def clear(self):
         """

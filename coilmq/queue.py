@@ -77,7 +77,7 @@ class QueueManager:
         @type queue_scheduler: L{coilmq.scheduler.QueuePriorityScheduler}
         """
         self.log = logging.getLogger(
-            '%s.%s' % (__name__, self.__class__.__name__))
+            f'{__name__}.{self.__class__.__name__}')
 
         # Use default schedulers, if they're not specified
         if subscriber_scheduler is None:

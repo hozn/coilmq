@@ -51,7 +51,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         if self.server.timeout is not None:
             self.request.settimeout(self.server.timeout)
         self.debug = False
-        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.buffer = FrameBuffer()
         self.engine = StompEngine(connection=self,
                                   authenticator=self.server.authenticator,
@@ -141,8 +141,8 @@ class StompServer(TCPServer):
         @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
         @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
         """
-        self.log = logging.getLogger('%s.%s' % (
-            self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(
+            f'{self.__module__}.{self.__class__.__name__}')
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
         self.timeout = timeout

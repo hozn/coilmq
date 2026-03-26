@@ -46,7 +46,7 @@ class TopicManager:
 
     def __init__(self):
         self.log = logging.getLogger(
-            '%s.%s' % (__name__, self.__class__.__name__))
+            f'{__name__}.{self.__class__.__name__}')
 
         # Lock var is required for L{synchornized} decorator.
         self._lock = threading.RLock()
