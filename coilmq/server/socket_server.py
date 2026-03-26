@@ -83,8 +83,8 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                     pass
         except ClientDisconnected:
             self.log.debug("Client disconnected, discontinuing read loop.")
-        except Exception as e:  # pragma: no cover
-            self.log.error("Error receiving data (unbinding): %s" % e)
+        except Exception:  # pragma: no cover
+            self.log.exception("Error receiving data (unbinding)")
             self.engine.unbind()
             raise
 

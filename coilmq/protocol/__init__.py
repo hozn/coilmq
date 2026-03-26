@@ -86,13 +86,11 @@ class STOMP10(STOMP):
                         "Invalid transaction specified: %s" % transaction)
                 self.engine.transactions[transaction].append(frame)
         except Exception as e:
-            self.engine.log.error("Error processing STOMP frame: %s" % e)
-            self.engine.log.exception(e)
+            self.engine.log.exception("Error processing STOMP frame")
             try:
                 self.engine.connection.send_frame(ErrorFrame(str(e), str(e)))
-            except Exception as e:  # pragma: no cover
-                self.engine.log.error("Could not send error frame: %s" % e)
-                self.engine.log.exception(e)
+            except Exception:  # pragma: no cover
+                self.engine.log.exception("Could not send error frame")
         else:
             # The protocol is not especially clear here (not sure why I'm surprised)
             # about the expected behavior WRT receipts and errors.  We will assume that

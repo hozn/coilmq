@@ -325,18 +325,18 @@ class QueueManager:
             if frame:
                 try:
                     self._send_frame(subscription, frame)
-                except Exception as x:
-                    self.log.error(
-                        "Error sending message %s (requeueing): %s" % (frame, x))
+                except Exception:
+                    self.log.exception(
+                        "Error sending message %s (requeueing)", frame)
                     self.store.requeue(destination, frame)
                     raise
         else:
             for frame in self.store.frames(destination):
                 try:
                     self._send_frame(subscription, frame)
-                except Exception as x:
-                    self.log.error(
-                        "Error sending message %s (requeueing): %s" % (frame, x))
+                except Exception:
+                    self.log.exception(
+                        "Error sending message %s (requeueing)", frame)
                     self.store.requeue(destination, frame)
                     raise
 

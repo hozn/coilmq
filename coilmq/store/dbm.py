@@ -14,7 +14,7 @@ import os.path
 import shelve
 from collections import deque
 from datetime import datetime, timedelta
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError
 
 
 from coilmq.store import QueueStore
@@ -47,8 +47,8 @@ def make_dbm():
         data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
         cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
         cp_timeout = config.getint('coilmq', 'qstore.dbm.checkpoint_timeout')
-    except ConfigParser.NoOptionError as e:
-        raise ConfigError('Missing configuration parameter: %s' % e)
+    except NoOptionError as e:
+        raise ConfigError(f'Missing configuration parameter: {e}') from e
 
     if not os.path.exists(data_dir):
         raise ConfigError('DBM directory does not exist: %s' % data_dir)

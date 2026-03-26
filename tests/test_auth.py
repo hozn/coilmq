@@ -78,7 +78,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
             try:
                 auth.from_configfile(filename)
                 self.fail("Expected error with invalid filename.")
-            except ValueError as e:
+            except ValueError:
                 pass
 
     def test_from_configfile_fp_invalid(self):
@@ -90,5 +90,5 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         try:
             auth.from_configfile(fp)
             self.fail("Expected error with missing section.")
-        except ValueError as e:
+        except ValueError:
             pass

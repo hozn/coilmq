@@ -153,13 +153,12 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
 
             server.serve_forever()
 
-    except (KeyboardInterrupt, SystemExit):
+    except (KeyboardInterrupt, SystemExit) as e:
         logger.info("Stomp server stopped by user interrupt.")
-        raise SystemExit()
+        raise SystemExit() from e
     except Exception as e:
-        logger.error("Stomp server stopped due to error: %s" % e)
-        logger.exception(e)
-        raise SystemExit()
+        logger.exception("Stomp server stopped due to error")
+        raise SystemExit() from e
     finally:
         if server:
             server.server_close()
@@ -222,6 +221,5 @@ if __name__ == '__main__':
         main()
     except (KeyboardInterrupt, SystemExit):
         pass
-    except Exception as e:
-        logger.error("Server terminated due to error: %s" % e)
-        logger.exception(e)
+    except Exception:
+        logger.exception("Server terminated due to error")
