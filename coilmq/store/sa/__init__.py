@@ -181,7 +181,7 @@ class SAQueue(QueueStore):
         session = meta.Session()
         sel = select([distinct(model.frames_table.c.destination)])
         result = session.execute(sel)
-        return set([r[0] for r in result.fetchall()])
+        return {r[0] for r in result.fetchall()}
 
     def close(self):
         """
