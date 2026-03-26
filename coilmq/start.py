@@ -89,7 +89,7 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
                                  topic_manager=TopicManager(),
                                  authenticator=authenticator,
                                  protocol=STOMP11)
-    logger.info("Created server:%r" % server)
+    logger.info("Created server:%r", server)
     return server
 
 
@@ -126,7 +126,7 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
                          configfile=configfile)
 
             server = server_from_config()
-            logger.info("Stomp server listening on %s:%s" % server.server_address)
+            logger.info("Stomp server listening on %s:%s", *server.server_address)
 
             if debug:
                 poll_interval = float(global_config.get(
@@ -139,8 +139,8 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
                                     "Stats heartbeat -------------------------------")
                             store = server.queue_manager.store
                             for dest in store.destinations():
-                                log.debug("Queue %s: size=%s, subscribers=%s" % (
-                                    dest, store.size(dest), server.queue_manager.subscriber_count(dest)))
+                                log.debug("Queue %s: size=%s, subscribers=%s",
+                                    dest, store.size(dest), server.queue_manager.subscriber_count(dest))
 
                             # TODO: Add number of subscribers?
 
@@ -179,7 +179,7 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
         global_config.set('coilmq', 'listen_port', str(port))
 
         if daemon and is_nt:
-            warnings.warn("Daemon context is not available for NT platform")
+            warnings.warn("Daemon context is not available for NT platform", stacklevel=2)
 
     # in an on-daemon mode, we use a dummy context objectx
     # so we can use the same run-server code as the daemon version.

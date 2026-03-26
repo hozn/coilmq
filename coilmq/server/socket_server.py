@@ -71,11 +71,11 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                     if not data:
                         break
                     if self.debug:
-                        self.log.debug("RECV: %r" % data)
+                        self.log.debug("RECV: %r", data)
                     self.buffer.append(data)
 
                     for frame in self.buffer:
-                        self.log.debug("Processing frame: %s" % frame)
+                        self.log.debug("Processing frame: %s", frame)
                         self.engine.process_frame(frame)
                         if not self.engine.connected:
                             raise ClientDisconnected()
@@ -105,7 +105,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         """
         packed = frame.pack()
         if self.debug:  # pragma: no cover
-            self.log.debug("SEND: %r" % packed)
+            self.log.debug("SEND: %r", packed)
         self.request.sendall(packed)
 
 

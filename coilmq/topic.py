@@ -75,7 +75,7 @@ class TopicManager:
         @param destination: The topic destination (e.g. '/topic/foo')
         @type destination: C{str} 
         """
-        self.log.debug("Subscribing %s to %s" % (connection, destination))
+        self.log.debug("Subscribing %s to %s", connection, destination)
         self._subscriptions.subscribe(connection, destination, id=id)
 
     @synchronized(lock)
@@ -89,7 +89,7 @@ class TopicManager:
         @param destination: The topic destination (e.g. '/topic/foo')
         @type destination: C{str} 
         """
-        self.log.debug("Unsubscribing %s from %s" % (connection, destination))
+        self.log.debug("Unsubscribing %s from %s", connection, destination)
         self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
@@ -100,7 +100,7 @@ class TopicManager:
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
         """
-        self.log.debug("Disconnecting %s" % connection)
+        self.log.debug("Disconnecting %s", connection)
         self._subscriptions.disconnect(connection)
 
     @synchronized(lock)
@@ -129,7 +129,7 @@ class TopicManager:
                 subscriber.connection.send_frame(frame)
             except:
                 self.log.exception(
-                    "Error delivering message to subscriber %s; client will be disconnected." % subscriber)
+                    "Error delivering message to subscriber %s; client will be disconnected.", subscriber)
                 # We queue for deletion so we are not modifying the topics dict
                 # while iterating over it.
                 bad_subscribers.add(subscriber)

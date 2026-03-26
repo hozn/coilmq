@@ -139,7 +139,7 @@ class QueueManager:
         @param destination: The topic/queue destination (e.g. '/queue/foo')
         @type destination: C{str} 
         """
-        self.log.debug("Subscribing %s to %s" % (connection, destination))
+        self.log.debug("Subscribing %s to %s", connection, destination)
         subscription = self._subscriptions.subscribe(connection, destination, id=id)
         self._send_backlog(subscription, destination)
 
@@ -154,7 +154,7 @@ class QueueManager:
         @param destination: The topic/queue destination (e.g. '/queue/foo')
         @type destination: C{str} 
         """
-        self.log.debug("Unsubscribing %s from %s" % (connection, destination))
+        self.log.debug("Unsubscribing %s from %s", connection, destination)
         self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
@@ -165,7 +165,7 @@ class QueueManager:
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
         """
-        self.log.debug("Disconnecting %s" % connection)
+        self.log.debug("Disconnecting %s", connection)
         for subscription, pending_frame in list(self._pending.items()):
             if subscription.connection == connection:
                 self.store.requeue(pending_frame.headers.get(
@@ -201,12 +201,12 @@ class QueueManager:
 
         if not subscribers:
             self.log.debug(
-                "No eligible subscribers; adding message %s to queue %s" % (message, dest))
+                "No eligible subscribers; adding message %s to queue %s", message, dest)
             self.store.enqueue(dest, message)
         else:
             selected = self.subscriber_scheduler.choice(subscribers, message)
-            self.log.debug("Delivering message %s to subscriber %s" %
-                           (message, selected))
+            self.log.debug("Delivering message %s to subscriber %s",
+                           message, selected)
             self._send_frame(selected, message)
 
     @synchronized(lock)
@@ -224,7 +224,7 @@ class QueueManager:
         @param frame: The frame being acknowledged.
 
         """
-        self.log.debug("ACK %s for %s" % (frame, connection))
+        self.log.debug("ACK %s for %s", frame, connection)
 
         subscription = Subscription.factory(connection=connection, id=id)
         pending_frame = self._pending.get(subscription, None)
@@ -246,7 +246,7 @@ class QueueManager:
             self._pending.pop(subscription)
             self._send_backlog(subscription)
         else:
-            self.log.debug("No pending messages for %s" % subscription)
+            self.log.debug("No pending messages for %s", subscription)
 
     @synchronized(lock)
     def resend_transaction_frames(self, connection, transaction):
@@ -314,11 +314,11 @@ class QueueManager:
                 eligible_subscriptions, subscription)
             if destination is None:
                 self.log.debug(
-                    "No eligible queues (with frames) for subscriber %s" % subscription)
+                    "No eligible queues (with frames) for subscriber %s", subscription)
                 return
 
-        self.log.debug("Sending backlog to %s for destination %s" %
-                       (subscription, destination))
+        self.log.debug("Sending backlog to %s for destination %s",
+                       subscription, destination)
         if subscription.connection.reliable_subscriber:
             # only send one message (waiting for ack)
             frame = self.store.dequeue(destination)
@@ -359,14 +359,14 @@ class QueueManager:
         if frame.cmd == frames.MESSAGE:
             frame.headers["subscription"] = subscription.id
 
-        self.log.debug("Delivering frame %s to subscription %s" %
-                       (frame, subscription))
+        self.log.debug("Delivering frame %s to subscription %s",
+                       frame, subscription)
 
         if subscription.connection.reliable_subscriber:
             if subscription in self._pending:
                 raise RuntimeError("Connection already has a pending frame.")
             self.log.debug(
-                "Tracking frame %s as pending for subscription %s" % (frame, subscription))
+                "Tracking frame %s as pending for subscription %s", frame, subscription)
             self._pending[subscription] = frame
 
         subscription.connection.send_frame(frame)

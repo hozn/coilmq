@@ -213,7 +213,7 @@ class TestStompClient:
                 data = self.sock.recv(1024)
                 self.buffer.append(data)
                 for frame in self.buffer:
-                    self.log.debug("Processing frame: %s" % frame)
+                    self.log.debug("Processing frame: %s", frame)
                     self.received_frames.put(frame)
         self.read_stopped.set()
         # print "Read loop has been quit! for %s" % id(self)

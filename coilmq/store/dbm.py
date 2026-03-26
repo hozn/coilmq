@@ -154,7 +154,7 @@ class DbmQueue(QueueStore):
 
         if not destination in self.queue_metadata:
             self.log.info(
-                "Destination %s not in metadata; creating new entry and queue database." % destination)
+                "Destination %s not in metadata; creating new entry and queue database.", destination)
             self.queue_metadata[destination] = {
                 'frames': deque(), 'enqueued': 0, 'dequeued': 0, 'size': 0}
 

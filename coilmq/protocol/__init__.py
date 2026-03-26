@@ -264,7 +264,7 @@ class STOMP11(STOMP10):
     def receive_heartbeat(self):
         ago = datetime.datetime.now() - self.last_hb
         if ago > self.receive_heartbeat_interval:
-            self.engine.log.debug("No heartbeat was received for {0} seconds".format(ago.total_seconds()))
+            self.engine.log.debug("No heartbeat was received for %s seconds", ago.total_seconds())
             self.engine.unbind()
 
     def connect(self, frame, response=None):
