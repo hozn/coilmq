@@ -30,3 +30,26 @@ jobs:
 
       - name: Pytest
         run: uv run pytest tests
+
+      - name: Upload coverage to Coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+          COVERALLS_PARALLEL: true
+        run: |
+          uvx coveralls --service=github
+
+  tests:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [pytest-linux]
+    steps:
+      - name: Check matrix status
+        if: needs.pytest-linux.result != 'success'
+        run: exit 1
+
+      - name: Finish Coveralls parallel build
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
