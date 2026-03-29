@@ -1,4 +1,0 @@
-python-daemon
-pid
-wheel
-click

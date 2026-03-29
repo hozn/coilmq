@@ -1,5 +1,4 @@
-include docs/news.txt
-include coilmq/config/defaults.cfg
-include coilmq/config/coilmq.cfg-sample
-include coilmq/config/coilmq.cfg-sample
-recursive-include requirements *.txt
+exclude .gitignore
+exclude .travis.yml
+exclude docs/epydoc.cfg
+exclude uv.lock
