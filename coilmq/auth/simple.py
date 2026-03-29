@@ -1,11 +1,7 @@
 """
 A simple config-file based authentication module.
 """
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
-    ConfigParser.read_file = ConfigParser.readfp
+from configparser import ConfigParser
 
 from coilmq.auth import Authenticator
 from coilmq.config import config
@@ -17,7 +13,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -84,7 +80,7 @@ class SimpleAuthenticator(Authenticator):
         else:
             filesread = cfg.read(configfile)
             if not filesread:
-                raise ValueError('Could not parse auth file: %s' % configfile)
+                raise ValueError(f'Could not parse auth file: {configfile}')
 
         if not cfg.has_section('auth'):
             raise ValueError('Config file contains no [auth] section.')

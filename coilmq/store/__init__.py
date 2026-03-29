@@ -13,7 +13,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@ limitations under the License."""
 lock = threading.RLock()
 
 
-class QueueStore(object):
+class QueueStore(abc.ABC):
     """
     Abstract base class for queue storage. 
 
@@ -33,7 +33,6 @@ class QueueStore(object):
     @ivar log: A logger for this class.
     @type log: C{logging.Logger}
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         """
@@ -42,19 +41,19 @@ class QueueStore(object):
         If you extend this class, you should either call this method or at minimum make sure these values
         get set.
         """
-        self.log = logging.getLogger('%s.%s' % (
-            self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(
+            f'{self.__module__}.{self.__class__.__name__}')
 
     @abc.abstractmethod
     @synchronized(lock)
     def enqueue(self, destination, frame):
         """
-        Store message (frame) for specified destinationination.
+        Store message (frame) for specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
 
@@ -64,7 +63,7 @@ class QueueStore(object):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
@@ -74,12 +73,12 @@ class QueueStore(object):
     @synchronized(lock)
     def requeue(self, destination, frame):
         """
-        Requeue a message (frame) for storing at specified destinationination.
+        Requeue a message (frame) for storing at specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
         self.enqueue(destination, frame)
@@ -118,17 +117,16 @@ class QueueStore(object):
         """
         Provides a set of destinations (queue "addresses") available.
 
-        @return: A list of the detinations available.
+        @return: A list of the destinations available.
         @rtype: C{set}
         """
         raise NotImplementedError
 
-    @synchronized(lock)
+    @synchronized(lock)  # noqa: B027
     def close(self):
         """
         May be implemented to perform any necessary cleanup operations when store is closed.
         """
-        pass
 
     # This is intentionally not synchronized, since it does not directly
     # expose any shared data.
@@ -146,7 +144,7 @@ class QueueStore(object):
         return QueueFrameIterator(self, destination)
 
 
-class QueueFrameIterator(object):
+class QueueFrameIterator:
     """
     Provides an C{iterable} over the frames for a specified destination in a queue.
 
@@ -164,9 +162,6 @@ class QueueFrameIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        return self.__next__()
-
     def __next__(self):
         frame = self.store.dequeue(self.destination)
         if not frame:
@@ -177,7 +172,7 @@ class QueueFrameIterator(object):
         return self.store.size(self.destination)
 
 
-class TopicStore(object):
+class TopicStore:
     """
     Abstract base class for non-durable topic storage.
     """

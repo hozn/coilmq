@@ -5,13 +5,11 @@ import datetime
 
 from coilmq.exception import ProtocolError, AuthError
 from coilmq.util import frames
-from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame, ConnectedFrame
+from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame
 from coilmq.util.concurrency import CoilThreadingTimer
 
 
-class STOMP(object):
-
-    __metaclass__ = abc.ABCMeta
+class STOMP(abc.ABC):
 
     def __init__(self, engine):
         self.engine = engine
@@ -71,7 +69,7 @@ class STOMP10(STOMP):
         """
 
         if frame.cmd not in frames.VALID_COMMANDS:
-            raise ProtocolError("Invalid STOMP command: {}".format(frame.cmd))
+            raise ProtocolError(f"Invalid STOMP command: {frame.cmd}")
 
         method = getattr(self, frame.cmd.lower(), None)
 
@@ -85,23 +83,20 @@ class STOMP10(STOMP):
             else:
                 if not transaction in self.engine.transactions:
                     raise ProtocolError(
-                        "Invalid transaction specified: %s" % transaction)
+                        f"Invalid transaction specified: {transaction}")
                 self.engine.transactions[transaction].append(frame)
         except Exception as e:
-            self.engine.log.error("Error processing STOMP frame: %s" % e)
-            self.engine.log.exception(e)
+            self.engine.log.exception("Error processing STOMP frame")
             try:
                 self.engine.connection.send_frame(ErrorFrame(str(e), str(e)))
-            except Exception as e:  # pragma: no cover
-                self.engine.log.error("Could not send error frame: %s" % e)
-                self.engine.log.exception(e)
+            except Exception:  # pragma: no cover
+                self.engine.log.exception("Could not send error frame")
         else:
             # The protocol is not especially clear here (not sure why I'm surprised)
             # about the expected behavior WRT receipts and errors.  We will assume that
             # the RECEIPT frame should not be sent if there is an error frame.
             # Also we'll assume that a transaction should not preclude sending the receipt
             # frame.
-            # import pdb; pdb.set_trace()
             if frame.headers.get('receipt') and method != self.connect:
                 self.engine.connection.send_frame(ReceiptFrame(
                     receipt=frame.headers.get('receipt')))
@@ -116,7 +111,7 @@ class STOMP10(STOMP):
             login = frame.headers.get('login')
             passcode = frame.headers.get('passcode')
             if not self.engine.authenticator.authenticate(login, passcode):
-                raise AuthError("Authentication failed for %s" % login)
+                raise AuthError(f"Authentication failed for {login}")
 
         self.engine.connected = True
 
@@ -153,11 +148,11 @@ class STOMP10(STOMP):
         if not dest:
             raise ProtocolError('Missing destination for SUBSCRIBE command.')
 
-        id = frame.headers.get('id')
+        subscription_id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=id)
+            self.engine.queue_manager.subscribe(self.engine.connection, dest, id=subscription_id)
         else:
-            self.engine.topic_manager.subscribe(self.engine.connection, dest, id=id)
+            self.engine.topic_manager.subscribe(self.engine.connection, dest, id=subscription_id)
 
     def unsubscribe(self, frame):
         """
@@ -167,15 +162,15 @@ class STOMP10(STOMP):
         if not dest:
             raise ProtocolError('Missing destination for UNSUBSCRIBE command.')
 
-        id = frame.headers.get('id')
+        subscription_id = frame.headers.get('id')
         if dest.startswith('/queue/'):
-            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=id)
+            self.engine.queue_manager.unsubscribe(self.engine.connection, dest, id=subscription_id)
         else:
-            self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=id)
+            self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=subscription_id)
 
     def begin(self, frame):
         """
-        Handles BEGING command: Starts a new transaction.
+        Handles BEGIN command: Starts a new transaction.
         """
         if not frame.transaction:
             raise ProtocolError("Missing transaction for BEGIN command.")
@@ -190,7 +185,7 @@ class STOMP10(STOMP):
             raise ProtocolError("Missing transaction for COMMIT command.")
 
         if not frame.transaction in self.engine.transactions:
-            raise ProtocolError("Invalid transaction: %s" % frame.transaction)
+            raise ProtocolError(f"Invalid transaction: {frame.transaction}")
 
         for tframe in self.engine.transactions[frame.transaction]:
             del tframe.headers['transaction']
@@ -208,7 +203,7 @@ class STOMP10(STOMP):
             raise ProtocolError("Missing transaction for ABORT command.")
 
         if not frame.transaction in self.engine.transactions:
-            raise ProtocolError("Invalid transaction: %s" % frame.transaction)
+            raise ProtocolError(f"Invalid transaction: {frame.transaction}")
 
         self.engine.queue_manager.resend_transaction_frames(
             self.engine.connection, frame.transaction)
@@ -238,7 +233,7 @@ class STOMP11(STOMP10):
     SUPPORTED_VERSIONS = {'1.0', '1.1'}
 
     def __init__(self, engine, send_heartbeat_interval=100, receive_heartbeat_interval=100, *args, **kwargs):
-        super(STOMP11, self).__init__(engine)
+        super().__init__(engine)
         self.last_hb = datetime.datetime.now()
         self.last_hb_sent = datetime.datetime.now()
         self.timer = CoilThreadingTimer()
@@ -257,8 +252,7 @@ class STOMP11(STOMP10):
             self.timer.schedule(max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cx)).total_seconds(),
                                 self.receive_heartbeat)
         self.timer.start()
-        response.headers['heart-beat'] = '{0},{1}'.format(int(self.send_heartbeat_interval.microseconds / 1000),
-                                                          int(self.receive_heartbeat_interval.microseconds / 1000))
+        response.headers['heart-beat'] = f'{int(self.send_heartbeat_interval.microseconds / 1000)},{int(self.receive_heartbeat_interval.microseconds / 1000)}'
 
     def disable_heartbeat(self):
         self.timer.stop()
@@ -270,7 +264,7 @@ class STOMP11(STOMP10):
     def receive_heartbeat(self):
         ago = datetime.datetime.now() - self.last_hb
         if ago > self.receive_heartbeat_interval:
-            self.engine.log.debug("No heartbeat was received for {0} seconds".format(ago.total_seconds()))
+            self.engine.log.debug("No heartbeat was received for %s seconds", ago.total_seconds())
             self.engine.unbind()
 
     def connect(self, frame, response=None):
@@ -279,7 +273,7 @@ class STOMP11(STOMP10):
         heart_beat = frame.headers.get('heart-beat', '0,0')
         if heart_beat:
             self.enable_heartbeat(*map(int, heart_beat.split(',')), response=connected_frame)
-        super(STOMP11, self).connect(frame, response=connected_frame)
+        super().connect(frame, response=connected_frame)
 
     def nack(self, frame):
         """
@@ -291,6 +285,9 @@ class STOMP11(STOMP10):
         if not frame.headers.get('subscription'):
             raise ProtocolError("No subscription specified for NACK command.")
 
+        raise NotImplementedError('Nack implementation incomplete')
+        # ToDo: self.engine.queue_manager.nack()
+
     def _negotiate_protocol(self, frame, response):
         client_versions = frame.headers.get('accept-version', '1.0')
         if not client_versions:
@@ -301,12 +298,12 @@ class STOMP11(STOMP10):
             self.engine.connection.send_frame(Frame(
                     frames.ERROR,
                     headers={'version': versions, 'content-type': frames.TEXT_PLAIN},
-                    body='Supported protocol versions are {0}'.format(versions)
+                    body=f'Supported protocol versions are {versions}'
             ))
         else:
             response.headers['version'] = max(common)
             protocol_class = PROTOCOL_MAP[response.headers['version']]
-            if type(self) is not protocol_class:
+            if not isinstance(self, protocol_class):
                 self.engine.protocol = protocol_class(self.engine)
                 self.engine.protocol.connect(frame, response=response)
 
@@ -338,7 +335,7 @@ class STOMP12(STOMP11):
             raise ProtocolError('"host" header is required')
         if host != socket.getfqdn():
             raise ProtocolError('Virtual hosting is not supported or host is unknown')
-        super(STOMP12, self).connect(frame, response)
+        super().connect(frame, response)
 
     def ack(self, frame):
         if "id" not in frame.headers:

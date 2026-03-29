@@ -18,7 +18,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,12 +29,12 @@ limitations under the License."""
 lock = threading.RLock()
 
 
-class TopicManager(object):
+class TopicManager:
     """
     Class that manages distribution of messages to topic subscribers.
 
     This class uses C{threading.RLock} to guard the public methods.  This is probably
-    a bit excessive, given 1) the actomic nature of basic C{dict} read/write operations 
+    a bit excessive, given 1) the atomic nature of basic C{dict} read/write operations
     and  2) the fact that most of the internal data structures are keying off of the 
     STOMP connection, which is going to be thread-isolated.  That said, this seems like 
     the technically correct approach and should increase the chance of this code being
@@ -46,9 +46,9 @@ class TopicManager(object):
 
     def __init__(self):
         self.log = logging.getLogger(
-            '%s.%s' % (__name__, self.__class__.__name__))
+            f'{__name__}.{self.__class__.__name__}')
 
-        # Lock var is required for L{synchornized} decorator.
+        # Lock var is required for L{synchronized} decorator.
         self._lock = threading.RLock()
 
         self._subscriptions = SubscriptionManager()
@@ -75,7 +75,7 @@ class TopicManager(object):
         @param destination: The topic destination (e.g. '/topic/foo')
         @type destination: C{str} 
         """
-        self.log.debug("Subscribing %s to %s" % (connection, destination))
+        self.log.debug("Subscribing %s to %s", connection, destination)
         self._subscriptions.subscribe(connection, destination, id=id)
 
     @synchronized(lock)
@@ -89,7 +89,7 @@ class TopicManager(object):
         @param destination: The topic destination (e.g. '/topic/foo')
         @type destination: C{str} 
         """
-        self.log.debug("Unsubscribing %s from %s" % (connection, destination))
+        self.log.debug("Unsubscribing %s from %s", connection, destination)
         self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
@@ -100,7 +100,7 @@ class TopicManager(object):
         @param connection: The client connection to unsubscribe.
         @type connection: L{coilmq.server.StompConnection}
         """
-        self.log.debug("Disconnecting %s" % connection)
+        self.log.debug("Disconnecting %s", connection)
         self._subscriptions.disconnect(connection)
 
     @synchronized(lock)
@@ -115,7 +115,7 @@ class TopicManager(object):
         dest = message.headers.get('destination')
         if not dest:
             raise ValueError(
-                "Cannot send frame with no destination: %s" % message)
+                "Cannot send frame with no destination: {message}")
 
         message.cmd = frames.MESSAGE
 
@@ -129,7 +129,7 @@ class TopicManager(object):
                 subscriber.connection.send_frame(frame)
             except:
                 self.log.exception(
-                    "Error delivering message to subscriber %s; client will be disconnected." % subscriber)
+                    "Error delivering message to subscriber %s; client will be disconnected.", subscriber)
                 # We queue for deletion so we are not modifying the topics dict
                 # while iterating over it.
                 bad_subscribers.add(subscriber)

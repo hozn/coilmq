@@ -3,10 +3,7 @@ try:
 except ImportError:  # pragma: no cover
     import sys; sys.exit('please, install redis-py package to use redis-store')
 import threading
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
 
 from coilmq.store import QueueStore
 from coilmq.util.concurrency import synchronized
@@ -18,7 +15,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,8 +36,7 @@ class RedisQueueStore(QueueStore):
     def __init__(self, redis_conn=None):
         """The default connection parameters are: host='localhost', port=6379, db=0"""
         self.__db = redis_conn or redis.Redis()
-        # self.key = '{0}:{1}'.format(namespace, name)
-        super(RedisQueueStore, self).__init__()
+        super().__init__()
 
     @synchronized(lock)
     def enqueue(self, destination, frame):

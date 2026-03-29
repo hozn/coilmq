@@ -2,12 +2,8 @@
 The default/recommended SocketServer-based server implementation. 
 """
 import logging
-import socket
 import threading
-try:
-    from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
-except ImportError:
-    from SocketServer import BaseRequestHandler, TCPServer, ThreadingMixIn
+from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 
 
 from coilmq.util.frames import FrameBuffer
@@ -21,7 +17,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,7 +51,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         if self.server.timeout is not None:
             self.request.settimeout(self.server.timeout)
         self.debug = False
-        self.log = logging.getLogger('%s.%s' % (self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.buffer = FrameBuffer()
         self.engine = StompEngine(connection=self,
                                   authenticator=self.server.authenticator,
@@ -75,20 +71,20 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                     if not data:
                         break
                     if self.debug:
-                        self.log.debug("RECV: %r" % data)
+                        self.log.debug("RECV: %r", data)
                     self.buffer.append(data)
 
                     for frame in self.buffer:
-                        self.log.debug("Processing frame: %s" % frame)
+                        self.log.debug("Processing frame: %s", frame)
                         self.engine.process_frame(frame)
                         if not self.engine.connected:
                             raise ClientDisconnected()
-                except socket.timeout:  # pragma: no cover
+                except TimeoutError:  # pragma: no cover
                     pass
         except ClientDisconnected:
             self.log.debug("Client disconnected, discontinuing read loop.")
-        except Exception as e:  # pragma: no cover
-            self.log.error("Error receiving data (unbinding): %s" % e)
+        except Exception:  # pragma: no cover
+            self.log.exception("Error receiving data (unbinding)")
             self.engine.unbind()
             raise
 
@@ -109,7 +105,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         """
         packed = frame.pack()
         if self.debug:  # pragma: no cover
-            self.log.debug("SEND: %r" % packed)
+            self.log.debug("SEND: %r", packed)
         self.request.sendall(packed)
 
 
@@ -145,8 +141,8 @@ class StompServer(TCPServer):
         @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
         @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
         """
-        self.log = logging.getLogger('%s.%s' % (
-            self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(
+            f'{self.__module__}.{self.__class__.__name__}')
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
         self.timeout = timeout

@@ -8,6 +8,7 @@ import logging
 
 import time
 import threading
+import warnings
 from contextlib import contextmanager
 
 is_nt = os.name == 'nt'
@@ -32,7 +33,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -88,7 +89,7 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
                                  topic_manager=TopicManager(),
                                  authenticator=authenticator,
                                  protocol=STOMP11)
-    logger.info("Created server:%r" % server)
+    logger.info("Created server:%r", server)
     return server
 
 
@@ -125,7 +126,7 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
                          configfile=configfile)
 
             server = server_from_config()
-            logger.info("Stomp server listening on %s:%s" % server.server_address)
+            logger.info("Stomp server listening on %s:%s", *server.server_address)
 
             if debug:
                 poll_interval = float(global_config.get(
@@ -138,8 +139,8 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
                                     "Stats heartbeat -------------------------------")
                             store = server.queue_manager.store
                             for dest in store.destinations():
-                                log.debug("Queue %s: size=%s, subscribers=%s" % (
-                                    dest, store.size(dest), server.queue_manager.subscriber_count(dest)))
+                                log.debug("Queue %s: size=%s, subscribers=%s",
+                                    dest, store.size(dest), server.queue_manager.subscriber_count(dest))
 
                             # TODO: Add number of subscribers?
 
@@ -152,13 +153,12 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
 
             server.serve_forever()
 
-    except (KeyboardInterrupt, SystemExit):
+    except (KeyboardInterrupt, SystemExit) as e:
         logger.info("Stomp server stopped by user interrupt.")
-        raise SystemExit()
+        raise SystemExit() from e
     except Exception as e:
-        logger.error("Stomp server stopped due to error: %s" % e)
-        logger.exception(e)
-        raise SystemExit()
+        logger.exception("Stomp server stopped due to error")
+        raise SystemExit() from e
     finally:
         if server:
             server.server_close()
@@ -179,9 +179,9 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
         global_config.set('coilmq', 'listen_port', str(port))
 
         if daemon and is_nt:
-            warnings.warn("Daemon context is not available for NT platform")
+            warnings.warn("Daemon context is not available for NT platform", stacklevel=2)
 
-    # in an on-daemon mode, we use a dummy context objectx
+    # in an on-daemon mode, we use a dummy context object
     # so we can use the same run-server code as the daemon version.
     context = pydaemon.DaemonContext(uid=uid,
                                      gid=gid,
@@ -221,6 +221,5 @@ if __name__ == '__main__':
         main()
     except (KeyboardInterrupt, SystemExit):
         pass
-    except Exception as e:
-        logger.error("Server terminated due to error: %s" % e)
-        logger.exception(e)
+    except Exception:
+        logger.exception("Server terminated due to error")

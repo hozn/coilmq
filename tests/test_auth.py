@@ -4,14 +4,10 @@ Tests for authenticators.
 import os
 import unittest
 try:
-    from io import StringIO
-    unicode = str
-except ImportError:
-    from StringIO import StringIO
-try:
     from importlib.resources import as_file, files
 except ImportError:
     from importlib_resources import as_file, files
+from io import StringIO
 
 from coilmq.auth.simple import SimpleAuthenticator
 
@@ -78,21 +74,21 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         Test loading store with invalid file path.
         """
         auth = SimpleAuthenticator()
-        with as_file(files('tests.resources').joinpath('auth-invlaid.ini')) as filename:
+        with as_file(files('tests.resources').joinpath('auth-invalid.ini')) as filename:
             try:
                 auth.from_configfile(filename)
                 self.fail("Expected error with invalid filename.")
-            except ValueError as e:
+            except ValueError:
                 pass
 
     def test_from_configfile_fp_invalid(self):
         """
         Test loading store with missing section in config.
         """
-        fp = StringIO(u"[invalid]\nusername=password")
+        fp = StringIO("[invalid]\nusername=password")
         auth = SimpleAuthenticator()
         try:
             auth.from_configfile(fp)
             self.fail("Expected error with missing section.")
-        except ValueError as e:
+        except ValueError:
             pass

@@ -8,7 +8,7 @@ from coilmq.util.concurrency import CoilThreadingTimer
 class CoilTimerTestCase(unittest.TestCase):
 
     def setUp(self):
-        class CountedCallback(object):
+        class CountedCallback:
 
             def __init__(self):
                 self.lock = threading.Lock()

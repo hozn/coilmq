@@ -9,17 +9,12 @@ documentation this is likely a BAD storage module to use if you are expecting to
 large frames.
 """
 import threading
-import logging
 import os
 import os.path
 import shelve
 from collections import deque
 from datetime import datetime, timedelta
-
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser, NoOptionError
 
 
 from coilmq.store import QueueStore
@@ -33,7 +28,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,14 +47,14 @@ def make_dbm():
         data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
         cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
         cp_timeout = config.getint('coilmq', 'qstore.dbm.checkpoint_timeout')
-    except ConfigParser.NoOptionError as e:
-        raise ConfigError('Missing configuration parameter: %s' % e)
+    except NoOptionError as e:
+        raise ConfigError(f'Missing configuration parameter: {e}') from e
 
     if not os.path.exists(data_dir):
-        raise ConfigError('DBM directory does not exist: %s' % data_dir)
+        raise ConfigError(f'DBM directory does not exist: {data_dir}')
     # FIXME: how do these get applied? Is OR appropriate?
     if not os.access(data_dir, os.W_OK | os.R_OK):
-        raise ConfigError('Cannot read and write DBM directory: %s' % data_dir)
+        raise ConfigError(f'Cannot read and write DBM directory: {data_dir}')
 
     store = DbmQueue(data_dir, checkpoint_operations=cp_ops,
                      checkpoint_timeout=cp_timeout)
@@ -79,7 +74,7 @@ class DbmQueue(QueueStore):
     appears that at least some of the underlying implementations that anydbm uses are not
     thread-safe
 
-    Due to some impedence mismatch between the types of data we need to store in queues
+    Due to some impedance mismatch between the types of data we need to store in queues
     (specifically lists) and the types of data that are best stored in DBM databases
     (specifically dicts), this class uses the `shelve` module to abstract away some
     of the ugliness.  The consequence of this is that we only persist objects periodically
@@ -104,7 +99,7 @@ class DbmQueue(QueueStore):
     @type checkpoint_operations: C{int}
 
     @ivar checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
-    @type checkpoint_timeout: C{float}
+    @type checkpoint_timeout: C{timedelta}
     """
 
     def __init__(self, data_dir, checkpoint_operations=100, checkpoint_timeout=30):
@@ -145,12 +140,12 @@ class DbmQueue(QueueStore):
     @synchronized(lock)
     def enqueue(self, destination, frame):
         """
-        Store message (frame) for specified destinationination.
+        Store message (frame) for specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
         message_id = frame.headers.get('message-id')
@@ -159,7 +154,7 @@ class DbmQueue(QueueStore):
 
         if not destination in self.queue_metadata:
             self.log.info(
-                "Destination %s not in metadata; creating new entry and queue database." % destination)
+                "Destination %s not in metadata; creating new entry and queue database.", destination)
             self.queue_metadata[destination] = {
                 'frames': deque(), 'enqueued': 0, 'dequeued': 0, 'size': 0}
 
@@ -176,7 +171,7 @@ class DbmQueue(QueueStore):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
@@ -201,7 +196,7 @@ class DbmQueue(QueueStore):
         """
         Whether specified queue has any frames.
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: Whether there are any frames in the specified queue.
@@ -238,17 +233,17 @@ class DbmQueue(QueueStore):
         """
         Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the detinations available.
+        @return: A list of the destinations available.
         @rtype: C{set}
         """
         return set(self.queue_metadata.keys())
 
     def _sync(self):
         """
-        Synchronize the cached data with the underlyind database.
+        Synchronize the cached data with the underlying database.
 
         Uses an internal transaction counter and compares to the checkpoint_operations
-        and checkpoint_timeout paramters to determine whether to persist the memory store.
+        and checkpoint_timeout parameters to determine whether to persist the memory store.
 
         In this implementation, this method wraps calls to C{shelve.Shelf#sync}. 
         """

@@ -65,7 +65,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
             for i in range(max_ops + 1):
                 frame = Frame(frames.MESSAGE, headers={
-                              'message-id': str(uuid.uuid4())}, body='some data - %d' % i)
+                              'message-id': str(uuid.uuid4())}, body=f'some data - {i}')
                 store.enqueue(dest, frame)
 
             self.assertEqual(store.size(dest), max_ops + 1)

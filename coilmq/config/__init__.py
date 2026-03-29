@@ -12,15 +12,11 @@ init_config('/path/to/config.cfg')
 config.getint('listen_port')
 """
 import os.path
+import importlib
 import logging
 import logging.config
-import warnings
-import io
 
-try:
-    from configparser import ConfigParser
-except ImportError:
-    from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -29,7 +25,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,8 +57,7 @@ def init_config(config_file=None):
     if config_file and os.path.exists(config_file):
         read = config.read([config_file])
         if not read:
-            raise ValueError(
-                "Could not read configuration from file: %s" % config_file)
+            raise ValueError(f"Could not read configuration from file: {config_file}")
 
 
 def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
@@ -83,7 +78,7 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
 
     @param configfile: The path to a configuration file.  This takes precedence over any explicitly
                         specified logfile/loglevel (but a warning will be logged if both are specified).
-                        If the file is not specified or does not exist annd no logfile was specified, 
+                        If the file is not specified or does not exist and no logfile was specified,
                         then the default.cfg configuration file will be used to initialize logging.
     @type configfile: C{str}
     """
@@ -99,14 +94,14 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
         logging.config.fileConfig(configfile)
         if logfile:
             msg = "Config file conflicts with explicitly specified logfile; config file takes precedence."
-            logging.warn(msg)
+            logging.warning(msg)
     else:
-        format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
+        log_format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
         if logfile:
             logging.basicConfig(
-                filename=logfile, level=loglevel, format=format)
+                filename=logfile, level=loglevel, format=log_format)
         else:
-            logging.basicConfig(level=loglevel, format=format)
+            logging.basicConfig(level=loglevel, format=log_format)
 
 
 def resolve_name(name):
@@ -119,7 +114,7 @@ def resolve_name(name):
 
     >>> resolve_name('coilmq.store.memory.MemoryQueue')
     <class 'coilmq.store.memory.MemoryQueue'>
-    >>> t = resolve_name('coilmq.store.dbm.make_dbm')
+    >>> t = resolve_name('coilmq.store.dbm:make_dbm')
     >>> import inspect
     >>> inspect.isfunction(t)
     True
@@ -131,21 +126,11 @@ def resolve_name(name):
 
     @return: The resolved object (class, callable, etc.) or None if not found.
     """
-    if ':' in name:
-        # Normalize foo.bar.baz:main to foo.bar.baz.main
-        # (since our logic below will handle that)
-        name = '%s.%s' % tuple(name.split(':'))
+    sep_index = max(name.rfind(sep) for sep in (":", "."))
 
-    name = name.split('.')
+    module_name = name[:sep_index]
+    member_name = name[1 + sep_index:]
 
-    used = name.pop(0)
-    found = __import__(used)
-    for n in name:
-        used = used + '.' + n
-        try:
-            found = getattr(found, n)
-        except AttributeError:
-            __import__(used)
-            found = getattr(found, n)
+    module = importlib.import_module(module_name)
 
-    return found
+    return getattr(module, member_name)

@@ -79,7 +79,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(len(self.conn.frames), 1)
         self.assertEqual(len(self.store.frames(dest)), 1)
 
-    def send_simple(self):
+    def test_send_simple(self):
         """ Test a basic send command. """
         dest = '/queue/dest'
 
@@ -87,16 +87,16 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.send(f)
 
         self.assertIn(dest, self.store.destinations())
-        self.assertEqua(len(self.store.frames(dest)), 1)
+        self.assertEqual(len(self.store.frames(dest)), 1)
 
         # Assert some side-effects
         self.assertIn('message-id', f.headers)
-        self.assertEqual(f.command, frames.MESSAGE)
+        self.assertEqual(f.cmd, frames.MESSAGE)
 
     def test_send_err(self):
         """ Test sending a message when delivery results in error. """
 
-        class ExcThrowingConn(object):
+        class ExcThrowingConn:
             reliable_subscriber = True
 
             def send_frame(self, frame):
@@ -118,7 +118,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_send_backlog_err_reliable(self):
         """ Test errors when sending backlog to reliable subscriber. """
 
-        class ExcThrowingConn(object):
+        class ExcThrowingConn:
             reliable_subscriber = True
 
             def send_frame(self, frame):
@@ -149,7 +149,7 @@ class QueueManagerTest(unittest.TestCase):
     def test_send_backlog_err_unreliable(self):
         """ Test errors when sending backlog to reliable subscriber. """
 
-        class ExcThrowingConn(object):
+        class ExcThrowingConn:
             reliable_subscriber = False
 
             def send_frame(self, frame):
