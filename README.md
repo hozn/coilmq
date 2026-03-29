@@ -1,7 +1,7 @@
 CoilMQ
 ======
 
-[![Build Status](https://travis-ci.org/hozn/coilmq.svg?branch=master)](https://travis-ci.org/hozn/coilmq)
+[![Actions Status](https://github.com/hozn/coilmq/actions/workflows/ci.yml/badge.svg)](https://github.com/hozn/coilmq/actions)
 [![Coverage Status](https://coveralls.io/repos/hozn/coilmq/badge.svg?branch=master&service=github)](https://coveralls.io/github/hozn/coilmq?branch=master)
 [![PyPI downloads](https://img.shields.io/pypi/dm/coilmq.svg)](https://badge.fury.io/py/coilmq)
 
