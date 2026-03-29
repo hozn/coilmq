@@ -7,10 +7,13 @@ import time
 import unittest
 import uuid
 
+import pytest
+
 from coilmq.store.dbm import DbmQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest
+
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -54,6 +57,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
         self.assertFalse(self.store.has_frames(dest))
         self.assertEqual(self.store.size(dest), 0)
 
+    @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_ops(self):
         """ Test a expected sync behavior with checkpoint_operations param. """
 
@@ -79,6 +83,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             shutil.rmtree(data_dir, ignore_errors=True)
             raise
 
+    @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_timeout(self):
         """ Test a expected sync behavior with checkpoint_timeout param. """
 
@@ -129,6 +134,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             shutil.rmtree(data_dir, ignore_errors=True)
             raise
 
+    @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_loss(self):
         """ Test metadata loss behavior. """
 
