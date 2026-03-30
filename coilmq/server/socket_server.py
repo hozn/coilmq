@@ -117,7 +117,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         """
         heartbeat = b'\n'
         if self.debug:  # pragma: no cover
-            self.log.debug("SEND: %r" % heartbeat)
+            self.log.debug("SEND: %r", heartbeat)
         self.request.sendall(heartbeat)
 
 
