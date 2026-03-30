@@ -16,7 +16,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,14 +25,13 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SubscriberPriorityScheduler(object):
+class SubscriberPriorityScheduler(abc.ABC):
     """ Abstract base class for choosing which recipient (subscriber) should receive a message. """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def choice(self, subscribers, message):
         """
-        Chooses which subscriber (from list) should recieve specified message.
+        Chooses which subscriber (from list) should receive specified message.
 
         @param subscribers: Collection of subscribed connections eligible to receive message. 
         @type subscribers: C{list} of L{coilmq.subscription.Subscription}
@@ -45,7 +44,7 @@ class SubscriberPriorityScheduler(object):
         """
 
 
-class QueuePriorityScheduler(object):
+class QueuePriorityScheduler:
     """
     Abstract base class for objects that provide a way to prioritize the queues.
     """

@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Functional tests that use the default memory-based storage backends and default
 scheduler implementations.
 """
 import zlib
-
-import six
 
 from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.util import frames
@@ -96,7 +93,7 @@ class BasicTest(BaseFunctionalTestCase):
 
         # Read some random binary data.
         # (This should be cross-platform.)
-        message = six.b('This is the message that will be compressed.')
+        message = b'This is the message that will be compressed.'
         c2 = self._new_client()
         c2.send('/queue/foo', zlib.compress(message))
 
@@ -111,7 +108,7 @@ class BasicTest(BaseFunctionalTestCase):
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
 
-        unicodemsg = u'我能吞下玻璃而不伤身体'
+        unicodemsg = '我能吞下玻璃而不伤身体'
         utf8msg = unicodemsg.encode('utf-8')
 
         c2 = self._new_client()
@@ -121,3 +118,27 @@ class BasicTest(BaseFunctionalTestCase):
         res = c1.received_frames.get()
         self.assertEqual(res.cmd, frames.MESSAGE)
         self.assertEqual(res.body, utf8msg)
+
+    def test_send_large_message(self):
+        """
+        Test sending a large message after a short one.
+        """
+        c1 = self._new_client()
+        c1.subscribe('/queue/foo')
+
+        shortmessage = b'x'
+        longmessage = b'y' * 1024 * 16
+
+        c2 = self._new_client()
+
+        c2.send('/queue/foo', shortmessage)
+
+        res = c1.received_frames.get()
+        self.assertEqual(res.cmd, frames.MESSAGE)
+        self.assertEqual(res.body, shortmessage)
+
+        c2.send('/queue/foo', longmessage)
+
+        res2 = c1.received_frames.get()
+        self.assertEqual(res2.cmd, frames.MESSAGE)
+        self.assertEqual(res2.body, longmessage)

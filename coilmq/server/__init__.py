@@ -20,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class StompConnection(object):
+class StompConnection(abc.ABC):
     """
     An "interface" for server implementation classes to "implement". 
 
@@ -30,8 +30,6 @@ class StompConnection(object):
     @ivar reliable_subscriber: Whether this client will ACK all messages.
     @type reliable_subscriber: C{bool}
     """
-    __metaclass__ = abc.ABCMeta
-
     reliable_subscriber = False
 
     @abc.abstractmethod

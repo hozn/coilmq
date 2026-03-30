@@ -13,7 +13,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,7 @@ class MemoryQueue(QueueStore):
     The locks on this class are probably excessive given that the 
     L{coilmq.queue.QueueManager} is already implementing coarse-grained locking 
     on the methods that access this storage backend.  That said, we'll start
-    over-protective and refactor later it if proves unecessary. 
+    over-protective and refactor later it if proves unnecessary.
     """
 
     def __init__(self):
@@ -70,7 +70,7 @@ class MemoryQueue(QueueStore):
         """
         Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the detinations available.
+        @return: A list of the destinations available.
         @rtype: C{set}
         """
         return set(self._messages.keys())

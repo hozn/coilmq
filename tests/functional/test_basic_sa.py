@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Functional tests that use a SQLite storage backends and default
 scheduler implementations.

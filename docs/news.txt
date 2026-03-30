@@ -3,6 +3,22 @@ News: CoilMQ
 
 .. contents::
 
+Unreleased
+----------
+* Removed uses of `pkg_resources` (issue 39)
+* Removed support for Python 2.7 through Python 3.7 (MR 37)
+* Fixed a defect in `coilmq.util.frames.FrameBuffer.extract_frame`: on
+  an `IncompleteFrame` error, this method set the buffer's next write
+  index to the read index (rather than the end of the buffer) causing
+  the subsequent `FrameBuffer.append()` call(s) to overwrite the
+  beginning of the frame and hanging the server (issue 44)
+
+1.0.1
+-----
+
+1.0.0
+-----
+
 0.6.1
 -----
 * Error with one subscriber causes topic messages not to be delivered to 

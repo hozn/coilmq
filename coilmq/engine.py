@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 
 from coilmq.protocol import STOMP10
 
@@ -17,7 +16,7 @@ if the underlying storage implementations were processor intensive (e.g. databas
 access).  For the default memory storage engines, this shouldn't be a problem.
 
 This code is inspired by the design of the Ruby stompserver project, by 
-Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
+Patrick Hurley and Lionel Bouton.  See https://stompserver.rubyforge.org/
 """
 import logging
 from collections import defaultdict
@@ -28,7 +27,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +36,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class StompEngine(object):
+class StompEngine:
     """ 
     The engine provides the core business logic that we use to respond to STOMP protocol
     messages.  
@@ -70,8 +69,7 @@ class StompEngine(object):
         @param connection: The stomp connection backing this engine.
         @type connection: L{coilmq.server.StompConnection}
         """
-        self.log = logging.getLogger('%s.%s' % (
-            self.__class__.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(f'{self.__class__.__name__}.{self.__class__.__name__}')
         self.connection = connection
         self.authenticator = authenticator
         self.queue_manager = queue_manager

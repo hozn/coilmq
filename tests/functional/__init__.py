@@ -9,10 +9,7 @@ import socket
 import select
 import threading
 
-try:
-    from queue import Queue, Empty
-except ImportError:
-    from Queue import Queue, Empty
+from queue import Queue, Empty
 
 from coilmq.util.frames import Frame, FrameBuffer
 from coilmq.queue import QueueManager
@@ -44,7 +41,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
     Base class for test cases provides the fixtures for setting up the multi-threaded
     unit test infrastructure.
 
-    We use a combination of C{threading.Event} and C{Queue.Queue} objects to faciliate
+    We use a combination of C{threading.Event} and C{Queue.Queue} objects to facilitate
     inter-thread communication and lock-stepping the assertions. 
     """
 
@@ -148,7 +145,7 @@ class TestStompServer(ThreadedStompServer):
         StompServer.server_activate(self)
 
 
-class TestStompClient(object):
+class TestStompClient:
     """
     A stomp client for use in testing.
 
@@ -167,8 +164,7 @@ class TestStompClient(object):
         @param connect: Whether to connect socket to specified addr.
         @type connect: C{bool}
         """
-        self.log = logging.getLogger('%s.%s' % (
-            self.__module__, self.__class__.__name__))
+        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.sock = None
         self.addr = addr
         self.received_frames = Queue()
@@ -207,7 +203,7 @@ class TestStompClient(object):
         self.connected = True
         self.read_stopped.clear()
         t = threading.Thread(target=self._read_loop,
-                             name="client-receiver-%s" % hex(id(self)))
+                             name=f"client-receiver-{hex(id(self))}")
         t.start()
 
     def _read_loop(self):
@@ -217,10 +213,9 @@ class TestStompClient(object):
                 data = self.sock.recv(1024)
                 self.buffer.append(data)
                 for frame in self.buffer:
-                    self.log.debug("Processing frame: %s" % frame)
+                    self.log.debug("Processing frame: %s", frame)
                     self.received_frames.put(frame)
         self.read_stopped.set()
-        # print "Read loop has been quit! for %s" % id(self)
 
     def disconnect(self):
         self.send_frame(Frame(frames.DISCONNECT))

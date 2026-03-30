@@ -3,27 +3,12 @@ Queue storage module that uses SQLAlchemy to access queue information and frames
 
 
 """
-import threading
-import logging
-import os
-import os.path
-import shelve
-from collections import deque
-from datetime import datetime, timedelta
-
-# try:
-#     from configparser import ConfigParser
-# except ImportError:
-#     from ConfigParser import ConfigParser
-
 from sqlalchemy import engine_from_config, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import select, func, distinct
 
 from coilmq.store import QueueStore
 from coilmq.config import config
-from coilmq.exception import ConfigError
-from coilmq.util.concurrency import synchronized
 from coilmq.store.sa import meta, model
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -32,7 +17,7 @@ __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
  
-  http://www.apache.org/licenses/LICENSE-2.0
+  https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -91,12 +76,12 @@ class SAQueue(QueueStore):
 
     def enqueue(self, destination, frame):
         """
-        Store message (frame) for specified destinationination.
+        Store message (frame) for specified destination.
 
-        @param destination: The destinationination queue name for this message (frame).
+        @param destination: The destination queue name for this message (frame).
         @type destination: C{str}
 
-        @param frame: The message (frame) to send to specified destinationination.
+        @param frame: The message (frame) to send to specified destination.
         @type frame: C{stompclient.frame.Frame}
         """
         session = meta.Session()
@@ -112,7 +97,7 @@ class SAQueue(QueueStore):
         """
         Removes and returns an item from the queue (or C{None} if no items in queue).
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
@@ -152,7 +137,7 @@ class SAQueue(QueueStore):
         """
         Whether specified queue has any frames.
 
-        @param destination: The queue name (destinationination).
+        @param destination: The queue name (destination).
         @type destination: C{str}
 
         @return: Whether there are any frames in the specified queue.
@@ -190,13 +175,13 @@ class SAQueue(QueueStore):
         """
         Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the detinations available.
+        @return: A list of the destinations available.
         @rtype: C{set}
         """
         session = meta.Session()
         sel = select([distinct(model.frames_table.c.destination)])
         result = session.execute(sel)
-        return set([r[0] for r in result.fetchall()])
+        return {r[0] for r in result.fetchall()}
 
     def close(self):
         """

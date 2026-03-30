@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Test of the QueueManager when using a SQLite (SQLAlchemy) backend (store).
 """

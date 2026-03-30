@@ -1,0 +1,94 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=75.3.4",
+    "setuptools-scm>=8",
+]
+
+[project]
+name = "coilmq"
+description = "Simple, lightweight, and easily extensible STOMP message broker."
+readme = "README.md"
+keywords = [
+    "broker",
+    "messaging",
+    "server",
+    "stomp",
+]
+license = { file = "LICENSE.md" }
+authors = [
+    { name = "Hans Lellelid", email = "hans@xmpl.org" },
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Distributed Computing",
+    "Topic :: System :: Networking",
+]
+dynamic = [
+    "version",
+]
+dependencies = [
+    "click>=8.1.8",
+    "pid>=3.0.4",
+    "python-daemon>=3.1.2",
+]
+optional-dependencies.redis = [
+    "redis>=6.1.1",
+]
+optional-dependencies.sqlalchemy = [
+    "sqlalchemy<2",
+]
+urls.Changelog = "https://github.com/hozn/blob/master/docs/news.txt"
+urls.Homepage = "https://github.com/hozn/coilmq"
+urls.Issues = "https://github.com/hozn/issues"
+scripts.coilmq = "coilmq.start:main"
+
+[dependency-groups]
+dev = [
+    { include-group = "tests" },
+]
+tests = [
+    "fakeredis>=2.34.1",
+    "importlib-resources>=6.4.5; python_full_version<'3.9'",
+    "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
+    "sqlalchemy<2",
+]
+
+[tool.setuptools]
+packages = [ "coilmq" ]
+
+[tool.setuptools_scm]
+
+[tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
+
+[tool.pytest]
+ini_options.addopts = "--doctest-modules --cov=coilmq --cov=tests"
+ini_options.python_files = "*.py"
+
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "raise NotImplementedError()",
+    "if 0:",
+    "if __name__ == '__main__':",
+]
