@@ -12,6 +12,10 @@ Unreleased
   index to the read index (rather than the end of the buffer) causing
   the subsequent `FrameBuffer.append()` call(s) to overwrite the
   beginning of the frame and hanging the server (issue 44)
+* Fixed defects in CoilMQ's heart-beating implementation (issue 26)
+  * stop heart-beating threads when a connection closes
+  * treat any incoming traffic as a heart-beat
+  * tolerate heart-beats arriving as late as twice the requested interval
 
 1.0.1
 -----

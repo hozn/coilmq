@@ -74,6 +74,9 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                         self.log.debug("RECV: %r", data)
                     self.buffer.append(data)
 
+                    if not self.buffer.buffer_empty():
+                        self.engine.protocol.process_heartbeat()
+
                     for frame in self.buffer:
                         self.log.debug("Processing frame: %s", frame)
                         self.engine.process_frame(frame)
@@ -107,6 +110,15 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         if self.debug:  # pragma: no cover
             self.log.debug("SEND: %r", packed)
         self.request.sendall(packed)
+
+    def send_heartbeat(self):
+        """ Sends an EOL to connected socket client.
+
+        """
+        heartbeat = b'\n'
+        if self.debug:  # pragma: no cover
+            self.log.debug("SEND: %r", heartbeat)
+        self.request.sendall(heartbeat)
 
 
 class StompServer(TCPServer):
