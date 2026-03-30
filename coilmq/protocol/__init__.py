@@ -265,7 +265,9 @@ class STOMP11(STOMP10):
             self.receive_heartbeat_interval = max(self.send_heartbeat_interval, datetime.timedelta(milliseconds=cx))
             self.timer.schedule(self.receive_heartbeat_interval.total_seconds(), self.check_receive_heartbeat)
         self.timer.start()
-        response.headers['heart-beat'] = f'{int(self.send_heartbeat_interval / datetime.timedelta(milliseconds=1))},{int(self.receive_heartbeat_interval / datetime.timedelta(milliseconds=1))}'
+        sx = int(self.send_heartbeat_interval / datetime.timedelta(milliseconds=1))
+        sy = int(self.receive_heartbeat_interval / datetime.timedelta(milliseconds=1))
+        response.headers['heart-beat'] = f'{sx},{sy}'
 
     def disable_heartbeat(self):
         self.timer.stop()
