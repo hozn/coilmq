@@ -319,7 +319,9 @@ class FrameBuffer:
             f = Frame.from_buffer(self._buffer)
             self._pointer = self._buffer.tell()
         except (IncompleteFrame, EmptyBuffer):
-            self._buffer.seek(self._pointer, 0)
+            # Seek to the end of the buffer so the next call to
+            # `append()` does not overwrite part of the frame.
+            self._buffer.seek(0, 2)
             return None
 
         return f
