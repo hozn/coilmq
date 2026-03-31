@@ -69,7 +69,7 @@ class StompEngine:
         @param connection: The stomp connection backing this engine.
         @type connection: L{coilmq.server.StompConnection}
         """
-        self.log = logging.getLogger(f'{self.__class__.__name__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f'{self.__class__.__module__}.{self.__class__.__name__}')
         self.connection = connection
         self.authenticator = authenticator
         self.queue_manager = queue_manager
