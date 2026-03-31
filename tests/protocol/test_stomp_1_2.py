@@ -30,4 +30,8 @@ class STOMP12TestCase(ProtocolBaseTestCase):
         response = self.feed_frame(frames.CONNECT, {'host': self.host, 'accept-version': '1.1'})
         self.assertEqual(response.cmd, frames.CONNECTED)
         self.assertEqual(response.headers['version'], '1.1')
-        self.assertIsInstance(self.engine.protocol, STOMP11)
+        # Note: assertIsInstance is not appropriate here because the test would
+        # pass if self.engine.protocol was STOMP10 which is not what we want.
+        # `assertIs(type(obj), cls)` is appropriate way to check for an object's
+        # exact type.
+        self.assertIs(type(self.engine.protocol), STOMP11)
