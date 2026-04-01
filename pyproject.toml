@@ -58,7 +58,14 @@ scripts.coilmq = "coilmq.start:main"
 
 [dependency-groups]
 dev = [
+    { include-group = "docs" },
     { include-group = "tests" },
+]
+docs = [
+    "furo>=2025.12.19; python_full_version>='3.13'",
+    "sphinx>=9.1.0; python_full_version>='3.13'",
+    "sphinx-autodoc-typehints>=3.9.11; python_full_version>='3.13'",
+    "sphinx-paramlinks>=0.6.0",
 ]
 tests = [
     "fakeredis>=2.34.1",
