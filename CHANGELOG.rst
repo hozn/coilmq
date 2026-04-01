@@ -1,7 +1,6 @@
-News: CoilMQ
-============
-
-.. contents::
+===========
+ Changelog
+===========
 
 Unreleased
 ----------
