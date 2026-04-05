@@ -1,6 +1,4 @@
-"""
-A simple config-file based authentication module.
-"""
+"""A simple config-file based authentication module."""
 from configparser import ConfigParser
 
 from coilmq.auth import Authenticator
@@ -23,12 +21,11 @@ limitations under the License."""
 
 
 def make_simple():
-    """
-    Create a L{SimpleAuthenticator} instance using values read from coilmq configuration.
+    """Create a :class:`SimpleAuthenticator` instance using values read from coilmq configuration.
 
-    @return: The configured L{SimpleAuthenticator}
-    @rtype: L{SimpleAuthenticator}
-    @raise ConfigError: If there is a configuration error.
+    :returns: The configured :class:`SimpleAuthenticator`
+    :rtype: SimpleAuthenticator
+    :raises ConfigError: If there is a configuration error.
     """
     authfile = config.get('coilmq', 'auth.simple.file')
     if not authfile:
@@ -39,29 +36,27 @@ def make_simple():
 
 
 class SimpleAuthenticator(Authenticator):
-    """
-    A simple configfile-based authenticator.
+    """A simple configfile-based authenticator.
 
-    @ivar store: Authentication key-value store (of logins to passwords).
-    @type store: C{dict} of C{str} to C{str}
+    :var store: Authentication key-value store (of logins to passwords).
+    :vartype store: dict[str, str]
     """
 
     def __init__(self, store=None):
-        """
-        Initialize the authenticator to use (optionally) specified :paramref:`store`.
+        """Initialize the authenticator to use (optionally) specified :paramref:`store`.
 
-        @param store: Authentication store whose keys are user names and values are passwords.
-        @type store: C{dict} of C{str} to C{str}
+        :param store: Authentication store whose keys are user names and values are
+            passwords.
+        :type store: dict[str, str]
         """
         if store is None:
             store = {}
         self.store = store
 
     def from_configfile(self, configfile):
-        """
-        Initialize the authentication store from a "config"-style file.
+        """Initialize the authentication store from a "config"-style file.
 
-        Auth "config" file is parsed with C{ConfigParser.ConfigParser} and must contain
+        Auth "config" file is parsed with :py:class:`configparser.ConfigParser` and must contain
         an ``[auth]`` section whose keys are user names and values are passwords.
 
         Example auth file::
@@ -70,9 +65,10 @@ class SimpleAuthenticator(Authenticator):
             someuser = somepass
             anotheruser = anotherpass
 
-        @param configfile: Path to config file or file-like object.
-        @type configfile: C{any}
-        @raise ValueError: If file could not be read or does not contain an ``[auth]`` section.
+        :param configfile: Path to config file or file-like object.
+        :type configfile: typing.Any
+        :raises ValueError: If file could not be read or does not contain an ``[auth]``
+            section.
         """
         cfg = ConfigParser()
         if hasattr(configfile, 'read'):
@@ -88,10 +84,9 @@ class SimpleAuthenticator(Authenticator):
         self.store = dict(cfg.items('auth'))
 
     def authenticate(self, login, passcode):
-        """
-        Authenticate the login and passcode.
+        """Authenticate the login and passcode.
 
-        @return: Whether provided login and password match values in store.
-        @rtype: C{bool}
+        :returns: Whether provided login and password match values in store.
+        :rtype: bool
         """
         return login in self.store and self.store[login] == passcode

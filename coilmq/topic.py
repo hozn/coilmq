@@ -1,7 +1,6 @@
-"""
-Non-durable topic support functionality.
+"""Non-durable topic support functionality.
 
-This code is inspired by the design of the Ruby stompserver project, by 
+This code is inspired by the design of the Ruby stompserver project, by
 Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 """
 import logging
@@ -17,7 +16,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -30,18 +29,17 @@ lock = threading.RLock()
 
 
 class TopicManager:
-    """
-    Class that manages distribution of messages to topic subscribers.
+    """Class that manages distribution of messages to topic subscribers.
 
-    This class uses C{threading.RLock} to guard the public methods.  This is probably
-    a bit excessive, given 1) the atomic nature of basic C{dict} read/write operations
-    and  2) the fact that most of the internal data structures are keying off of the 
-    STOMP connection, which is going to be thread-isolated.  That said, this seems like 
+    This class uses :py:class:`threading.RLock` to guard the public methods.  This is probably
+    a bit excessive, given 1) the atomic nature of basic :py:class:`dict` read/write operations
+    and  2) the fact that most of the internal data structures are keying off of the
+    STOMP connection, which is going to be thread-isolated.  That said, this seems like
     the technically correct approach and should increase the chance of this code being
     portable to non-GIL systems.
 
-    @ivar _subscriptions: A dict of registered topics, keyed by destination.
-    @type _subscriptions: C{dict} of C{str} to C{set} of L{coilmq.server.StompConnection}
+    :var _subscriptions: A dict of registered topics, keyed by destination.
+    :vartype _subscriptions: dict[str, set[coilmq.server.StompConnection]]
     """
 
     def __init__(self):
@@ -57,60 +55,55 @@ class TopicManager:
 
     @synchronized(lock)
     def close(self):
-        """
-        Closes all resources associated with this topic manager.
+        """Closes all resources associated with this topic manager.
 
-        (Currently this is simply here for API conformity w/ L{coilmq.queue.QueueManager}.)
+        (Currently this is simply here for API conformity w/ :class:`coilmq.queue.QueueManager`.)
         """
         self.log.info("Shutting down topic manager.")  # pragma: no cover
 
     @synchronized(lock)
     def subscribe(self, connection, destination, id=None):
-        """
-        Subscribes a connection to the specified topic destination. 
+        """Subscribes a connection to the specified topic destination.
 
-        @param connection: The client connection to subscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection to subscribe.
+        :type connection: coilmq.server.StompConnection
+        :param destination: The topic destination (e.g. '/topic/foo')
+        :type destination: str
 
-        @param destination: The topic destination (e.g. '/topic/foo')
-        @type destination: C{str} 
         """
         self.log.debug("Subscribing %s to %s", connection, destination)
         self._subscriptions.subscribe(connection, destination, id=id)
 
     @synchronized(lock)
     def unsubscribe(self, connection, destination, id=None):
-        """
-        Unsubscribes a connection from the specified topic destination. 
+        """Unsubscribes a connection from the specified topic destination.
 
-        @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection to unsubscribe.
+        :type connection: coilmq.server.StompConnection
+        :param destination: The topic destination (e.g. '/topic/foo')
+        :type destination: str
 
-        @param destination: The topic destination (e.g. '/topic/foo')
-        @type destination: C{str} 
         """
         self.log.debug("Unsubscribing %s from %s", connection, destination)
         self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
     def disconnect(self, connection):
-        """
-        Removes a subscriber connection.
+        """Removes a subscriber connection.
 
-        @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection to unsubscribe.
+        :type connection: coilmq.server.StompConnection
         """
         self.log.debug("Disconnecting %s", connection)
         self._subscriptions.disconnect(connection)
 
     @synchronized(lock)
     def send(self, message):
-        """
-        Sends a message to all subscribers of destination.
+        """Sends a message to all subscribers of destination.
 
-        @param message: The message frame.  (The frame will be modified to set command 
-                            to MESSAGE and set a message id.)
-        @type message: L{coilmq.util.frames.Frame}
+        :param message: The message frame.  (The frame will be modified to set command
+            to MESSAGE and set a message id.)
+        :type message: coilmq.util.frames.Frame
         """
         dest = message.headers.get('destination')
         if not dest:

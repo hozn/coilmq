@@ -1,6 +1,4 @@
-"""
-Test SQLAlchemy storage.
-"""
+"""Test SQLAlchemy storage."""
 import datetime
 import unittest
 
@@ -18,7 +16,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -39,7 +37,7 @@ class SAQueueTest(CommonQueueTest, unittest.TestCase):
         meta.Session.remove()
 
     def test_dequeue_order(self):
-        """ Test the order that frames are returned by dequeue() method. """
+        """Test the order that frames are returned by dequeue() method."""
         dest = '/queue/foo'
 
         frame1 = Frame(frames.MESSAGE, headers={

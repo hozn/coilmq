@@ -1,6 +1,4 @@
-"""
-Test the FrameBuffer utility class.
-"""
+"""Test the FrameBuffer utility class."""
 import unittest
 import uuid
 import io
@@ -26,9 +24,7 @@ limitations under the License."""
 
 
 class TestFrameBuffer(unittest.TestCase):
-    """
-    Test the L{coilmq.utils.buffer.FrameBuffer} class.
-    """
+    """Test the :class:`coilmq.utils.frames.FrameBuffer` class."""
 
     def setUp(self):
         pass
@@ -37,11 +33,11 @@ class TestFrameBuffer(unittest.TestCase):
         pass
 
     def createMessage(self, cmd, headers, body):
-        """ Creates a package STOMP message. """
+        """Creates a package STOMP message."""
         return Frame(cmd, headers=headers, body=body).pack()
 
     def test_extract_frame(self):
-        """ Test extracting a single frame. """
+        """Test extracting a single frame."""
         sb = FrameBuffer()
         m1 = self.createMessage(
             frames.CONNECT, {'session': uuid.uuid4()}, 'This is the body')
@@ -51,7 +47,7 @@ class TestFrameBuffer(unittest.TestCase):
         self.assertEqual(m1, msg.pack())
 
     def test_extract_frame_binary(self):
-        """ Test extracting a binary frame. """
+        """Test extracting a binary frame."""
         sb = FrameBuffer()
         binmsg = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
         m1 = self.createMessage(frames.SEND, OrderedDict({'content-length': len(binmsg), 'x-other-header': 'value'}), binmsg
@@ -62,8 +58,7 @@ class TestFrameBuffer(unittest.TestCase):
         self.assertEqual(msg.pack(), m1)
 
     def test_extract_frame_multi(self):
-        """ Test the handling of multiple concatenated messages by the buffer. """
-
+        """Test the handling of multiple concatenated messages by the buffer."""
         m1 = b'CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00'
         m2 = b'SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00SEND\ndestination:/queue/test\n\n\x00'
 
@@ -90,7 +85,7 @@ class TestFrameBuffer(unittest.TestCase):
         self.assertIsNone(sb.extract_frame())
 
     def test_iteration(self):
-        """ Test the iteration feature of our buffer."""
+        """Test the iteration feature of our buffer."""
         sb = FrameBuffer()
         m1 = self.createMessage(
             frames.CONNECT, {'session': uuid.uuid4()}, b'This is the body')

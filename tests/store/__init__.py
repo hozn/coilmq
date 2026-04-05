@@ -1,6 +1,4 @@
-"""
-Queue storage tests.
-"""
+"""Queue storage tests."""
 import unittest
 import uuid
 
@@ -12,7 +10,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -23,14 +21,13 @@ limitations under the License."""
 
 
 class CommonQueueTest:
-    """
-    An abstract set of base tests for queue storage engines.
+    """An abstract set of base tests for queue storage engines.
 
-    This class must be mixed in with something that extends C{unittest.TestCase}.
+    This class must be mixed in with something that extends :py:class:`unittest.TestCase`.
     """
 
     def test_enqueue(self):
-        """ Test the enqueue() method. """
+        """Test the enqueue() method."""
         dest = '/queue/foo'
         frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
@@ -40,7 +37,7 @@ class CommonQueueTest:
         self.assertEqual(self.store.size(dest), 1)
 
     def test_dequeue(self):
-        """ Test the dequeue() method. """
+        """Test the dequeue() method."""
         dest = '/queue/foo'
         frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
@@ -59,7 +56,7 @@ class CommonQueueTest:
         self.assertEqual(self.store.size(dest), 0)
 
     def test_dequeue_specific(self):
-        """ Test that we only dequeue from the correct queue. """
+        """Test that we only dequeue from the correct queue."""
         dest = '/queue/foo'
         notdest = '/queue/other'
 
@@ -88,7 +85,7 @@ class CommonQueueTest:
         self.assertEqual(self.store.size(dest), 0)
 
     def test_dequeue_order(self):
-        """ Test the order that frames are returned by dequeue() method. """
+        """Test the order that frames are returned by dequeue() method."""
         dest = '/queue/foo'
 
         frame1 = Frame(frames.MESSAGE, headers={
@@ -119,8 +116,7 @@ class CommonQueueTest:
         self.assertEqual(self.store.size(dest), 0)
 
     def test_dequeue_empty(self):
-        """ Test dequeue() with empty queue. """
-
+        """Test dequeue() with empty queue."""
         self.assertIsNone(self.store.dequeue('/queue/nonexist'))
 
         self.assertFalse(self.store.has_frames('/queue/nonexist'))

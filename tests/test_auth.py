@@ -1,6 +1,4 @@
-"""
-Tests for authenticators.
-"""
+"""Tests for authenticators."""
 import os
 import unittest
 try:
@@ -35,18 +33,14 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         pass
 
     def test_constructor(self):
-        """
-        Test the with passing auth store in constructor.
-        """
+        """Test the with passing auth store in constructor."""
         auth = SimpleAuthenticator({'user': 'pass'})
         assert auth.authenticate('user', 'pass') == True
         assert auth.authenticate('user1', 'pass') == False
         assert auth.authenticate('user', 'pass2') == False
 
     def test_from_configfile(self):
-        """
-        Test the loading store from config file path.
-        """
+        """Test the loading store from config file path."""
         auth = SimpleAuthenticator()
         with as_file(files('tests.resources').joinpath('auth.ini')) as filename:
             auth.from_configfile(filename)
@@ -56,9 +50,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         assert auth.authenticate('foo', 'bar') == False
 
     def test_from_configfile_fp(self):
-        """
-        Test loading store from file-like object.
-        """
+        """Test loading store from file-like object."""
         auth = SimpleAuthenticator()
         with as_file(files('tests.resources').joinpath('auth.ini')) as filename:
             with filename.open() as fp:
@@ -70,9 +62,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         assert auth.authenticate('foo', 'bar') == False
 
     def test_from_configfile_invalid(self):
-        """
-        Test loading store with invalid file path.
-        """
+        """Test loading store with invalid file path."""
         auth = SimpleAuthenticator()
         with as_file(files('tests.resources').joinpath('auth-invalid.ini')) as filename:
             try:
@@ -82,9 +72,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
                 pass
 
     def test_from_configfile_fp_invalid(self):
-        """
-        Test loading store with missing section in config.
-        """
+        """Test loading store with missing section in config."""
         fp = StringIO("[invalid]\nusername=password")
         auth = SimpleAuthenticator()
         try:
