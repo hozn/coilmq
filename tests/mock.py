@@ -1,6 +1,4 @@
-"""
-Classes to be used for mock objects.
-"""
+"""Classes to be used for mock objects."""
 from collections import defaultdict
 
 from coilmq import auth
@@ -10,7 +8,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -85,25 +83,25 @@ class MockQueueManager:
         self.acks.append(frame.headers.get("message-id"))
 
     def resend_transaction_frames(self, connection, transaction):
-        """ Resend the messages that were ACK'd in specified transaction.
+        """Resend the messages that were ACK'd in specified transaction.
 
         @param connection: The client connection that aborted the transaction.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: coilmq.server.StompConnection
 
         @param transaction: The transaction id (which was aborted).
-        @type transaction: C{str}
+        @type transaction: str
         """
         for frame in self.transaction_frames[connection][transaction]:
             self.send(frame)
 
     def clear_transaction_frames(self, connection, transaction):
-        """ Clears out the queued ACK frames for specified transaction. 
+        """Clears out the queued ACK frames for specified transaction.
 
         @param connection: The client connection that committed the transaction.
-        @type connection: L{coilmq.server.StompConnection}
+        @type connection: coilmq.server.StompConnection
 
         @param transaction: The transaction id (which was committed).
-        @type transaction: C{str}
+        @type transaction: str
         """
         try:
             del self.transaction_frames[connection][transaction]

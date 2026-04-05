@@ -1,6 +1,4 @@
-"""
-The default/recommended SocketServer-based server implementation. 
-"""
+"""The default/recommended SocketServer-based server implementation."""
 import logging
 import threading
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
@@ -16,7 +14,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -27,24 +25,23 @@ limitations under the License."""
 
 
 class StompRequestHandler(BaseRequestHandler, StompConnection):
-    """
-    Class that will be instantiated to handle STOMP connections.
+    """Class that will be instantiated to handle STOMP connections.
 
     This class will be instantiated once per connection to the server.  In a multi-threaded
     context, that means that instances of this class are scoped to a single thread.  It should
-    be noted that while the L{coilmq.engine.StompEngine} instance will be thread-local, the 
+    be noted that while the :class:`coilmq.engine.StompEngine` instance will be thread-local, the
     storage containers configured into the engine are not thread-local (and hence must be
-    thread-safe). 
+    thread-safe).
 
-    @ivar buffer: A StompBuffer instance which buffers received data (to ensure we deal with
-                    complete STOMP messages.
-    @type buffer: C{coilmq.util.frames.FrameBuffer}
+    :var buffer: A StompBuffer instance which buffers received data (to ensure we deal
+        with complete STOMP messages.
+    :vartype buffer: coilmq.util.frames.FrameBuffer
+    :var engine: The STOMP protocol engine.
+    :vartype engine: coilmq.engine.StompEngine
+    :var debug: Whether to enable extra-verbose debug logging.  (Will be logged at debug
+        level.)
+    :vartype debug: bool
 
-    @ivar engine: The STOMP protocol engine.
-    @type engine: L{coilmq.engine.StompEngine}
-
-    @ivar debug: Whether to enable extra-verbose debug logging.  (Will be logged at debug level.)
-    @type debug: C{bool}
     """
 
     def setup(self):
@@ -60,9 +57,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
                                   protocol=self.server.protocol)
 
     def handle(self):
-        """
-        Handle a new socket connection.
-        """
+        """Handle a new socket connection."""
         # self.request is the TCP socket connected to the client
         try:
             while not self.server._shutdown_request_event.is_set():
@@ -92,19 +87,18 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
             raise
 
     def finish(self):
-        """
-        Normal (non-error) termination of request.
+        """Normal (non-error) termination of request.
 
         Unbinds the engine.
-        @see: L{coilmq.engine.StompEngine.unbind}
+        .. seealso:: :meth:`coilmq.engine.StompEngine.unbind`
         """
         self.engine.unbind()
 
     def send_frame(self, frame):
-        """ Sends a frame to connected socket client.
+        """Sends a frame to connected socket client.
 
         @param frame: The frame to send.
-        @type frame: C{coilmq.util.frames.Frame}
+        @type frame: coilmq.util.frames.Frame
         """
         packed = frame.pack()
         if self.debug:  # pragma: no cover
@@ -112,9 +106,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         self.request.sendall(packed)
 
     def send_heartbeat(self):
-        """ Sends an EOL to connected socket client.
-
-        """
+        """Sends an EOL to connected socket client."""
         heartbeat = b'\n'
         if self.debug:  # pragma: no cover
             self.log.debug("SEND: %r", heartbeat)
@@ -122,18 +114,16 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
 
 
 class StompServer(TCPServer):
-    """
-    Subclass of C{StompServer.TCPServer} to handle new connections with 
-    instances of L{StompRequestHandler}.
+    """Subclass of :py:class:`TCPServer` to handle new connections with
+    instances of :class:`StompRequestHandler`.
 
-    @ivar authenticator: The authenticator to use.
-    @type authenticator: L{coilmq.auth.Authenticator}
+    :var authenticator: The authenticator to use.
+    :vartype authenticator: coilmq.auth.Authenticator
+    :var queue_manager: The queue manager to use.
+    :vartype queue_manager: coilmq.queue.QueueManager
+    :var topic_manager: The topic manager to use.
+    :vartype topic_manager: coilmq.topic.TopicManager
 
-    @ivar queue_manager: The queue manager to use.
-    @type queue_manager: L{coilmq.queue.QueueManager}
-
-    @ivar topic_manager: The topic manager to use.
-    @type topic_manager: L{coilmq.topic.TopicManager}
     """
 
     # This causes the SO_REUSEADDR option to be set on the socket, allowing
@@ -143,15 +133,17 @@ class StompServer(TCPServer):
 
     def __init__(self, server_address, RequestHandlerClass=None, timeout=3.0,
                  authenticator=None, queue_manager=None, topic_manager=None, protocol=None):
-        """
-        Extension to C{TCPServer} constructor to provide mechanism for providing implementation classes.
+        """Extension to :py:class:`TCPServer` constructor to provide mechanism for providing implementation classes.
 
-        @param server_address: The (address,port) C{tuple}
-        @param RequestHandlerClass: The class to use for handling requests.
-        @param timeout: The timeout for the underlying socket.
-        @keyword authenticator: The configured L{coilmq.auth.Authenticator} object to use.
-        @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
-        @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
+        :param server_address: The (address,port) :py:class:`tuple`
+        :param RequestHandlerClass: The class to use for handling requests.
+        :param timeout: The timeout for the underlying socket.
+        :param authenticator: The configured :class:`coilmq.auth.Authenticator` object
+            to use.
+        :param queue_manager: The configured :class:`coilmq.queue.QueueManager` object
+            to use.
+        :param topic_manager: The configured :class:`coilmq.topic.TopicManager` object
+            to use.
         """
         self.log = logging.getLogger(
             f'{self.__module__}.{self.__class__.__name__}')
@@ -167,9 +159,7 @@ class StompServer(TCPServer):
         TCPServer.__init__(self, server_address, RequestHandlerClass)
 
     def server_close(self):
-        """
-        Closes the socket server and any associated resources.
-        """
+        """Closes the socket server and any associated resources."""
         self.log.debug("Closing the socket server connection.")
         TCPServer.server_close(self)
         self.queue_manager.close()

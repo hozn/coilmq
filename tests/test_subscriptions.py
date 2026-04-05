@@ -1,6 +1,4 @@
-"""
-Tests for the subscription management.
-"""
+"""Tests for the subscription management."""
 import unittest
 
 from coilmq.subscription import SubscriptionManager
@@ -12,7 +10,6 @@ class SubscriptionManagerTest(unittest.TestCase):
 
     def test_subscribing(self):
         """Test (un)subscribing."""
-
         subscriptions = SubscriptionManager()
         conn1 = MockConnection()
         conn2 = MockConnection()

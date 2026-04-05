@@ -26,26 +26,23 @@ TEXT_PLAIN = 'text/plain'
 
 
 class IncompleteFrame(Exception):
-    """The frame has incomplete body"""
+    """The frame has incomplete body."""
 
 
 class BodyNotTerminated(Exception):
-    """The frame's body is not terminated with the NULL character"""
+    """The frame's body is not terminated with the NULL character."""
 
 
 class EmptyBuffer(Exception):
-    """The buffer is empty"""
+    """The buffer is empty."""
 
 
 def parse_headers(buff):
+    """Parses buffer and returns command and headers as strings.
+
+    :param buff: Buffer containing frame
+    :type buff: io.BytesIO
     """
-    Parses buffer and returns command and headers as strings
-
-    @param buff: Buffer containing frame
-    @type buff: C{io.BytesIO}
-
-    """
-
     preamble_lines = list(map(
         lambda x: x.decode(),
         iter(lambda: buff.readline().strip(), b''))
@@ -56,13 +53,10 @@ def parse_headers(buff):
 
 
 def parse_body(buff, headers):
-    """
-
-    @param buff: Buffer containing frame
-    @type buff: C{io.BytesIO}
-
-    @param headers: Dictionary of headers
-    @type headers: C{dict}
+    """:param buff: Buffer containing frame
+    :type buff: io.BytesIO
+    :param headers: Dictionary of headers
+    :type headers: dict
 
     """
     content_length = int(headers.get('content-length', -1))
@@ -85,8 +79,7 @@ def parse_body(buff, headers):
 
 
 class Frame:
-    """
-    A STOMP frame (or message).
+    """A STOMP frame (or message).
 
     :param cmd: the protocol command
     :param headers: a map of headers for the frame
@@ -102,7 +95,7 @@ class Frame:
         return f'{{cmd={self.cmd},headers=[{self.headers}],body={self.body if isinstance(self.body, bytes) else self.body.encode()}}}'
 
     def __eq__(self, other):
-        """ Override equality checking to test for matching command, headers, and body. """
+        """Override equality checking to test for matching command, headers, and body."""
         return all([isinstance(other, Frame),
                     self.cmd == other.cmd,
                     self.headers == other.headers,
@@ -119,13 +112,11 @@ class Frame:
         return cls(cmd, headers=headers, body=body)
 
     def pack(self):
-        """
-        Create a string representation from object state.
+        """Create a string representation from object state.
 
-        @return: The string (bytes) for this stomp frame.
-        @rtype: C{str}
+        :returns: The string (bytes) for this stomp frame.
+        :rtype: str
         """
-
         self.headers.setdefault('content-length', len(self.body))
 
         # See https://stomp.github.io/stomp-specification-1.1.html#Augmented_BNF
@@ -144,16 +135,15 @@ class Frame:
 
 
 class ConnectedFrame(Frame):
-    """ A CONNECTED server frame (response to CONNECT).
+    """A CONNECTED server frame (response to CONNECT).
 
     @ivar session: The (throw-away) session ID to include in response.
-    @type session: C{str}
+    @type session: str
     """
 
     def __init__(self, session, extra_headers=None):
-        """
-        @param session: The (throw-away) session ID to include in response.
-        @type session: C{str}
+        """:param session: The (throw-away) session ID to include in response.
+        :type session: str
         """
         super().__init__(
             cmd=CONNECTED, headers=extra_headers or {})
@@ -161,8 +151,7 @@ class ConnectedFrame(Frame):
 
 
 class HeaderValue:
-    """
-    An descriptor class that can be used when a calculated header value is needed.
+    """An descriptor class that can be used when a calculated header value is needed.
 
     This class is a descriptor, implementing  __get__ to return the calculated value.
 
@@ -174,14 +163,13 @@ class HeaderValue:
         >>> str(headers['content-length'])
         '4'
 
-    @ivar calc: The calculator function.
-    @type calc: C{callable}
+    :var calc: The calculator function.
+    :vartype calc: callable
     """
 
     def __init__(self, calculator):
-        """
-        @param calculator: The calculator callable that will yield the desired value.
-        @type calculator: C{callable}
+        """:param calculator: The calculator callable that will yield the desired value.
+        :type calculator: callable
         """
         if not callable(calculator):
             raise ValueError("Non-callable param: {calculator}")
@@ -201,12 +189,11 @@ class HeaderValue:
 
 
 class ErrorFrame(Frame):
-    """ An ERROR server frame. """
+    """An ERROR server frame."""
 
     def __init__(self, message, body=None, extra_headers=None):
-        """
-        @param body: The message body bytes.
-        @type body: C{str}
+        """:param body: The message body bytes.
+        :type body: str
         """
         super().__init__(cmd=ERROR,
                                          headers=extra_headers or {}, body=body)
@@ -219,12 +206,11 @@ class ErrorFrame(Frame):
 
 
 class ReceiptFrame(Frame):
-    """ A RECEIPT server frame. """
+    """A RECEIPT server frame."""
 
     def __init__(self, receipt, extra_headers=None):
-        """
-        @param receipt: The receipt message ID.
-        @type receipt: C{str}
+        """:param receipt: The receipt message ID.
+        :type receipt: str
         """
         super().__init__(
             'RECEIPT', headers=extra_headers or {})
@@ -232,23 +218,22 @@ class ReceiptFrame(Frame):
 
 
 class FrameBuffer:
-    """
-    A customized version of the StompBuffer class from Stomper project that returns frame objects
+    r"""A customized version of the StompBuffer class from Stomper project that returns frame objects
     and supports iteration.
 
     This version of the parser also assumes that stomp messages with no content-length
     end in a simple \\x00 char, not \\x00\\n as is assumed by
-    C{stomper.stompbuffer.StompBuffer}. Additionally, this class differs from Stomper version
+    ``stomper.stompbuffer.StompBuffer``. Additionally, this class differs from Stomper version
     by conforming to PEP-8 coding style.
 
     This class can be used to smooth over a transport that may provide partial frames (or
     may provide multiple frames in one data buffer).
 
-    @ivar _buffer: The internal byte buffer.
-    @type _buffer: C{io.BytesIO}
+    :var _buffer: The internal byte buffer.
+    :vartype _buffer: io.BytesIO
+    :var debug: Log extra parsing debug (logs will be DEBUG level).
+    :vartype debug: bool
 
-    @ivar debug: Log extra parsing debug (logs will be DEBUG level).
-    @type debug: C{bool}
     """
 
     # regexp to check that the buffer starts with a command.
@@ -271,37 +256,31 @@ class FrameBuffer:
         self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
 
     def clear(self):
-        """
-        Clears (empties) the internal buffer.
-        """
+        """Clears (empties) the internal buffer."""
         self._buffer = io.BytesIO()
 
     def buffer_len(self):
-        """
-        @return: Number of bytes in the internal buffer.
-        @rtype: C{int}
+        """:returns: Number of bytes in the internal buffer.
+        :rtype: int
         """
         return self._buffer.getbuffer().nbytes
 
     def buffer_empty(self):
-        """
-        @return: C{True} if buffer is empty, C{False} otherwise.
-        @rtype: C{bool}
+        """:returns: :py:obj:`True` if buffer is empty, :py:obj:`False` otherwise.
+        :rtype: bool
         """
         return self._buffer.getbuffer().nbytes > 0
 
     def append(self, data):
-        """
-        Appends bytes to the internal buffer (may or may not contain full stomp frames).
+        """Appends bytes to the internal buffer (may or may not contain full stomp frames).
 
-        @param data: The bytes to append.
-        @type data: C{bytes}
+        :param data: The bytes to append.
+        :type data: bytes
         """
         self._buffer.write(data)
 
     def extract_frame(self):
-        """
-        Pulls one complete frame off the buffer and returns it.
+        """Pulls one complete frame off the buffer and returns it.
 
         If there is no complete message in the buffer, returns None.
 
@@ -309,8 +288,8 @@ class FrameBuffer:
         should therefore call this method in a loop (or use iterator
         functionality exposed by class) until None returned.
 
-        @return: The next complete frame in the buffer.
-        @rtype: L{Frame}
+        :returns: The next complete frame in the buffer.
+        :rtype: Frame
         """
         self._buffer.seek(self._pointer, 0)
         try:
@@ -325,16 +304,13 @@ class FrameBuffer:
         return f
 
     def __iter__(self):
-        """
-        Returns an iterator object.
-        """
+        """Returns an iterator object."""
         return self
 
     def __next__(self):
-        """
-        Return the next STOMP message in the buffer (supporting iteration).
+        """Return the next STOMP message in the buffer (supporting iteration).
 
-        @rtype: L{Frame}
+        :rtype: Frame
         """
         msg = self.extract_frame()
         if not msg:

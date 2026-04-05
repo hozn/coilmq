@@ -1,7 +1,6 @@
-"""
-Queue manager, queue implementation, and supporting classes.
+"""Queue manager, queue implementation, and supporting classes.
 
-This code is inspired by the design of the Ruby stompserver project, by 
+This code is inspired by the design of the Ruby stompserver project, by
 Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 """
 import logging
@@ -19,7 +18,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -32,49 +31,44 @@ lock = threading.RLock()
 
 
 class QueueManager:
-    """
-    Class that manages distribution of messages to queue subscribers.
+    """Class that manages distribution of messages to queue subscribers.
 
-    This class uses C{threading.RLock} to guard the public methods.  This is probably
-    a bit excessive, given 1) the atomic nature of basic C{dict} read/write operations
-    and  2) the fact that most of the internal data structures are keying off of the 
-    STOMP connection, which is going to be thread-isolated.  That said, this seems like 
+    This class uses :py:class:`threading.RLock` to guard the public methods.  This is probably
+    a bit excessive, given 1) the atomic nature of basic :py:class:`dict` read/write operations
+    and  2) the fact that most of the internal data structures are keying off of the
+    STOMP connection, which is going to be thread-isolated.  That said, this seems like
     the technically correct approach and should increase the chance of this code being
-    portable to non-GIL systems. 
+    portable to non-GIL systems.
 
-    @ivar store: The queue storage backend to use.
-    @type store: L{coilmq.store.QueueStore}
+    :var store: The queue storage backend to use.
+    :vartype store: coilmq.store.QueueStore
+    :var subscriber_scheduler: The scheduler that chooses which subscriber to send
+        messages to.
+    :vartype subscriber_scheduler: coilmq.scheduler.SubscriberPriorityScheduler
+    :var queue_scheduler: The scheduler that chooses which queue to select for sending
+        backlogs for a single connection.
+    :vartype queue_scheduler: coilmq.scheduler.QueuePriorityScheduler
+    :var _subscriptions: A dict of registered queues, keyed by destination.
+    :vartype _subscriptions: coilmq.subscription.SubscriptionManager
+    :var _pending: All messages waiting for ACK from clients.
+    :vartype _pending: dict[coilmq.subscription.SubscriptionManager,
+        coilmq.util.frames.Frame]
+    :var _transaction_frames: Frames that have been ACK'd within a transaction.
+    :vartype _transaction_frames: dict[coilmq.subscription.Subscription,
+        list[coilmq.util.frames.Frame]]
 
-    @ivar subscriber_scheduler: The scheduler that chooses which subscriber to send
-                                    messages to.
-    @type subscriber_scheduler: L{coilmq.scheduler.SubscriberPriorityScheduler}
-
-    @ivar queue_scheduler: The scheduler that chooses which queue to select for sending
-                                    backlogs for a single connection.
-    @type queue_scheduler: L{coilmq.scheduler.QueuePriorityScheduler}
-
-    @ivar _subscriptions: A dict of registered queues, keyed by destination.
-    @type _subscriptions: L{coilmq.subscription.SubscriptionManager}
-
-    @ivar _pending: All messages waiting for ACK from clients.
-    @type _pending: C{dict} of L{coilmq.subscription.SubscriptionManager} to C{coilmq.util.frames.Frame}
-
-    @ivar _transaction_frames: Frames that have been ACK'd within a transaction.
-    @type _transaction_frames: C{dict} of L{coilmq.subscription.Subscription} to C{list} of C{coilmq.util.frames.Frame}
     """
 
     def __init__(self, store, subscriber_scheduler=None, queue_scheduler=None):
-        """
-        @param store: The queue storage backend.
-        @type store: L{coilmq.store.QueueStore}
+        """:param store: The queue storage backend.
+        :type store: coilmq.store.QueueStore
+        :param subscriber_scheduler: The scheduler that chooses which subscriber to send
+            messages to.
+        :type subscriber_scheduler: coilmq.scheduler.SubscriberPriorityScheduler
+        :param queue_scheduler: The scheduler that chooses which queue to select for
+            sending backlogs for a single connection.
+        :type queue_scheduler: coilmq.scheduler.QueuePriorityScheduler
 
-        @param subscriber_scheduler: The scheduler that chooses which subscriber to send
-                                    messages to.
-        @type subscriber_scheduler: L{coilmq.scheduler.SubscriberPriorityScheduler}
-
-        @param queue_scheduler: The scheduler that chooses which queue to select for sending
-                                    backlogs for a single connection.
-        @type queue_scheduler: L{coilmq.scheduler.QueuePriorityScheduler}
         """
         self.log = logging.getLogger(
             f'{__name__}.{self.__class__.__name__}')
@@ -99,9 +93,7 @@ class QueueManager:
 
     @synchronized(lock)
     def close(self):
-        """
-        Closes all resources/backends associated with this queue manager.
-        """
+        """Closes all resources/backends associated with this queue manager."""
         self.log.info("Shutting down queue manager.")
         if hasattr(self.store, 'close'):
             self.store.close()
@@ -114,30 +106,28 @@ class QueueManager:
 
     @synchronized(lock)
     def subscriber_count(self, destination=None):
-        """
-        Returns a count of the number of subscribers.
+        """Returns a count of the number of subscribers.
 
-        If destination is specified then it only returns count of subscribers 
+        If destination is specified then it only returns count of subscribers
         for that specific destination.
 
-        @param destination: The optional topic/queue destination (e.g. '/queue/foo')
-        @type destination: C{str}
+        :param destination: The optional topic/queue destination (e.g. '/queue/foo')
+        :type destination: str
 
-        @return: The number of subscribers.
-        @rtype: C{int}
+        :returns: The number of subscribers.
+        :rtype: int
         """
         return self._subscriptions.subscriber_count(destination=destination)
 
     @synchronized(lock)
     def subscribe(self, connection, destination, id=None):
-        """
-        Subscribes a connection to the specified destination (topic or queue). 
+        """Subscribes a connection to the specified destination (topic or queue).
 
-        @param connection: The connection to subscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The connection to subscribe.
+        :type connection: coilmq.server.StompConnection
+        :param destination: The topic/queue destination (e.g. '/queue/foo')
+        :type destination: str
 
-        @param destination: The topic/queue destination (e.g. '/queue/foo')
-        @type destination: C{str} 
         """
         self.log.debug("Subscribing %s to %s", connection, destination)
         subscription = self._subscriptions.subscribe(connection, destination, id=id)
@@ -145,25 +135,23 @@ class QueueManager:
 
     @synchronized(lock)
     def unsubscribe(self, connection, destination, id=None):
-        """
-        Unsubscribes a connection from a destination (topic or queue).
+        """Unsubscribes a connection from a destination (topic or queue).
 
-        @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection to unsubscribe.
+        :type connection: coilmq.server.StompConnection
+        :param destination: The topic/queue destination (e.g. '/queue/foo')
+        :type destination: str
 
-        @param destination: The topic/queue destination (e.g. '/queue/foo')
-        @type destination: C{str} 
         """
         self.log.debug("Unsubscribing %s from %s", connection, destination)
         self._subscriptions.unsubscribe(connection, destination, id=id)
 
     @synchronized(lock)
     def disconnect(self, connection):
-        """
-        Removes a subscriber connection, ensuring that any pending commands get requeued.
+        """Removes a subscriber connection, ensuring that any pending commands get requeued.
 
-        @param connection: The client connection to unsubscribe.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection to unsubscribe.
+        :type connection: coilmq.server.StompConnection
         """
         self.log.debug("Disconnecting %s", connection)
         for subscription, pending_frame in list(self._pending.items()):
@@ -175,15 +163,14 @@ class QueueManager:
 
     @synchronized(lock)
     def send(self, message):
-        """
-        Sends a MESSAGE frame to an eligible subscriber connection.
+        """Sends a MESSAGE frame to an eligible subscriber connection.
 
-        Note that this method will modify the incoming message object to 
+        Note that this method will modify the incoming message object to
         add a message-id header (if not present) and to change the command
         to 'MESSAGE' (if it is not).
 
-        @param message: The message frame.
-        @type message: C{coilmq.util.frames.Frame}
+        :param message: The message frame.
+        :type message: coilmq.util.frames.Frame
         """
         dest = message.headers.get('destination')
         if not dest:
@@ -211,17 +198,15 @@ class QueueManager:
 
     @synchronized(lock)
     def ack(self, connection, frame, transaction=None, id=None):
-        """
-        Acknowledge receipt of a message.
+        """Acknowledge receipt of a message.
 
         If the `transaction` parameter is non-null, the frame being ack'd
         will be queued so that it can be requeued if the transaction
-        is rolled back. 
+        is rolled back.
 
-        @param connection: The connection that is acknowledging the frame.
-        @type connection: L{coilmq.server.StompConnection}
-
-        @param frame: The frame being acknowledged.
+        :param connection: The connection that is acknowledging the frame.
+        :type connection: coilmq.server.StompConnection
+        :param frame: The frame being acknowledged.
 
         """
         self.log.debug("ACK %s for %s", frame, connection)
@@ -250,16 +235,15 @@ class QueueManager:
 
     @synchronized(lock)
     def resend_transaction_frames(self, connection, transaction):
-        """
-        Resend the messages that were ACK'd in specified transaction.
+        """Resend the messages that were ACK'd in specified transaction.
 
         This is called by the engine when there is an abort command.
 
-        @param connection: The client connection that aborted the transaction.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection that aborted the transaction.
+        :type connection: coilmq.server.StompConnection
+        :param transaction: The transaction id (which was aborted).
+        :type transaction: str
 
-        @param transaction: The transaction id (which was aborted).
-        @type transaction: C{str}
         """
         for subscription, frames in self._transaction_frames.items():
             if subscription.connection == connection:
@@ -268,16 +252,15 @@ class QueueManager:
 
     @synchronized(lock)
     def clear_transaction_frames(self, connection, transaction):
-        """
-        Clears out the queued ACK frames for specified transaction. 
+        """Clears out the queued ACK frames for specified transaction.
 
         This is called by the engine when there is a commit command.
 
-        @param connection: The client connection that committed the transaction.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The client connection that committed the transaction.
+        :type connection: coilmq.server.StompConnection
+        :param transaction: The transaction id (which was committed).
+        :type transaction: str
 
-        @param transaction: The transaction id (which was committed).
-        @type transaction: C{str}
         """
         for subscription, frames in self._transaction_frames.items():
             if subscription.connection == connection:
@@ -288,23 +271,21 @@ class QueueManager:
                     pass
 
     def _send_backlog(self, subscription, destination=None):
-        """
-        Sends any queued-up messages for the (optionally) specified destination to subscription.
+        """Sends any queued-up messages for the (optionally) specified destination to subscription.
 
-        If the destination is not provided, a destination is chosen using the 
-        L{QueueManager.queue_scheduler} scheduler algorithm.
+        If the destination is not provided, a destination is chosen using the
+        :meth:`QueueManager.queue_scheduler` scheduler algorithm.
 
         (This method assumes it is being called from within a lock-guarded public
-        method.)  
+        method.)
 
-        @param subscription: The client subscription.
-        @type subscription: L{coilmq.subscription.Subscription}
+        :param subscription: The client subscription.
+        :type subscription: coilmq.subscription.Subscription
+        :param destination: The topic/queue destination (e.g. '/queue/foo')
+        :type destination: str
 
-        @param destination: The topic/queue destination (e.g. '/queue/foo')
-        @type destination: C{str} 
-
-        @raise Exception: if the underlying connection object raises an error, the message
-                            will be re-queued and the error will be re-raised.  
+        :raises Exception: if the underlying connection object raises an error, the
+            message will be re-queued and the error will be re-raised.
         """
         if destination is None:
             # Find all destinations that have frames and that contain this subscription.
@@ -341,17 +322,16 @@ class QueueManager:
                     raise
 
     def _send_frame(self, subscription, frame):
-        """
-        Sends a frame to a specific subscription.
+        """Sends a frame to a specific subscription.
 
         (This method assumes it is being called from within a lock-guarded public
         method.)
 
-        @param connection: The subscriber connection object to send to.
-        @type connection: L{coilmq.server.StompConnection}
+        :param connection: The subscriber connection object to send to.
+        :type connection: coilmq.server.StompConnection
+        :param frame: The frame to send.
+        :type frame: coilmq.util.frames.Frame
 
-        @param frame: The frame to send.
-        @type frame: L{coilmq.util.frames.Frame}
         """
         assert subscription is not None
         assert frame is not None
