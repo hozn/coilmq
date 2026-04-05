@@ -58,7 +58,7 @@ class StompEngine:
     @type topic_manager: L{coilmq.topic.TopicManager}
 
     @ivar transactions: Active transactions for this connection.
-    @type transactions: C{dict} of C{str} to C{list} 
+    @type transactions: C{dict} of C{str} to C{list} of C{coilmq.util.frames.Frame}
 
     @ivar connected: Whether engine is connected.
     @type connected: C{bool}

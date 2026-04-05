@@ -38,7 +38,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
 
     @ivar buffer: A StompBuffer instance which buffers received data (to ensure we deal with
                     complete STOMP messages.
-    @type buffer: C{stompclient.util.FrameBuffer}
+    @type buffer: C{coilmq.util.frames.FrameBuffer}
 
     @ivar engine: The STOMP protocol engine.
     @type engine: L{coilmq.engine.StompEngine}
@@ -104,7 +104,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         """ Sends a frame to connected socket client.
 
         @param frame: The frame to send.
-        @type frame: C{stompclient.frame.Frame}
+        @type frame: C{coilmq.util.frames.Frame}
         """
         packed = frame.pack()
         if self.debug:  # pragma: no cover
@@ -149,7 +149,7 @@ class StompServer(TCPServer):
         @param server_address: The (address,port) C{tuple}
         @param RequestHandlerClass: The class to use for handling requests.
         @param timeout: The timeout for the underlying socket.
-        @keyword authenticator: The configure L{coilmq.auth.Authenticator} object to use.
+        @keyword authenticator: The configured L{coilmq.auth.Authenticator} object to use.
         @keyword queue_manager: The configured L{coilmq.queue.QueueManager} object to use.
         @keyword topic_manager: The configured L{coilmq.topic.TopicManager} object to use. 
         """

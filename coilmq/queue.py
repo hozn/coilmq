@@ -57,10 +57,10 @@ class QueueManager:
     @type _subscriptions: L{coilmq.subscription.SubscriptionManager}
 
     @ivar _pending: All messages waiting for ACK from clients.
-    @type _pending: C{dict} of L{coilmq.subscription.SubscriptionManager} to C{stompclient.frame.Frame}
+    @type _pending: C{dict} of L{coilmq.subscription.SubscriptionManager} to C{coilmq.util.frames.Frame}
 
     @ivar _transaction_frames: Frames that have been ACK'd within a transaction.
-    @type _transaction_frames: C{dict} of L{coilmq.subscription.Subscription} to C{dict} of C{str} to C{stompclient.frame.Frame}
+    @type _transaction_frames: C{dict} of L{coilmq.subscription.Subscription} to C{list} of C{coilmq.util.frames.Frame}
     """
 
     def __init__(self, store, subscriber_scheduler=None, queue_scheduler=None):
@@ -183,7 +183,7 @@ class QueueManager:
         to 'MESSAGE' (if it is not).
 
         @param message: The message frame.
-        @type message: C{stompclient.frame.Frame}
+        @type message: C{coilmq.util.frames.Frame}
         """
         dest = message.headers.get('destination')
         if not dest:
@@ -351,7 +351,7 @@ class QueueManager:
         @type connection: L{coilmq.server.StompConnection}
 
         @param frame: The frame to send.
-        @type frame: L{stompclient.frame.Frame}
+        @type frame: L{coilmq.util.frames.Frame}
         """
         assert subscription is not None
         assert frame is not None

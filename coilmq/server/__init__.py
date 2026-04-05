@@ -38,5 +38,5 @@ class StompConnection(abc.ABC):
         Uses this connection implementation to send the specified frame to a connected client.
 
         @param frame: The STOMP frame to send.
-        @type frame: C{stompclient.frame.Frame}  
+        @type frame: C{coilmq.util.frames.Frame}
         """

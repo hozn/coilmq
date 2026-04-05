@@ -42,15 +42,15 @@ class SimpleAuthenticator(Authenticator):
     """
     A simple configfile-based authenticator.
 
-    @ivar store:  Authentication key-value store (of logins to passwords).
+    @ivar store: Authentication key-value store (of logins to passwords).
     @type store: C{dict} of C{str} to C{str}
     """
 
     def __init__(self, store=None):
         """
-        Initialize the authenticator to use (optionally) specified C{dict} store.
+        Initialize the authenticator to use (optionally) specified :paramref:`store`.
 
-        @param store:  Authentication store, C{dict} of logins to passwords.
+        @param store: Authentication store whose keys are user names and values are passwords.
         @type store: C{dict} of C{str} to C{str}
         """
         if store is None:
@@ -61,8 +61,8 @@ class SimpleAuthenticator(Authenticator):
         """
         Initialize the authentication store from a "config"-style file.
 
-        Auth "config" file is parsed with C{ConfigParser.RawConfigParser} and must contain
-        an [auth] section which contains the usernames (keys) and passwords (values).
+        Auth "config" file is parsed with C{ConfigParser.ConfigParser} and must contain
+        an ``[auth]`` section whose keys are user names and values are passwords.
 
         Example auth file::
 
@@ -72,7 +72,7 @@ class SimpleAuthenticator(Authenticator):
 
         @param configfile: Path to config file or file-like object.
         @type configfile: C{any}
-        @raise ValueError: If file could not be read or does not contain [auth] section.
+        @raise ValueError: If file could not be read or does not contain an ``[auth]`` section.
         """
         cfg = ConfigParser()
         if hasattr(configfile, 'read'):

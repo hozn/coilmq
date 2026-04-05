@@ -165,9 +165,6 @@ class HeaderValue:
     An descriptor class that can be used when a calculated header value is needed.
 
     This class is a descriptor, implementing  __get__ to return the calculated value.
-    While according to  U{https://docs.codehaus.org/display/STOMP/Character+Encoding} there
-    seems to some general idea about having UTF-8 as the character encoding for headers;
-    however the C{stomper} lib does not support this currently.
 
     For example, to use this class to generate the content-length header:
 
@@ -313,7 +310,7 @@ class FrameBuffer:
         functionality exposed by class) until None returned.
 
         @return: The next complete frame in the buffer.
-        @rtype: L{stomp.frame.Frame}
+        @rtype: L{Frame}
         """
         self._buffer.seek(self._pointer, 0)
         try:
@@ -337,7 +334,7 @@ class FrameBuffer:
         """
         Return the next STOMP message in the buffer (supporting iteration).
 
-        @rtype: L{stomp.frame.Frame}
+        @rtype: L{Frame}
         """
         msg = self.extract_frame()
         if not msg:

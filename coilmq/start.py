@@ -48,19 +48,16 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     """
     Gets a configured L{coilmq.server.StompServer} from specified config.
 
-    If `config` is None, global L{coilmq.config.config} var will be used instead.
+    If :paramref:`config` is :py:obj:`None`, global L{coilmq.config.config} var will be used instead.
 
-    The `server_class` and `additional_kwargs` are primarily hooks for using this method
-    from a testing environment.
-
-    @param config: A C{ConfigParser.ConfigParser} instance with loaded config values.
+    @param config: A loaded configuration.
     @type config: C{ConfigParser.ConfigParser}
 
-    @param server_class: Which class to use for the server.  (This doesn't come from config currently.)
-    @type server_class: C{class}
+    :param server_class:
+        Which class to use for the server.
 
-    @param additional_kwargs: Any additional args that should be passed to class.
-    @type additional_kwargs: C{list}
+    :param additional_kwargs:
+        Any additional args that should be passed to class.
 
     @return: The configured StompServer.
     @rtype: L{coilmq.server.StompServer}
@@ -104,13 +101,15 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
     context object for the non-daemon use case. 
 
     @param options: The compiled collection of options that need to be parsed. 
-    @type options: C{ConfigParser}
+    @type options: C{configparser.ConfigParser}
 
     @param context: The context object that implements __enter__/__exit__ "with" methods.
     @type context: C{object}
 
     @raise Exception: Any underlying exception will be logged but then re-raised.
-    @see: server_from_config()
+
+    @see: :func:`server_from_config`
+
     """
     global global_config
 

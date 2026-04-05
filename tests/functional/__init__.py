@@ -153,7 +153,7 @@ class TestStompClient:
     read_frames queue.
 
     @ivar received_frames: A queue of Frame instances that have been received.
-    @type received_frames: C{Queue.Queue} containing any received C{stompclient.frame.Frame}
+    @type received_frames: C{Queue.Queue} containing any received C{coilmq.util.frames.Frame}
     """
 
     def __init__(self, addr, connect=True):
@@ -191,7 +191,7 @@ class TestStompClient:
         """
         Sends a stomp frame.
         @param frame: The stomp frame to send.
-        @type frame: L{stompclient.frame.Frame}
+        @type frame: L{coilmq.util.frames.Frame}
         """
         if not self.connected:
             raise RuntimeError("Not connected")
