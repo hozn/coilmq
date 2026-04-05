@@ -54,7 +54,7 @@ class QueueStore(abc.ABC):
         @type destination: C{str}
 
         @param frame: The message (frame) to send to specified destination.
-        @type frame: C{stompclient.frame.Frame}
+        @type frame: C{coilmq.util.frames.Frame}
         """
 
     @abc.abstractmethod
@@ -67,7 +67,7 @@ class QueueStore(abc.ABC):
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
-        @rtype: C{stompclient.frame.Frame} 
+        @rtype: C{coilmq.util.frames.Frame}
         """
 
     @synchronized(lock)
@@ -79,7 +79,7 @@ class QueueStore(abc.ABC):
         @type destination: C{str}
 
         @param frame: The message (frame) to send to specified destination.
-        @type frame: C{stompclient.frame.Frame}
+        @type frame: C{coilmq.util.frames.Frame}
         """
         self.enqueue(destination, frame)
 

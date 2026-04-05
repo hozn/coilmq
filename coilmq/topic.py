@@ -110,7 +110,7 @@ class TopicManager:
 
         @param message: The message frame.  (The frame will be modified to set command 
                             to MESSAGE and set a message id.)
-        @type message: L{stompclient.frame.Frame}
+        @type message: L{coilmq.util.frames.Frame}
         """
         dest = message.headers.get('destination')
         if not dest:

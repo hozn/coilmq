@@ -42,7 +42,7 @@ def init_model(engine, create=True, drop=False):
     Initializes the shared SQLAlchemy state in the L{coilmq.store.sa.model} module.
 
     @param engine: The SQLAlchemy engine instance.
-    @type engine: C{sqlalchemy.Engine}
+    @type engine: C{sqlalchemy.engine.Engine}
 
     @param create: Whether to create the tables (if they do not exist).
     @type create: C{bool}
@@ -65,8 +65,8 @@ class SAQueue(QueueStore):
     uses SQLAlchemy for the DB abstraction for SQL building and DDL (table creation).
 
     This L{coilmq.store.sa.model.setup_tables} function is used to actually define (& create) the 
-    database tables.  This class also depends on the L{init_model} method have been called to 
-    define the L{coilmq.store.sa.model.Session} class-like callable (and the engine & metadata).
+    database tables.  This class also depends on the L{init_model} method has been called to
+    initialize the variables in :mod:`coilmq.store.sa.meta`.
 
     Finally, this class does not explicitly use shared data (db connections); a new Session is created
     in each method.  The actual implementation is handled using SQLAlchemy scoped sessions, which provide
@@ -82,7 +82,7 @@ class SAQueue(QueueStore):
         @type destination: C{str}
 
         @param frame: The message (frame) to send to specified destination.
-        @type frame: C{stompclient.frame.Frame}
+        @type frame: C{coilmq.util.frames.Frame}
         """
         session = meta.Session()
         message_id = frame.headers.get('message-id')
@@ -101,7 +101,7 @@ class SAQueue(QueueStore):
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
-        @rtype: C{stompclient.frame.Frame} 
+        @rtype: C{coilmq.util.frames.Frame}
         """
         session = meta.Session()
 

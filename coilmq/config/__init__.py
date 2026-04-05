@@ -1,15 +1,16 @@
 """
 Configuration support functionality.
 
-The global C{config} object (C{ConfigParser.SafeConfigParser} instance) is initialized
-with default configuration from the defaults.cfg file, which is located in this package.
+The global C{config} object, a C{ConfigParser.ConfigParser}, is initialized
+with default configuration from the ``defaults.cfg`` file, which is located in this package.
 In order to ensure that the config contains custom values, you must call the C{init_config}
 function during application initialization:
+function during application initialization::
 
-from coilmq.config import config, init_config
-init_config('/path/to/config.cfg')
+    from coilmq.config import config, init_config
+    init_config('/path/to/config.cfg')
+    config.getint('listen_port')
 
-config.getint('listen_port')
 """
 import os.path
 import importlib
@@ -33,6 +34,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+#: The global configuration object containing the default configuration.
 config = ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), 'defaults.cfg'))
 
@@ -41,16 +43,18 @@ def init_config(config_file=None):
     """
     Initialize the configuration from a config file.
 
-    The values in config_file will override those already loaded from the default
-    configuration file (defaults.cfg, in current package).
+    The values in :paramref:`config_file` will override those already loaded from the default
+    configuration file.
 
     This method does not setup logging.
 
     @param config_file: The path to a configuration file.
     @type config_file: C{str}
 
-    @raise ValueError: if the specified config_file could not be read.
+    @raise ValueError: if the specified file could not be read.
+
     @see: L{init_logging}  
+
     """
     global config
 
@@ -62,9 +66,9 @@ def init_config(config_file=None):
 
 def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
     """
-    Configures the logging using either basic filename + loglevel or passed config file path.
+    Configures logging with :py:func:`logging.basicConfig` or :py:func:`logging.config.fileConfig`.
 
-    This is performed separately from L{init_config()} in order to support the case where 
+    This is performed separately from L{init_config} in order to support the case where
     logging should happen independent of (usu. *after*) other aspects of the configuration 
     initialization. For example, if logging may need to be initialized within a  daemon 
     context.
@@ -109,8 +113,9 @@ def resolve_name(name):
     Resolve a dotted name to some object (usually class, module, or function).
 
     Supported naming formats include:
-        1. path.to.module:method
-        2. path.to.module.ClassName
+
+    1. ``path.to.module:method``
+    2. ``path.to.module.ClassName``
 
     >>> resolve_name('coilmq.store.memory.MemoryQueue')
     <class 'coilmq.store.memory.MemoryQueue'>
@@ -121,10 +126,10 @@ def resolve_name(name):
     >>> t.__name__
     'make_dbm'
 
-    @param name: The dotted name (e.g. path.to.MyClass)
+    @param name: The dotted name (e.g. ``path.to.MyClass``)
     @type name: C{str}
 
-    @return: The resolved object (class, callable, etc.) or None if not found.
+    @return: The resolved object (class, callable, etc.) or :py:obj:`None` if not found.
     """
     sep_index = max(name.rfind(sep) for sep in (":", "."))
 

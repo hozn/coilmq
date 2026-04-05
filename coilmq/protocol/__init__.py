@@ -73,7 +73,7 @@ class STOMP10(STOMP):
         Dispatches a received frame to the appropriate internal method.
 
         @param frame: The frame that was received.
-        @type frame: C{stompclient.frame.Frame}
+        @type frame: C{coilmq.util.frames.Frame}
         """
         if frame.cmd not in frames.VALID_COMMANDS:
             raise ProtocolError(f"Invalid STOMP command: {frame.cmd}")

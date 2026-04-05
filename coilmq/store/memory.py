@@ -28,9 +28,9 @@ class MemoryQueue(QueueStore):
     """
     A QueueStore implementation that stores messages in memory.
 
-    This classes uses a C{threading.RLock} to guard access to the memory store.  
-    The locks on this class are probably excessive given that the 
-    L{coilmq.queue.QueueManager} is already implementing coarse-grained locking 
+    This class uses a C{threading.RLock} to guard access to the memory store.
+    The locks on this class are probably excessive given that the
+    L{coilmq.queue.QueueManager} already implements coarse-grained locking
     on the methods that access this storage backend.  That said, we'll start
     over-protective and refactor later it if proves unnecessary.
     """

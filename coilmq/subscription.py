@@ -30,6 +30,8 @@ class Subscription:
 
 
 class SubscriptionManager:
+    """Manage subscriptions associated with connections."""
+
     def __init__(self):
         """
         @ivar _subscriptions: A dict of registered subscriptions, keyed by destination.

@@ -1,10 +1,10 @@
 """
 Queue storage module that stores the queue information and frames in a DBM-style database.
 
-The current implementation uses the Python `shelve` module, which uses a DBM implementation
-under the hood (specifically the `anydbm` module, aka `dbm` in Python 3.x).
+The current implementation uses :py:mod:`shelve` which, in turn, uses a DBM implementation
+under the hood from :py:mod:`dbm`.
 
-Because of how the `shelve` module works (and how we're using it) and caveats in the Python 
+Because of how the :py:mod:`shelve` module works (and how we're using it) and caveats in the Python
 documentation this is likely a BAD storage module to use if you are expecting to traffic in
 large frames.
 """
@@ -70,24 +70,23 @@ class DbmQueue(QueueStore):
     queues will be stored in its own database and each queue will also have its own
     database file.
 
-    This classes uses a C{threading.RLock} to guard access to the memory store, since it
-    appears that at least some of the underlying implementations that anydbm uses are not
-    thread-safe
+    This class uses a C{threading.RLock} to guard access to the memory store, since it
+    appears that at least some of the underlying implementations that :py:mod:`dbm` uses are not
+    thread-safe.
 
     Due to some impedance mismatch between the types of data we need to store in queues
     (specifically lists) and the types of data that are best stored in DBM databases
-    (specifically dicts), this class uses the `shelve` module to abstract away some
+    (specifically dicts), this class uses :py:mod:`shelve` to abstract away some
     of the ugliness.  The consequence of this is that we only persist objects periodically
     to the datastore, for performance reasons.  How periodic is determined by the 
-    `checkpoint_operations` and `checkpoint_timeout` instance variables (and params to 
-    L{__init__}).
+    :paramref:`checkpoint_operations` and :paramref:`checkpoint_timeout` instance variables.
 
     @ivar data_dir: The directory where DBM files will be stored.
     @type data_dir: C{str}
 
     @ivar queue_metadata: A Shelf (DBM) database that tracks stats & delivered message ids 
                             for all the queues.
-    @ivar queue_metadata: C{shelve.Shelf}
+    @type queue_metadata: C{shelve.Shelf}
 
     @ivar frame_store: A Shelf (DBM) database that contains frame contents indexed by message id.
     @type frame_store: C{shelve.Shelf}
@@ -99,7 +98,7 @@ class DbmQueue(QueueStore):
     @type checkpoint_operations: C{int}
 
     @ivar checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
-    @type checkpoint_timeout: C{timedelta}
+    @type checkpoint_timeout: C{datetime.timedelta}
     """
 
     def __init__(self, data_dir, checkpoint_operations=100, checkpoint_timeout=30):
@@ -146,7 +145,7 @@ class DbmQueue(QueueStore):
         @type destination: C{str}
 
         @param frame: The message (frame) to send to specified destination.
-        @type frame: C{stompclient.frame.Frame}
+        @type frame: C{coilmq.util.frames.Frame}
         """
         message_id = frame.headers.get('message-id')
         if not message_id:
@@ -175,7 +174,7 @@ class DbmQueue(QueueStore):
         @type destination: C{str}
 
         @return: The first frame in the specified queue, or C{None} if there are none.
-        @rtype: C{stompclient.frame.Frame} 
+        @rtype: C{coilmq.util.frames.Frame}
         """
         if not self.has_frames(destination):
             return None

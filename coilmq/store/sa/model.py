@@ -21,7 +21,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
-frames_table = None  # : The C{sqlalchemy.Table} set by L{setup_tables}
+#: The C{sqlalchemy.Table} set by L{setup_tables}
+frames_table = None
 
 
 def setup_tables(create=True, drop=False):
@@ -29,7 +30,7 @@ def setup_tables(create=True, drop=False):
     Binds the model classes to registered metadata and engine and (potentially) 
     creates the db tables.
 
-    This function expects that you have bound the L{meta.metadata} and L{meta.engine}.
+    This function expects that you have bound the L{coilmq.store.sa.meta.metadata} and L{coilmq.store.sa.meta.engine}.
 
     @param create: Whether to create the tables (if they do not exist).
     @type create: C{bool}
