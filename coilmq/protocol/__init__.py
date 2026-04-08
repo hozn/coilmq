@@ -69,11 +69,10 @@ class STOMP(abc.ABC):
 class STOMP10(STOMP):
 
     def process_frame(self, frame):
-        """
-        Dispatches a received frame to the appropriate internal method.
+        """Dispatches a received frame to the appropriate internal method.
 
-        @param frame: The frame that was received.
-        @type frame: C{stompclient.frame.Frame}
+        :param frame: The frame that was received.
+        :type frame: coilmq.util.frames.Frame
         """
         if frame.cmd not in frames.VALID_COMMANDS:
             raise ProtocolError(f"Invalid STOMP command: {frame.cmd}")
@@ -115,9 +114,7 @@ class STOMP10(STOMP):
         pass
 
     def connect(self, frame, response=None):
-        """
-        Handle CONNECT command: Establishes a new connection and checks auth (if applicable).
-        """
+        """Handle CONNECT command: Establishes a new connection and checks auth (if applicable)."""
         self.engine.log.debug("CONNECT")
 
         if self.engine.authenticator:
@@ -136,9 +133,7 @@ class STOMP10(STOMP):
         self.engine.connection.send_frame(response)
 
     def send(self, frame):
-        """
-        Handle the SEND command: Delivers a message to a queue or topic (default).
-        """
+        """Handle the SEND command: Delivers a message to a queue or topic (default)."""
         dest = frame.headers.get('destination')
         if not dest:
             raise ProtocolError('Missing destination for SEND command.')
@@ -149,9 +144,7 @@ class STOMP10(STOMP):
             self.engine.topic_manager.send(frame)
 
     def subscribe(self, frame):
-        """
-        Handle the SUBSCRIBE command: Adds this connection to destination.
-        """
+        """Handle the SUBSCRIBE command: Adds this connection to destination."""
         ack = frame.headers.get('ack')
         reliable = ack and ack.lower() == 'client'
 
@@ -168,9 +161,7 @@ class STOMP10(STOMP):
             self.engine.topic_manager.subscribe(self.engine.connection, dest, id=subscription_id)
 
     def unsubscribe(self, frame):
-        """
-        Handle the UNSUBSCRIBE command: Removes this connection from destination.
-        """
+        """Handle the UNSUBSCRIBE command: Removes this connection from destination."""
         dest = frame.headers.get('destination')
         if not dest:
             raise ProtocolError('Missing destination for UNSUBSCRIBE command.')
@@ -182,18 +173,14 @@ class STOMP10(STOMP):
             self.engine.topic_manager.unsubscribe(self.engine.connection, dest, id=subscription_id)
 
     def begin(self, frame):
-        """
-        Handles BEGIN command: Starts a new transaction.
-        """
+        """Handles BEGIN command: Starts a new transaction."""
         if not frame.transaction:
             raise ProtocolError("Missing transaction for BEGIN command.")
 
         self.engine.transactions[frame.transaction] = []
 
     def commit(self, frame):
-        """
-        Handles COMMIT command: Commits specified transaction.
-        """
+        """Handles COMMIT command: Commits specified transaction."""
         if not frame.transaction:
             raise ProtocolError("Missing transaction for COMMIT command.")
 
@@ -209,9 +196,7 @@ class STOMP10(STOMP):
         del self.engine.transactions[frame.transaction]
 
     def abort(self, frame):
-        """
-        Handles ABORT command: Rolls back specified transaction.
-        """
+        """Handles ABORT command: Rolls back specified transaction."""
         if not frame.transaction:
             raise ProtocolError("Missing transaction for ABORT command.")
 
@@ -223,16 +208,13 @@ class STOMP10(STOMP):
         del self.engine.transactions[frame.transaction]
 
     def ack(self, frame):
-        """
-        Handles the ACK command: Acknowledges receipt of a message.
-        """
+        """Handles the ACK command: Acknowledges receipt of a message."""
         if "message-id" not in frame.headers:
             raise ProtocolError("No message-id specified for ACK command.")
         self.engine.queue_manager.ack(self.engine.connection, frame, id=frame.headers.get("id"))
 
     def disconnect(self, frame):
-        """
-        Handles the DISCONNECT command: Unbinds the connection.
+        """Handles the DISCONNECT command: Unbinds the connection.
 
         Clients are supposed to send this command, but in practice it should not be
         relied upon.
@@ -296,9 +278,8 @@ class STOMP11(STOMP10):
         super().connect(frame, response=connected_frame)
 
     def nack(self, frame):
-        """
-        Handles the NACK command: Unacknowledges receipt of a message.
-        For now, this is just a placeholder to implement this version of the protocol
+        """Handles the NACK command: Unacknowledges receipt of a message.
+        For now, this is just a placeholder to implement this version of the protocol.
         """
         if not frame.headers.get('message-id'):
             raise ProtocolError("No message-id specified for NACK command.")

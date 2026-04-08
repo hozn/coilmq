@@ -1,6 +1,4 @@
-"""
-Tests for the transport-agnostic engine module.
-"""
+"""Tests for the transport-agnostic engine module."""
 import unittest
 
 from coilmq.engine import StompEngine
@@ -13,7 +11,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -39,25 +37,24 @@ class EngineTest(unittest.TestCase):
         self.conn.reset()
 
     def _connect(self):
-        """ Call the engine connect() method so that we have a valid 'session'. """
+        """Call the engine connect() method so that we have a valid 'session'."""
         self.engine.process_frame(Frame(frames.CONNECT))
 
     def assertErrorFrame(self, frame, msgsub):
-        """ Assert that the passed in frame is an error frame and that message contains specified
+        """Assert that the passed in frame is an error frame and that message contains specified
         string.
         """
         assert frame.cmd == frames.ERROR
         assert msgsub.lower() in frame.headers['message'].lower()
 
     def test_connect_no_auth(self):
-        """ Test the CONNECT command with no auth required. """
-
+        """Test the CONNECT command with no auth required."""
         assert self.engine.connected == False
         self.engine.process_frame(Frame(frames.CONNECT))
         assert self.engine.connected == True
 
     def test_connect_auth(self):
-        """ Test the CONNECT command when auth is required. """
+        """Test the CONNECT command when auth is required."""
         self.engine.authenticator = self.auth
 
         assert self.engine.connected == False
@@ -70,7 +67,7 @@ class EngineTest(unittest.TestCase):
         assert self.engine.connected == True
 
     def test_subscribe_noack(self):
-        """ Test subscribing to topics and queues w/ no ACK. """
+        """Test subscribing to topics and queues w/ no ACK."""
         self._connect()
         self.engine.process_frame(
             Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar'}))
@@ -81,7 +78,7 @@ class EngineTest(unittest.TestCase):
         assert self.conn in self.tm.topics['/foo/bar']
 
     def test_send(self):
-        """ Test sending to a topic and queue. """
+        """Test sending to a topic and queue."""
         self._connect()
 
         msg = Frame(frames.SEND, headers={
@@ -99,7 +96,7 @@ class EngineTest(unittest.TestCase):
         self.assertErrorFrame(self.conn.frames[-1], 'Missing destination')
 
     def test_receipt(self):
-        """ Test pushing frames with a receipt specified. """
+        """Test pushing frames with a receipt specified."""
         self._connect()
 
         receipt_id = 'FOOBAR'
@@ -118,7 +115,7 @@ class EngineTest(unittest.TestCase):
         self.assertEqual(receipt_id, rframe.headers.get('receipt-id'))
 
     def test_subscribe_ack(self):
-        """ Test subscribing to a queue with ack=true """
+        """Test subscribing to a queue with ack=true."""
         self._connect()
         self.engine.process_frame(Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar',
                                                               'ack': 'client'}))
@@ -126,7 +123,7 @@ class EngineTest(unittest.TestCase):
         assert self.conn in self.qm.queues['/queue/bar']
 
     def test_unsubscribe(self):
-        """ Test the UNSUBSCRIBE command. """
+        """Test the UNSUBSCRIBE command."""
         self._connect()
         self.engine.process_frame(
             Frame(frames.SUBSCRIBE, headers={'destination': '/queue/bar'}))
@@ -140,7 +137,7 @@ class EngineTest(unittest.TestCase):
             Frame(frames.UNSUBSCRIBE, headers={'destination': '/invalid'}))
 
     def test_begin(self):
-        """ Test transaction BEGIN. """
+        """Test transaction BEGIN."""
         self._connect()
 
         self.engine.process_frame(
@@ -149,7 +146,7 @@ class EngineTest(unittest.TestCase):
         assert len(self.engine.transactions['abc']) == 0
 
     def test_commit(self):
-        """ Test transaction COMMIT. """
+        """Test transaction COMMIT."""
         self._connect()
 
         self.engine.process_frame(
@@ -179,7 +176,7 @@ class EngineTest(unittest.TestCase):
         assert len(self.engine.transactions) == 0
 
     def test_commit_invalid(self):
-        """ Test invalid states for transaction COMMIT. """
+        """Test invalid states for transaction COMMIT."""
         self._connect()
 
         # Send a message with invalid transaction
@@ -205,7 +202,7 @@ class EngineTest(unittest.TestCase):
         self.assertErrorFrame(self.conn.frames[-1], 'invalid transaction')
 
     def test_abort(self):
-        """ Test transaction ABORT. """
+        """Test transaction ABORT."""
         self._connect()
 
         self.engine.process_frame(
@@ -232,7 +229,7 @@ class EngineTest(unittest.TestCase):
         assert len(self.engine.transactions) == 1
 
     def test_abort_invalid(self):
-        """ Test invalid states for transaction ABORT. """
+        """Test invalid states for transaction ABORT."""
         self._connect()
 
         self.engine.process_frame(

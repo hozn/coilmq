@@ -1,6 +1,4 @@
-"""
-Functional tests to test full stack (but not actual socket layer).
-"""
+"""Functional tests to test full stack (but not actual socket layer)."""
 import sys
 import time
 import unittest
@@ -26,7 +24,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -37,12 +35,11 @@ limitations under the License."""
 
 
 class BaseFunctionalTestCase(unittest.TestCase):
-    """
-    Base class for test cases provides the fixtures for setting up the multi-threaded
+    """Base class for test cases provides the fixtures for setting up the multi-threaded
     unit test infrastructure.
 
-    We use a combination of C{threading.Event} and C{Queue.Queue} objects to facilitate
-    inter-thread communication and lock-stepping the assertions. 
+    We use a combination of :py:class:`threading.Event` and :py:class:`Queue.Queue` objects to facilitate
+    inter-thread communication and lock-stepping the assertions.
     """
 
     def setUp(self):
@@ -71,24 +68,22 @@ class BaseFunctionalTestCase(unittest.TestCase):
         addr_bound.wait()
 
     def _queuemanager(self):
-        """
-        Returns the configured L{QueueManager} instance to use.
+        """Returns the configured :class:`QueueManager` instance to use.
 
         Can be overridden by subclasses that wish to change out any queue mgr parameters.
 
-        @rtype: L{QueueManager}
+        :rtype: QueueManager
         """
         return QueueManager(store=MemoryQueue(),
                             subscriber_scheduler=FavorReliableSubscriberScheduler(),
                             queue_scheduler=RandomQueueScheduler())
 
     def _topicmanager(self):
-        """
-        Returns the configured L{TopicManager} instance to use.
+        """Returns the configured :class:`TopicManager` instance to use.
 
         Can be overridden by subclasses that wish to change out any topic mgr parameters.
 
-        @rtype: L{TopicManager}
+        :rtype: TopicManager
         """
         return TopicManager()
 
@@ -101,15 +96,14 @@ class BaseFunctionalTestCase(unittest.TestCase):
         del self.server_thread
 
     def _new_client(self, connect=True):
-        """
-        Get a new L{TestStompClient} connected to our test server. 
+        """Get a new :class:`TestStompClient` connected to our test server.
 
         The client will also be registered for close in the tearDown method.
 
-        @param connect: Whether to issue the CONNECT command.
-        @type connect: C{bool}
+        :param connect: Whether to issue the CONNECT command.
+        :type connect: bool
 
-        @rtype: L{TestStompClient}
+        :rtype: TestStompClient
         """
         client = TestStompClient(self.server_address)
         self.clients.append(client)
@@ -121,8 +115,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
 
 
 class TestStompServer(ThreadedStompServer):
-    """
-    A stomp server for functional tests that uses C{threading.Event} objects
+    """A stomp server for functional tests that uses :py:class:`threading.Event` objects
     to ensure that it stays in sync with the test suite.
     """
 
@@ -146,23 +139,21 @@ class TestStompServer(ThreadedStompServer):
 
 
 class TestStompClient:
-    """
-    A stomp client for use in testing.
+    """A stomp client for use in testing.
 
-    This client spawns a listener thread and pushes anything that comes in onto the 
+    This client spawns a listener thread and pushes anything that comes in onto the
     read_frames queue.
 
-    @ivar received_frames: A queue of Frame instances that have been received.
-    @type received_frames: C{Queue.Queue} containing any received C{stompclient.frame.Frame}
+    :var received_frames: A queue of Frame instances that have been received.
+    :vartype received_frames: Queue.Queue[coilmq.util.frames.Frame]
     """
 
     def __init__(self, addr, connect=True):
-        """
-        @param addr: The (host,port) tuple for connection.
-        @type addr: C{tuple}
+        """:param addr: The (host,port) tuple for connection.
+        :type addr: tuple
+        :param connect: Whether to connect socket to specified addr.
+        :type connect: bool
 
-        @param connect: Whether to connect socket to specified addr.
-        @type connect: C{bool}
         """
         self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.sock = None
@@ -188,10 +179,9 @@ class TestStompClient:
                         'destination': destination}))
 
     def send_frame(self, frame):
-        """
-        Sends a stomp frame.
-        @param frame: The stomp frame to send.
-        @type frame: L{stompclient.frame.Frame}
+        """Sends a stomp frame.
+        :param frame: The stomp frame to send.
+        :type frame: coilmq.util.frames.Frame.
         """
         if not self.connected:
             raise RuntimeError("Not connected")

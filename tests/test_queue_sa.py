@@ -1,6 +1,4 @@
-"""
-Test of the QueueManager when using a SQLite (SQLAlchemy) backend (store).
-"""
+"""Test of the QueueManager when using a SQLite (SQLAlchemy) backend (store)."""
 import os
 import os.path
 
@@ -14,7 +12,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -25,15 +23,14 @@ limitations under the License."""
 
 
 class SAQueueManagerTest(QueueManagerTest):
-    """ Run all the tests from BasicTest using a SQLite database store. """
+    """Run all the tests from BasicTest using a SQLite database store."""
 
     def _queuestore(self):
-        """
-        Returns the configured L{QueueStore} instance to use.
+        """Returns the configured :class:`QueueStore` instance to use.
 
         Can be overridden by subclasses that wish to change out any queue store parameters.
 
-        @rtype: L{QueueStore}
+        :rtype: QueueStore
         """
         data_dir = os.path.join(os.getcwd(), 'data')
         if not os.path.exists(data_dir):

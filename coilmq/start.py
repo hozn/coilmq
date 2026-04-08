@@ -1,7 +1,5 @@
 #!python
-"""
-Entrypoint for starting the application.
-"""
+"""Entrypoint for starting the application."""
 import os
 import logging
 
@@ -32,7 +30,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -45,25 +43,21 @@ logger = logging.getLogger(__name__)
 
 
 def server_from_config(config=None, server_class=None, additional_kwargs=None):
-    """
-    Gets a configured L{coilmq.server.StompServer} from specified config.
+    """Gets a configured :class:`coilmq.server.socket_server.StompServer` from specified config.
 
-    If `config` is None, global L{coilmq.config.config} var will be used instead.
+    If :paramref:`config` is :py:obj:`None`, global L{coilmq.config.config} var will be used instead.
 
-    The `server_class` and `additional_kwargs` are primarily hooks for using this method
-    from a testing environment.
+    :param config: A loaded configuration.
+    :type config: configparser.ConfigParser
 
-    @param config: A C{ConfigParser.ConfigParser} instance with loaded config values.
-    @type config: C{ConfigParser.ConfigParser}
+    :param server_class:
+        Which class to use for the server.
 
-    @param server_class: Which class to use for the server.  (This doesn't come from config currently.)
-    @type server_class: C{class}
+    :param additional_kwargs:
+        Any additional args that should be passed to class.
 
-    @param additional_kwargs: Any additional args that should be passed to class.
-    @type additional_kwargs: C{list}
-
-    @return: The configured StompServer.
-    @rtype: L{coilmq.server.StompServer}
+    :returns: The configured StompServer.
+    :rtype: coilmq.server.socket_server.StompServer
     """
     global global_config
     if not config:
@@ -95,22 +89,22 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
 
 def context_serve(context, configfile, listen_addr, listen_port, logfile,
                   debug, daemon, uid, gid, pidfile, umask, rundir):
-    """
-    Takes a context object, which implements the __enter__/__exit__ "with" interface 
+    """Takes a context object, which implements the __enter__/__exit__ "with" interface
     and starts a server within that context.
 
     This method is a refactored single-place for handling the server-run code whether
-    running in daemon or non-daemon mode.  It is invoked with a dummy (passthrough) 
-    context object for the non-daemon use case. 
+    running in daemon or non-daemon mode.  It is invoked with a dummy (passthrough)
+    context object for the non-daemon use case.
 
-    @param options: The compiled collection of options that need to be parsed. 
-    @type options: C{ConfigParser}
+    :param options: The compiled collection of options that need to be parsed.
+    :type options: configparser.ConfigParser
+    :param context: The context object that implements __enter__/__exit__ "with"
+        methods.
+    :type context: object
 
-    @param context: The context object that implements __enter__/__exit__ "with" methods.
-    @type context: C{object}
+    :raises Exception: Any underlying exception will be logged but then re-raised.
 
-    @raise Exception: Any underlying exception will be logged but then re-raised.
-    @see: server_from_config()
+    .. seealso:: :func:`server_from_config`
     """
     global global_config
 
@@ -205,14 +199,12 @@ def _main(config=None, host=None, port=None, logfile=None, debug=None,
 @click.option("--umask", help="Umask (octal) to apply for daemonized process.", metavar="MASK")
 @click.option('--rundir', help="The working directory to use for the daemonized process (default /).", metavar="DIR")
 def main(config, host, port, logfile, debug, daemon, uid, gid, pidfile, umask, rundir):
-    """
-    Main entry point for running a socket server from the commandline.
+    """Main entry point for running a socket server from the commandline.
 
-    This method will read in options from the commandline and call the L{config.init_config} method
-    to get everything setup.  Then, depending on whether deamon mode was specified or not, 
+    This method will read in options from the commandline and call the :func:`config.init_config` method
+    to get everything setup.  Then, depending on whether deamon mode was specified or not,
     the process may be forked (or not) and the server will be started.
     """
-
     _main(**locals())
 
 

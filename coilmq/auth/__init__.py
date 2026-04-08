@@ -1,5 +1,4 @@
-"""
-Authentication providers.
+"""Authentication providers.
 
 Because authentication providers are instantiated and configured in the application scope
 (and not in the request handler), the authenticator implementations must be thread-safe.
@@ -10,7 +9,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -21,13 +20,12 @@ limitations under the License."""
 
 
 class Authenticator(abc.ABC):
-    """ Abstract base class for authenticators. """
+    """Abstract base class for authenticators."""
 
     @abc.abstractmethod
     def authenticate(self, login, passcode):
-        """
-        Authenticate the login and passcode.
+        """Authenticate the login and passcode.
 
-        @return: Whether user is authenticated.
-        @rtype: C{bool} 
+        :returns: Whether user is authenticated.
+        :rtype: bool
         """

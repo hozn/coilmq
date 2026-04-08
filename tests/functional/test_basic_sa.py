@@ -1,5 +1,4 @@
-"""
-Functional tests that use a SQLite storage backends and default
+"""Functional tests that use a SQLite storage backends and default
 scheduler implementations.
 """
 import os
@@ -17,7 +16,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -28,12 +27,10 @@ limitations under the License."""
 
 
 class BasicSqlAlchemyStoreTest(BasicTest):
-    """ Run all the tests from BasicTest using a SQLite database store. """
+    """Run all the tests from BasicTest using a SQLite database store."""
 
     def _queuemanager(self):
-        """
-        Returns the configured L{QueueManager} instance to use.
-        """
+        """Returns the configured :class:`QueueManager` instance to use."""
         data_dir = os.path.join(os.getcwd(), 'data')
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)

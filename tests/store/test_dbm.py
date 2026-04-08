@@ -1,6 +1,4 @@
-"""
-Test DBM queue storage.
-"""
+"""Test DBM queue storage."""
 import shutil
 import tempfile
 import time
@@ -20,7 +18,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -41,7 +39,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
         shutil.rmtree(self.data_dir)
 
     def test_dequeue_identity(self):
-        """ Test the dequeue() method. """
+        """Test the dequeue() method."""
         dest = '/queue/foo'
         frame = Frame(frames.MESSAGE, headers={
                       'message-id': str(uuid.uuid4())}, body='some data')
@@ -59,8 +57,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_ops(self):
-        """ Test a expected sync behavior with checkpoint_operations param. """
-
+        """Test a expected sync behavior with checkpoint_operations param."""
         data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
         max_ops = 5
         try:
@@ -85,8 +82,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_timeout(self):
-        """ Test a expected sync behavior with checkpoint_timeout param. """
-
+        """Test a expected sync behavior with checkpoint_timeout param."""
         data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
         try:
             store = DbmQueue(data_dir, checkpoint_timeout=0.5)
@@ -114,8 +110,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             raise
 
     def test_sync_close(self):
-        """ Test a expected sync behavior of close() call. """
-
+        """Test a expected sync behavior of close() call."""
         data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
         try:
             store = DbmQueue(data_dir)
@@ -136,8 +131,7 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_loss(self):
-        """ Test metadata loss behavior. """
-
+        """Test metadata loss behavior."""
         data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
         try:
             store = DbmQueue(data_dir)

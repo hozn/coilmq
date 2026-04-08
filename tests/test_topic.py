@@ -1,6 +1,4 @@
-"""
-Tests for topic-related functionality.
-"""
+"""Tests for topic-related functionality."""
 import unittest
 
 from coilmq.topic import TopicManager
@@ -13,7 +11,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -24,14 +22,14 @@ limitations under the License."""
 
 
 class TopicManagerTest(unittest.TestCase):
-    """ Tests for the L{TopicManager} class. """
+    """Tests for the :class:`TopicManager` class."""
 
     def setUp(self):
         self.tm = TopicManager()
         self.conn = MockConnection()
 
     def test_subscribe(self):
-        """ Test subscribing a connection to the topic. """
+        """Test subscribing a connection to the topic."""
         dest = '/topic/dest'
 
         self.tm.subscribe(self.conn, dest)
@@ -44,7 +42,7 @@ class TopicManagerTest(unittest.TestCase):
         self.assertEqual(self.conn.frames[0], f)
 
     def test_unsubscribe(self):
-        """ Test unsubscribing a connection from the queue. """
+        """Test unsubscribing a connection from the queue."""
         dest = '/topic/dest'
 
         self.tm.subscribe(self.conn, dest)
@@ -63,7 +61,7 @@ class TopicManagerTest(unittest.TestCase):
         self.assertEqual(len(self.conn.frames), 1)
 
     def test_send_simple(self):
-        """ Test a basic send command. """
+        """Test a basic send command."""
         dest = '/topic/dest'
 
         f = Frame(frames.SEND, headers={'destination': dest}, body='Empty')
@@ -74,7 +72,7 @@ class TopicManagerTest(unittest.TestCase):
         self.assertEqual(f.cmd, frames.MESSAGE)
 
     def test_send_subscriber_timeout(self):
-        """ Test a send command when one subscriber errs out. """
+        """Test a send command when one subscriber errs out."""
 
         class TimeoutConnection:
             reliable_subscriber = False

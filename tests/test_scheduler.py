@@ -1,6 +1,4 @@
-"""
-Tests for the scheduler implementation.
-"""
+"""Tests for the scheduler implementation."""
 import unittest
 
 from coilmq.scheduler import FavorReliableSubscriberScheduler
@@ -22,11 +20,10 @@ limitations under the License."""
 
 
 class QueueDeliverySchedulerTest(unittest.TestCase):
-    """ Tests for various message delivery schedulers. """
+    """Tests for various message delivery schedulers."""
 
     def test_favorReliable(self):
-        """ Test the favor reliable delivery scheduler. """
-
+        """Test the favor reliable delivery scheduler."""
         sched = FavorReliableSubscriberScheduler()
 
         sub1 = MockSubscription()

@@ -1,10 +1,9 @@
-"""
-Queue storage module that stores the queue information and frames in a DBM-style database.
+"""Queue storage module that stores the queue information and frames in a DBM-style database.
 
-The current implementation uses the Python `shelve` module, which uses a DBM implementation
-under the hood (specifically the `anydbm` module, aka `dbm` in Python 3.x).
+The current implementation uses :py:mod:`shelve` which, in turn, uses a DBM implementation
+under the hood from :py:mod:`dbm`.
 
-Because of how the `shelve` module works (and how we're using it) and caveats in the Python 
+Because of how the :py:mod:`shelve` module works (and how we're using it) and caveats in the Python
 documentation this is likely a BAD storage module to use if you are expecting to traffic in
 large frames.
 """
@@ -27,7 +26,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -40,9 +39,7 @@ lock = threading.RLock()
 
 
 def make_dbm():
-    """
-    Creates a DBM queue store, pulling config values from the CoilMQ configuration.
-    """
+    """Creates a DBM queue store, pulling config values from the CoilMQ configuration."""
     try:
         data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
         cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
@@ -62,56 +59,50 @@ def make_dbm():
 
 
 class DbmQueue(QueueStore):
-    """
-    A QueueStore implementation that stores messages and queue information in DBM-style
+    """A QueueStore implementation that stores messages and queue information in DBM-style
     database.
 
     Several database files will be used to support this functionality: metadata about the
     queues will be stored in its own database and each queue will also have its own
     database file.
 
-    This classes uses a C{threading.RLock} to guard access to the memory store, since it
-    appears that at least some of the underlying implementations that anydbm uses are not
-    thread-safe
+    This class uses a :py:class:`threading.RLock` to guard access to the memory store, since it
+    appears that at least some of the underlying implementations that :py:mod:`dbm` uses are not
+    thread-safe.
 
     Due to some impedance mismatch between the types of data we need to store in queues
     (specifically lists) and the types of data that are best stored in DBM databases
-    (specifically dicts), this class uses the `shelve` module to abstract away some
+    (specifically dicts), this class uses :py:mod:`shelve` to abstract away some
     of the ugliness.  The consequence of this is that we only persist objects periodically
-    to the datastore, for performance reasons.  How periodic is determined by the 
-    `checkpoint_operations` and `checkpoint_timeout` instance variables (and params to 
-    L{__init__}).
+    to the datastore, for performance reasons.  How periodic is determined by the
+    :paramref:`checkpoint_operations` and :paramref:`checkpoint_timeout` instance variables.
 
-    @ivar data_dir: The directory where DBM files will be stored.
-    @type data_dir: C{str}
+    :var data_dir: The directory where DBM files will be stored.
+    :vartype data_dir: str
+    :var queue_metadata: A Shelf (DBM) database that tracks stats & delivered message
+        ids for all the queues.
+    :vartype queue_metadata: shelve.Shelf
+    :var frame_store: A Shelf (DBM) database that contains frame contents indexed by
+        message id.
+    :vartype frame_store: shelve.Shelf
+    :var _opcount: Internal counter for keeping track of unpersisted operations.
+    :vartype _opcount: int
+    :var checkpoint_operations: Number of operations between syncs.
+    :vartype checkpoint_operations: int
+    :var checkpoint_timeout: Max time (in seconds) that can elapse between sync of
+        cache.
+    :vartype checkpoint_timeout: datetime.timedelta
 
-    @ivar queue_metadata: A Shelf (DBM) database that tracks stats & delivered message ids 
-                            for all the queues.
-    @ivar queue_metadata: C{shelve.Shelf}
-
-    @ivar frame_store: A Shelf (DBM) database that contains frame contents indexed by message id.
-    @type frame_store: C{shelve.Shelf}
-
-    @ivar _opcount: Internal counter for keeping track of unpersisted operations.
-    @type _opcount: C{int}
-
-    @ivar checkpoint_operations: Number of operations between syncs.
-    @type checkpoint_operations: C{int}
-
-    @ivar checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
-    @type checkpoint_timeout: C{timedelta}
     """
 
     def __init__(self, data_dir, checkpoint_operations=100, checkpoint_timeout=30):
-        """
-        @param data_dir: The directory where DBM files will be stored.
-        @param data_dir: C{str}
+        """:param data_dir: :py:class:`str`
+        :param checkpoint_operations: Number of operations between syncs.
+        :type checkpoint_operations: int
+        :param checkpoint_timeout: Max time (in seconds) that can elapse between sync of
+            cache.
+        :type checkpoint_timeout: float
 
-        @param checkpoint_operations: Number of operations between syncs.
-        @type checkpoint_operations: C{int}
-
-        @param checkpoint_timeout: Max time (in seconds) that can elapse between sync of cache.
-        @type checkpoint_timeout: C{float}
         """
         QueueStore.__init__(self)
 
@@ -139,14 +130,13 @@ class DbmQueue(QueueStore):
 
     @synchronized(lock)
     def enqueue(self, destination, frame):
-        """
-        Store message (frame) for specified destination.
+        """Store message (frame) for specified destination.
 
-        @param destination: The destination queue name for this message (frame).
-        @type destination: C{str}
+        :param destination: The destination queue name for this message (frame).
+        :type destination: str
+        :param frame: The message (frame) to send to specified destination.
+        :type frame: coilmq.util.frames.Frame
 
-        @param frame: The message (frame) to send to specified destination.
-        @type frame: C{stompclient.frame.Frame}
         """
         message_id = frame.headers.get('message-id')
         if not message_id:
@@ -168,14 +158,14 @@ class DbmQueue(QueueStore):
 
     @synchronized(lock)
     def dequeue(self, destination):
-        """
-        Removes and returns an item from the queue (or C{None} if no items in queue).
+        """Removes and returns an item from the queue (or :py:obj:`None` if no items in queue).
 
-        @param destination: The queue name (destination).
-        @type destination: C{str}
+        :param destination: The queue name (destination).
+        :type destination: str
 
-        @return: The first frame in the specified queue, or C{None} if there are none.
-        @rtype: C{stompclient.frame.Frame} 
+        :returns: The first frame in the specified queue, or :py:obj:`None` if there are
+            none.
+        :rtype: coilmq.util.frames.Frame
         """
         if not self.has_frames(destination):
             return None
@@ -193,27 +183,25 @@ class DbmQueue(QueueStore):
 
     @synchronized(lock)
     def has_frames(self, destination):
-        """
-        Whether specified queue has any frames.
+        """Whether specified queue has any frames.
 
-        @param destination: The queue name (destination).
-        @type destination: C{str}
+        :param destination: The queue name (destination).
+        :type destination: str
 
-        @return: Whether there are any frames in the specified queue.
-        @rtype: C{bool}
+        :returns: Whether there are any frames in the specified queue.
+        :rtype: bool
         """
         return (destination in self.queue_metadata) and bool(self.queue_metadata[destination]['frames'])
 
     @synchronized(lock)
     def size(self, destination):
-        """
-        Size of the queue for specified destination.
+        """Size of the queue for specified destination.
 
-        @param destination: The queue destination (e.g. /queue/foo)
-        @type destination: C{str}
+        :param destination: The queue destination (e.g. /queue/foo)
+        :type destination: str
 
-        @return: The number of frames in specified queue.
-        @rtype: C{int}
+        :returns: The number of frames in specified queue.
+        :rtype: int
         """
         if not destination in self.queue_metadata:
             return 0
@@ -222,30 +210,26 @@ class DbmQueue(QueueStore):
 
     @synchronized(lock)
     def close(self):
-        """
-        Closes the databases, freeing any resources (and flushing any unsaved changes to disk).
-        """
+        """Closes the databases, freeing any resources (and flushing any unsaved changes to disk)."""
         self.queue_metadata.close()
         self.frame_store.close()
 
     @synchronized(lock)
     def destinations(self):
-        """
-        Provides a list of destinations (queue "addresses") available.
+        """Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the destinations available.
-        @rtype: C{set}
+        :returns: A list of the destinations available.
+        :rtype: set
         """
         return set(self.queue_metadata.keys())
 
     def _sync(self):
-        """
-        Synchronize the cached data with the underlying database.
+        """Synchronize the cached data with the underlying database.
 
         Uses an internal transaction counter and compares to the checkpoint_operations
         and checkpoint_timeout parameters to determine whether to persist the memory store.
 
-        In this implementation, this method wraps calls to C{shelve.Shelf#sync}. 
+        In this implementation, this method wraps calls to :py:meth:`shelve.Shelf.sync`.
         """
         if (self._opcount > self.checkpoint_operations or
                 datetime.now() > self._last_sync + self.checkpoint_timeout):
