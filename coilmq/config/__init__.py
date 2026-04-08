@@ -3,7 +3,6 @@
 The global ``config`` object, a :py:class:`configparser.ConfigParser`, is initialized
 with default configuration from the ``defaults.cfg`` file, which is located in this package.
 In order to ensure that the config contains custom values, you must call the :func:`init_config`
-function during application initialization:
 function during application initialization::
 
     from coilmq.config import config, init_config
