@@ -65,7 +65,7 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
 
     This is performed separately from :func:`init_config` in order to support the case where
     logging should happen independent of (usu. *after*) other aspects of the configuration
-    initialization. For example, if logging may need to be initialized within a  daemon
+    initialization. For example, if logging may need to be initialized within a daemon
     context.
 
     :param logfile: An explicitly specified logfile destination.  If this is specified
