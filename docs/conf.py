@@ -48,7 +48,7 @@ intersphinx_mapping = {
 
 autosectionlabel_prefix_document = True
 
-# -- Options for sphinx-paramlins extension ----------------------------------
+# -- Options for sphinx-paramlinks extension ---------------------------------
 # https://pypi.org/project/sphinx-paramlinks/#configuration
 
 paramlinks_hyperlink_param = "name"
