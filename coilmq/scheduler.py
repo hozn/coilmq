@@ -44,11 +44,12 @@ class SubscriberPriorityScheduler(abc.ABC):
         """
 
 
-class QueuePriorityScheduler:
+class QueuePriorityScheduler(abc.ABC):
     """
     Abstract base class for objects that provide a way to prioritize the queues.
     """
 
+    @abc.abstractmethod
     def choice(self, queues, connection):
         """
         Choose which queue to select for messages to specified connection.
@@ -63,7 +64,6 @@ class QueuePriorityScheduler:
         @return: A selected queue destination (name) or None if queues C{dict} is empty.
         @rtype: C{str}
         """
-        raise NotImplementedError
 
 
 class RandomSubscriberScheduler(SubscriberPriorityScheduler):
