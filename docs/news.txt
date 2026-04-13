@@ -16,6 +16,9 @@ Unreleased
   * stop heart-beating threads when a connection closes
   * treat any incoming traffic as a heart-beat
   * tolerate heart-beats arriving as late as twice the requested interval
+* ``QueuePriorityScheduler`` is now a subclasses of ``abc.ABC``;
+  ``QueuePriorityScheduler.choice()`` is now an ``abc.abstractmethod``
+  (issue 53)
 
 1.0.1
 -----
