@@ -1,4 +1,3 @@
-
 from coilmq.protocol import STOMP10
 
 """
@@ -59,11 +58,15 @@ class StompEngine:
 
     """
 
-    def __init__(self, connection, authenticator, queue_manager, topic_manager, protocol=STOMP10):
+    def __init__(
+        self, connection, authenticator, queue_manager, topic_manager, protocol=STOMP10
+    ):
         """:param connection: The stomp connection backing this engine.
         :type connection: coilmq.server.StompConnection
         """
-        self.log = logging.getLogger(f'{self.__class__.__module__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
         self.connection = connection
         self.authenticator = authenticator
         self.queue_manager = queue_manager

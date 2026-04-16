@@ -1,4 +1,5 @@
 """Classes to be used for mock objects."""
+
 from collections import defaultdict
 
 from coilmq import auth
@@ -19,7 +20,6 @@ limitations under the License."""
 
 
 class MockConnection:
-
     def __init__(self):
         self.frames = []
         self.heartbeat_count = 0
@@ -37,22 +37,20 @@ class MockConnection:
 
 
 class MockSubscription:
-
     def __init__(self):
         self.id = 0
         self.connection = MockConnection()
 
 
 class MockAuthenticator(auth.Authenticator):
-    LOGIN = 'foo'
-    PASSCODE = 'bar'
+    LOGIN = "foo"
+    PASSCODE = "bar"
 
     def authenticate(self, login, passcode):
-        return (login == self.LOGIN and passcode == self.PASSCODE)
+        return login == self.LOGIN and passcode == self.PASSCODE
 
 
 class MockQueueManager:
-
     def __init__(self):
         self.reset()
 
@@ -110,7 +108,6 @@ class MockQueueManager:
 
 
 class MockTopicManager:
-
     def __init__(self):
         self.reset()
 

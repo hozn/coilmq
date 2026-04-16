@@ -1,4 +1,5 @@
 """Tests for the scheduler implementation."""
+
 import unittest
 
 from coilmq.scheduler import FavorReliableSubscriberScheduler
@@ -34,5 +35,4 @@ class QueueDeliverySchedulerTest(unittest.TestCase):
 
         choice = sched.choice((sub1, sub2), None)
 
-        self.assertIs(
-            choice, sub1, "Expected reliable connection to be selected.")
+        self.assertIs(choice, sub1, "Expected reliable connection to be selected.")

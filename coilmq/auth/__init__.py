@@ -3,6 +3,7 @@
 Because authentication providers are instantiated and configured in the application scope
 (and not in the request handler), the authenticator implementations must be thread-safe.
 """
+
 import abc
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']

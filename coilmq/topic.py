@@ -3,6 +3,7 @@
 This code is inspired by the design of the Ruby stompserver project, by
 Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 """
+
 import logging
 import threading
 import uuid
@@ -44,8 +45,7 @@ class TopicManager:
     """
 
     def __init__(self):
-        self.log = logging.getLogger(
-            f'{__name__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # Lock var is required for L{synchronized} decorator.
         self._lock = threading.RLock()
@@ -106,14 +106,13 @@ class TopicManager:
             to MESSAGE and set a message id.)
         :type message: coilmq.util.frames.Frame
         """
-        dest = message.headers.get('destination')
+        dest = message.headers.get("destination")
         if not dest:
-            raise ValueError(
-                "Cannot send frame with no destination: {message}")
+            raise ValueError("Cannot send frame with no destination: {message}")
 
         message.cmd = frames.MESSAGE
 
-        message.headers.setdefault('message-id', str(uuid.uuid4()))
+        message.headers.setdefault("message-id", str(uuid.uuid4()))
 
         bad_subscribers = set()
         for subscriber in self._subscriptions.subscribers(dest):
@@ -123,7 +122,9 @@ class TopicManager:
                 subscriber.connection.send_frame(frame)
             except:  # noqa: E722
                 self.log.exception(
-                    "Error delivering message to subscriber %s; client will be disconnected.", subscriber)
+                    "Error delivering message to subscriber %s; client will be disconnected.",
+                    subscriber,
+                )
                 # We queue for deletion so we are not modifying the topics dict
                 # while iterating over it.
                 bad_subscribers.add(subscriber)

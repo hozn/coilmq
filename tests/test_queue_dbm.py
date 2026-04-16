@@ -1,4 +1,5 @@
 """Test of the QueueManager when using a DBM backend (store)."""
+
 import os
 import os.path
 import shutil
@@ -31,13 +32,14 @@ class DBMQueueManagerTest(QueueManagerTest):
 
         :rtype: QueueStore
         """
-        data_dir = os.path.abspath(os.path.join('/tmp/coilmq-test', 'data'))
+        data_dir = os.path.abspath(os.path.join("/tmp/coilmq-test", "data"))
         if os.path.exists(data_dir):
             shutil.rmtree(data_dir)
         os.makedirs(data_dir)
 
         cp_ops = 100
         cp_timeout = 20
-        store = DbmQueue(data_dir, checkpoint_operations=cp_ops,
-                         checkpoint_timeout=cp_timeout)
+        store = DbmQueue(
+            data_dir, checkpoint_operations=cp_ops, checkpoint_timeout=cp_timeout
+        )
         return store

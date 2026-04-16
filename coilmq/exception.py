@@ -3,6 +3,7 @@
 CoilMQ exceptions extend :py:class:`RuntimeError` or other appropriate sub-classes.  These will be
 thrown if there is not a more appropriate error class already provided by builtins.
 """
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");

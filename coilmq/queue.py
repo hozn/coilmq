@@ -3,6 +3,7 @@
 This code is inspired by the design of the Ruby stompserver project, by
 Patrick Hurley and Lionel Bouton.  See http://stompserver.rubyforge.org/
 """
+
 import logging
 import threading
 import uuid
@@ -70,8 +71,7 @@ class QueueManager:
         :type queue_scheduler: coilmq.scheduler.QueuePriorityScheduler
 
         """
-        self.log = logging.getLogger(
-            f'{__name__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # Use default schedulers, if they're not specified
         if subscriber_scheduler is None:
@@ -95,13 +95,13 @@ class QueueManager:
     def close(self):
         """Closes all resources/backends associated with this queue manager."""
         self.log.info("Shutting down queue manager.")
-        if hasattr(self.store, 'close'):
+        if hasattr(self.store, "close"):
             self.store.close()
 
-        if hasattr(self.subscriber_scheduler, 'close'):
+        if hasattr(self.subscriber_scheduler, "close"):
             self.subscriber_scheduler.close()
 
-        if hasattr(self.queue_scheduler, 'close'):
+        if hasattr(self.queue_scheduler, "close"):
             self.queue_scheduler.close()
 
     @synchronized(lock)
@@ -156,8 +156,9 @@ class QueueManager:
         self.log.debug("Disconnecting %s", connection)
         for subscription, pending_frame in list(self._pending.items()):
             if subscription.connection == connection:
-                self.store.requeue(pending_frame.headers.get(
-                    'destination'), pending_frame)
+                self.store.requeue(
+                    pending_frame.headers.get("destination"), pending_frame
+                )
                 del self._pending[subscription]
         self._subscriptions.disconnect(connection)
 
@@ -172,28 +173,28 @@ class QueueManager:
         :param message: The message frame.
         :type message: coilmq.util.frames.Frame
         """
-        dest = message.headers.get('destination')
+        dest = message.headers.get("destination")
         if not dest:
-            raise ValueError(
-                f"Cannot send frame with no destination: {message}")
+            raise ValueError(f"Cannot send frame with no destination: {message}")
 
         message.cmd = MESSAGE
 
-        message.headers.setdefault('message-id', str(uuid.uuid4()))
+        message.headers.setdefault("message-id", str(uuid.uuid4()))
 
         # Grab all subscribers for this destination that do not have pending
         # frames
-        subscribers = [s for s in self._subscriptions.subscribers(dest)
-                       if s not in self._pending]
+        subscribers = [
+            s for s in self._subscriptions.subscribers(dest) if s not in self._pending
+        ]
 
         if not subscribers:
             self.log.debug(
-                "No eligible subscribers; adding message %s to queue %s", message, dest)
+                "No eligible subscribers; adding message %s to queue %s", message, dest
+            )
             self.store.enqueue(dest, message)
         else:
             selected = self.subscriber_scheduler.choice(subscribers, message)
-            self.log.debug("Delivering message %s to subscriber %s",
-                           message, selected)
+            self.log.debug("Delivering message %s to subscriber %s", message, selected)
             self._send_frame(selected, message)
 
     @synchronized(lock)
@@ -217,16 +218,16 @@ class QueueManager:
         if pending_frame is not None:
             # Make sure that the frame being acknowledged matches
             # the expected frame
-            message_id = frame.headers.get('message-id')
-            if pending_frame.headers.get('message-id') != message_id:
-                self.log.warning(
-                    "Got a ACK for unexpected message-id: %s", message_id)
+            message_id = frame.headers.get("message-id")
+            if pending_frame.headers.get("message-id") != message_id:
+                self.log.warning("Got a ACK for unexpected message-id: %s", message_id)
                 self.store.requeue(pending_frame.destination, pending_frame)
                 # (The pending frame will be removed further down)
 
             if transaction is not None:
-                self._transaction_frames[subscription][
-                    transaction].append(pending_frame)
+                self._transaction_frames[subscription][transaction].append(
+                    pending_frame
+                )
 
             self._pending.pop(subscription)
             self._send_backlog(subscription)
@@ -295,14 +296,17 @@ class QueueManager:
                 if subscription in s and self.store.has_frames(dest)
             }
             destination = self.queue_scheduler.choice(
-                eligible_subscriptions, subscription)
+                eligible_subscriptions, subscription
+            )
             if destination is None:
                 self.log.debug(
-                    "No eligible queues (with frames) for subscriber %s", subscription)
+                    "No eligible queues (with frames) for subscriber %s", subscription
+                )
                 return
 
-        self.log.debug("Sending backlog to %s for destination %s",
-                       subscription, destination)
+        self.log.debug(
+            "Sending backlog to %s for destination %s", subscription, destination
+        )
         if subscription.connection.reliable_subscriber:
             # only send one message (waiting for ack)
             frame = self.store.dequeue(destination)
@@ -310,8 +314,7 @@ class QueueManager:
                 try:
                     self._send_frame(subscription, frame)
                 except Exception:
-                    self.log.exception(
-                        "Error sending message %s (requeueing)", frame)
+                    self.log.exception("Error sending message %s (requeueing)", frame)
                     self.store.requeue(destination, frame)
                     raise
         else:
@@ -319,8 +322,7 @@ class QueueManager:
                 try:
                     self._send_frame(subscription, frame)
                 except Exception:
-                    self.log.exception(
-                        "Error sending message %s (requeueing)", frame)
+                    self.log.exception("Error sending message %s (requeueing)", frame)
                     self.store.requeue(destination, frame)
                     raise
 
@@ -342,14 +344,14 @@ class QueueManager:
         if frame.cmd == MESSAGE:
             frame.headers["subscription"] = subscription.id
 
-        self.log.debug("Delivering frame %s to subscription %s",
-                       frame, subscription)
+        self.log.debug("Delivering frame %s to subscription %s", frame, subscription)
 
         if subscription.connection.reliable_subscriber:
             if subscription in self._pending:
                 raise RuntimeError("Connection already has a pending frame.")
             self.log.debug(
-                "Tracking frame %s as pending for subscription %s", frame, subscription)
+                "Tracking frame %s as pending for subscription %s", frame, subscription
+            )
             self._pending[subscription] = frame
 
         subscription.connection.send_frame(frame)

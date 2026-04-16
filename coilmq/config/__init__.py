@@ -10,6 +10,7 @@ function during application initialization::
     config.getint('listen_port')
 
 """
+
 import importlib
 import logging
 import logging.config
@@ -32,7 +33,7 @@ limitations under the License."""
 
 #: The global configuration object containing the default configuration.
 config = ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), 'defaults.cfg'))
+config.read(os.path.join(os.path.dirname(__file__), "defaults.cfg"))
 
 
 def init_config(config_file=None):
@@ -84,7 +85,7 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
     if configfile and os.path.exists(configfile):
         testcfg = ConfigParser()
         read = testcfg.read(configfile)
-        use_configfile = (read and testcfg.has_section('loggers'))
+        use_configfile = read and testcfg.has_section("loggers")
 
     if use_configfile:
         logging.config.fileConfig(configfile)
@@ -92,10 +93,11 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
             msg = "Config file conflicts with explicitly specified logfile; config file takes precedence."
             logging.warning(msg)  # noqa: LOG015
     else:
-        log_format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
+        log_format = (
+            "%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s"
+        )
         if logfile:
-            logging.basicConfig(
-                filename=logfile, level=loglevel, format=log_format)
+            logging.basicConfig(filename=logfile, level=loglevel, format=log_format)
         else:
             logging.basicConfig(level=loglevel, format=log_format)
 
@@ -126,7 +128,7 @@ def resolve_name(name):
     sep_index = max(name.rfind(sep) for sep in (":", "."))
 
     module_name = name[:sep_index]
-    member_name = name[1 + sep_index:]
+    member_name = name[1 + sep_index :]
 
     module = importlib.import_module(module_name)
 

@@ -1,6 +1,7 @@
 """Functional tests that use a SQLite storage backends and default
 scheduler implementations.
 """
+
 import os
 import os.path
 
@@ -31,14 +32,16 @@ class BasicSqlAlchemyStoreTest(BasicTest):
 
     def _queuemanager(self):
         """Returns the configured :class:`QueueManager` instance to use."""
-        data_dir = os.path.join(os.getcwd(), 'data')
+        data_dir = os.path.join(os.getcwd(), "data")
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
-        configuration = {'qstore.sqlalchemy.url': 'sqlite:///data/coilmq.db'}
-        engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
+        configuration = {"qstore.sqlalchemy.url": "sqlite:///data/coilmq.db"}
+        engine = engine_from_config(configuration, "qstore.sqlalchemy.")
         init_model(engine, drop=True)
         store = SAQueue()
 
-        return QueueManager(store=store,
-                            subscriber_scheduler=FavorReliableSubscriberScheduler(),
-                            queue_scheduler=RandomQueueScheduler())
+        return QueueManager(
+            store=store,
+            subscriber_scheduler=FavorReliableSubscriberScheduler(),
+            queue_scheduler=RandomQueueScheduler(),
+        )

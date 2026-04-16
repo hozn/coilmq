@@ -1,4 +1,5 @@
 """Test SQLAlchemy storage."""
+
 import datetime
 import unittest
 
@@ -25,9 +26,8 @@ limitations under the License."""
 
 
 class SAQueueTest(CommonQueueTest, unittest.TestCase):
-
     def setUp(self):
-        engine = create_engine('sqlite:///:memory:', echo=True)
+        engine = create_engine("sqlite:///:memory:", echo=True)
         init_model(engine)
         self.store = SAQueue()
 
@@ -36,18 +36,15 @@ class SAQueueTest(CommonQueueTest, unittest.TestCase):
 
     def test_dequeue_order(self):
         """Test the order that frames are returned by dequeue() method."""
-        dest = '/queue/foo'
+        dest = "/queue/foo"
 
-        frame1 = Frame(frames.MESSAGE, headers={
-                       'message-id': 'id-1'}, body='message-1')
+        frame1 = Frame(frames.MESSAGE, headers={"message-id": "id-1"}, body="message-1")
         self.store.enqueue(dest, frame1)
 
-        frame2 = Frame(frames.MESSAGE, headers={
-                       'message-id': 'id-2'}, body='message-2')
+        frame2 = Frame(frames.MESSAGE, headers={"message-id": "id-2"}, body="message-2")
         self.store.enqueue(dest, frame2)
 
-        frame3 = Frame(frames.MESSAGE, headers={
-                       'message-id': 'id-3'}, body='message-3')
+        frame3 = Frame(frames.MESSAGE, headers={"message-id": "id-3"}, body="message-3")
         self.store.enqueue(dest, frame3)
 
         self.assertTrue(self.store.has_frames(dest))
@@ -56,12 +53,24 @@ class SAQueueTest(CommonQueueTest, unittest.TestCase):
         # Perform some updates to change the expected order.
 
         sess = meta.Session()
-        sess.execute(model.frames_table.update().where(
-            model.frames_table.c.message_id == 'id-1').values(queued=datetime.datetime(2010, 1, 1)))
-        sess.execute(model.frames_table.update().where(
-            model.frames_table.c.message_id == 'id-2').values(queued=datetime.datetime(2009, 1, 1)))
-        sess.execute(model.frames_table.update().where(
-            model.frames_table.c.message_id == 'id-3').values(queued=datetime.datetime(2004, 1, 1)))
+        sess.execute(
+            model.frames_table
+            .update()
+            .where(model.frames_table.c.message_id == "id-1")
+            .values(queued=datetime.datetime(2010, 1, 1))
+        )
+        sess.execute(
+            model.frames_table
+            .update()
+            .where(model.frames_table.c.message_id == "id-2")
+            .values(queued=datetime.datetime(2009, 1, 1))
+        )
+        sess.execute(
+            model.frames_table
+            .update()
+            .where(model.frames_table.c.message_id == "id-3")
+            .values(queued=datetime.datetime(2004, 1, 1))
+        )
         sess.commit()
 
         rframe1 = self.store.dequeue(dest)

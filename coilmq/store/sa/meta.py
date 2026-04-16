@@ -2,6 +2,7 @@
 
 These objects are set by the :func:`coilmq.store.sa.init_model` function.
 """
+
 #: The SA engine.
 engine = None
 

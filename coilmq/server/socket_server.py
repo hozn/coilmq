@@ -1,4 +1,5 @@
 """The default/recommended SocketServer-based server implementation."""
+
 import logging
 import threading
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
@@ -47,13 +48,15 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         if self.server.timeout is not None:
             self.request.settimeout(self.server.timeout)
         self.debug = False
-        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
         self.buffer = FrameBuffer()
-        self.engine = StompEngine(connection=self,
-                                  authenticator=self.server.authenticator,
-                                  queue_manager=self.server.queue_manager,
-                                  topic_manager=self.server.topic_manager,
-                                  protocol=self.server.protocol)
+        self.engine = StompEngine(
+            connection=self,
+            authenticator=self.server.authenticator,
+            queue_manager=self.server.queue_manager,
+            topic_manager=self.server.topic_manager,
+            protocol=self.server.protocol,
+        )
 
     def handle(self):
         """Handle a new socket connection."""
@@ -106,7 +109,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
 
     def send_heartbeat(self):
         """Sends an EOL to connected socket client."""
-        heartbeat = b'\n'
+        heartbeat = b"\n"
         if self.debug:  # pragma: no cover
             self.log.debug("SEND: %r", heartbeat)
         self.request.sendall(heartbeat)
@@ -130,8 +133,16 @@ class StompServer(TCPServer):
     # leave TIME_WAIT after unclean disconnect).
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass=None, timeout=3.0,
-                 authenticator=None, queue_manager=None, topic_manager=None, protocol=None):
+    def __init__(
+        self,
+        server_address,
+        RequestHandlerClass=None,
+        timeout=3.0,
+        authenticator=None,
+        queue_manager=None,
+        topic_manager=None,
+        protocol=None,
+    ):
         """Extension to :py:class:`TCPServer` constructor to provide mechanism for providing implementation classes.
 
         :param server_address: The (address,port) :py:class:`tuple`
@@ -144,8 +155,7 @@ class StompServer(TCPServer):
         :param topic_manager: The configured :class:`coilmq.topic.TopicManager` object
             to use.
         """
-        self.log = logging.getLogger(
-            f'{self.__module__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
         if not RequestHandlerClass:
             RequestHandlerClass = StompRequestHandler
         self.timeout = timeout
@@ -163,7 +173,7 @@ class StompServer(TCPServer):
         TCPServer.server_close(self)
         self.queue_manager.close()
         self.topic_manager.close()
-        if hasattr(self.authenticator, 'close'):
+        if hasattr(self.authenticator, "close"):
             self.authenticator.close()
         self.shutdown()
 

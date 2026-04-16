@@ -12,7 +12,6 @@ from tests.mock import (
 
 
 class ProtocolBaseTestCase(unittest.TestCase):
-
     def get_protocol(self):
         return STOMP12
 
@@ -21,13 +20,15 @@ class ProtocolBaseTestCase(unittest.TestCase):
         self.tm = MockTopicManager()
         self.conn = MockConnection()
         self.auth = MockAuthenticator()
-        self.engine = StompEngine(connection=self.conn,
-                                  queue_manager=self.qm,
-                                  topic_manager=self.tm,
-                                  authenticator=None,
-                                  protocol=self.get_protocol())
+        self.engine = StompEngine(
+            connection=self.conn,
+            queue_manager=self.qm,
+            topic_manager=self.tm,
+            authenticator=None,
+            protocol=self.get_protocol(),
+        )
 
-    def feed_frame(self, cmd, headers=None, body=''):
+    def feed_frame(self, cmd, headers=None, body=""):
         self.engine.process_frame(Frame(cmd, headers or {}, body))
         return self.conn.frames[-1]
 

@@ -1,4 +1,5 @@
 """Tests for authenticators."""
+
 import unittest
 
 try:
@@ -25,7 +26,6 @@ limitations under the License."""
 
 
 class SimpleAuthenticatorTest(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -34,36 +34,38 @@ class SimpleAuthenticatorTest(unittest.TestCase):
 
     def test_constructor(self):
         """Test the with passing auth store in constructor."""
-        auth = SimpleAuthenticator({'user': 'pass'})
-        assert auth.authenticate('user', 'pass') == True
-        assert auth.authenticate('user1', 'pass') == False
-        assert auth.authenticate('user', 'pass2') == False
+        auth = SimpleAuthenticator({"user": "pass"})
+        assert auth.authenticate("user", "pass") == True
+        assert auth.authenticate("user1", "pass") == False
+        assert auth.authenticate("user", "pass2") == False
 
     def test_from_configfile(self):
         """Test the loading store from config file path."""
         auth = SimpleAuthenticator()
-        with as_file(files('tests.resources').joinpath('auth.ini')) as filename:
+        with as_file(files("tests.resources").joinpath("auth.ini")) as filename:
             auth.from_configfile(filename)
-        assert auth.authenticate('juniper', 'b3rr1es') == True
-        assert auth.authenticate('oak', 'ac$rrubrum') == True
-        assert auth.authenticate('pinetree', 'str0bus') == True
-        assert auth.authenticate('foo', 'bar') == False
+        assert auth.authenticate("juniper", "b3rr1es") == True
+        assert auth.authenticate("oak", "ac$rrubrum") == True
+        assert auth.authenticate("pinetree", "str0bus") == True
+        assert auth.authenticate("foo", "bar") == False
 
     def test_from_configfile_fp(self):
         """Test loading store from file-like object."""
         auth = SimpleAuthenticator()
-        with as_file(files('tests.resources').joinpath('auth.ini')) as filename, filename.open() as fp:
+        with as_file(
+            files("tests.resources").joinpath("auth.ini")
+        ) as filename, filename.open() as fp:
             auth.from_configfile(fp)
 
-        assert auth.authenticate('juniper', 'b3rr1es') == True
-        assert auth.authenticate('oak', 'ac$rrubrum') == True
-        assert auth.authenticate('pinetree', 'str0bus') == True
-        assert auth.authenticate('foo', 'bar') == False
+        assert auth.authenticate("juniper", "b3rr1es") == True
+        assert auth.authenticate("oak", "ac$rrubrum") == True
+        assert auth.authenticate("pinetree", "str0bus") == True
+        assert auth.authenticate("foo", "bar") == False
 
     def test_from_configfile_invalid(self):
         """Test loading store with invalid file path."""
         auth = SimpleAuthenticator()
-        with as_file(files('tests.resources').joinpath('auth-invalid.ini')) as filename:
+        with as_file(files("tests.resources").joinpath("auth-invalid.ini")) as filename:
             try:
                 auth.from_configfile(filename)
                 self.fail("Expected error with invalid filename.")

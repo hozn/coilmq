@@ -7,6 +7,7 @@ Because of how the :py:mod:`shelve` module works (and how we're using it) and ca
 documentation this is likely a BAD storage module to use if you are expecting to traffic in
 large frames.
 """
+
 import os
 import os.path
 import shelve
@@ -40,20 +41,21 @@ lock = threading.RLock()
 def make_dbm():
     """Creates a DBM queue store, pulling config values from the CoilMQ configuration."""
     try:
-        data_dir = config.get('coilmq', 'qstore.dbm.data_dir')
-        cp_ops = config.getint('coilmq', 'qstore.dbm.checkpoint_operations')
-        cp_timeout = config.getint('coilmq', 'qstore.dbm.checkpoint_timeout')
+        data_dir = config.get("coilmq", "qstore.dbm.data_dir")
+        cp_ops = config.getint("coilmq", "qstore.dbm.checkpoint_operations")
+        cp_timeout = config.getint("coilmq", "qstore.dbm.checkpoint_timeout")
     except NoOptionError as e:
-        raise ConfigError(f'Missing configuration parameter: {e}') from e
+        raise ConfigError(f"Missing configuration parameter: {e}") from e
 
     if not os.path.exists(data_dir):
-        raise ConfigError(f'DBM directory does not exist: {data_dir}')
+        raise ConfigError(f"DBM directory does not exist: {data_dir}")
     # FIXME: how do these get applied? Is OR appropriate?
     if not os.access(data_dir, os.W_OK | os.R_OK):
-        raise ConfigError(f'Cannot read and write DBM directory: {data_dir}')
+        raise ConfigError(f"Cannot read and write DBM directory: {data_dir}")
 
-    store = DbmQueue(data_dir, checkpoint_operations=cp_ops,
-                     checkpoint_timeout=cp_timeout)
+    store = DbmQueue(
+        data_dir, checkpoint_operations=cp_ops, checkpoint_timeout=cp_timeout
+    )
     return store
 
 
@@ -117,15 +119,23 @@ class DbmQueue(QueueStore):
         # The queue metadata stores mutable (dict) objects.  For this reason we set
         # writeback=True and rely on the sync() method to keep the cache & disk
         # in-sync.
-        self.queue_metadata = shelve.open(os.path.join(  # noqa: SIM115
-            self.data_dir, 'metadata'), writeback=True)
+        self.queue_metadata = shelve.open(
+            os.path.join(  # noqa: SIM115
+                self.data_dir, "metadata"
+            ),
+            writeback=True,
+        )
 
         # Since we do not need mutable objects on the frame stores (we don't modify them, we just
         # put/get values), we do NOT use writeback=True here.  This should also conserve on memory
         # usage, since apparently that can get hefty with the caching when
         # writeback=True.
-        self.frame_store = shelve.open(os.path.join(  # noqa: SIM115
-            self.data_dir, 'frames'), writeback=False)
+        self.frame_store = shelve.open(
+            os.path.join(  # noqa: SIM115
+                self.data_dir, "frames"
+            ),
+            writeback=False,
+        )
 
     @synchronized(lock)
     def enqueue(self, destination, frame):
@@ -137,18 +147,24 @@ class DbmQueue(QueueStore):
         :type frame: coilmq.util.frames.Frame
 
         """
-        message_id = frame.headers.get('message-id')
+        message_id = frame.headers.get("message-id")
         if not message_id:
             raise ValueError("Cannot queue a frame without message-id set.")
 
         if not destination in self.queue_metadata:
             self.log.info(
-                "Destination %s not in metadata; creating new entry and queue database.", destination)
+                "Destination %s not in metadata; creating new entry and queue database.",
+                destination,
+            )
             self.queue_metadata[destination] = {
-                'frames': deque(), 'enqueued': 0, 'dequeued': 0, 'size': 0}
+                "frames": deque(),
+                "enqueued": 0,
+                "dequeued": 0,
+                "size": 0,
+            }
 
-        self.queue_metadata[destination]['frames'].appendleft(message_id)
-        self.queue_metadata[destination]['enqueued'] += 1
+        self.queue_metadata[destination]["frames"].appendleft(message_id)
+        self.queue_metadata[destination]["enqueued"] += 1
 
         self.frame_store[message_id] = frame
 
@@ -169,8 +185,8 @@ class DbmQueue(QueueStore):
         if not self.has_frames(destination):
             return None
 
-        message_id = self.queue_metadata[destination]['frames'].pop()
-        self.queue_metadata[destination]['dequeued'] += 1
+        message_id = self.queue_metadata[destination]["frames"].pop()
+        self.queue_metadata[destination]["dequeued"] += 1
 
         frame = self.frame_store[message_id]
         del self.frame_store[message_id]
@@ -190,7 +206,9 @@ class DbmQueue(QueueStore):
         :returns: Whether there are any frames in the specified queue.
         :rtype: bool
         """
-        return (destination in self.queue_metadata) and bool(self.queue_metadata[destination]['frames'])
+        return (destination in self.queue_metadata) and bool(
+            self.queue_metadata[destination]["frames"]
+        )
 
     @synchronized(lock)
     def size(self, destination):
@@ -205,7 +223,7 @@ class DbmQueue(QueueStore):
         if not destination in self.queue_metadata:
             return 0
         else:
-            return len(self.queue_metadata[destination]['frames'])
+            return len(self.queue_metadata[destination]["frames"])
 
     @synchronized(lock)
     def close(self):
@@ -230,8 +248,10 @@ class DbmQueue(QueueStore):
 
         In this implementation, this method wraps calls to :py:meth:`shelve.Shelf.sync`.
         """
-        if (self._opcount > self.checkpoint_operations or
-                datetime.now() > self._last_sync + self.checkpoint_timeout):
+        if (
+            self._opcount > self.checkpoint_operations
+            or datetime.now() > self._last_sync + self.checkpoint_timeout
+        ):
             self.log.debug("Synchronizing queue metadata.")
             self.queue_metadata.sync()
             self._last_sync = datetime.now()

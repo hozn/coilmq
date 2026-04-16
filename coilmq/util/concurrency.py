@@ -29,16 +29,18 @@ def synchronized(lock):
         :param func: Method to decorate
         :type func: callable
         """
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             with lock:
                 return func(*args, **kwargs)
+
         return wrapper
+
     return synchronize
 
 
 class CoilTimerBase(abc.ABC):
-
     def __init__(self, *args, **kwargs):
         self.jobs = []
 
@@ -68,7 +70,6 @@ class CoilTimerBase(abc.ABC):
 # <http://stackoverflow.com/questions/2124540/how-does-timer-in-python-work-regarding-mutlithreading>
 # <http://stackoverflow.com/questions/12435211/python-threading-timer-repeat-function-every-n-seconds>
 class CoilThreadingTimer(CoilTimerBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._running = False
@@ -83,7 +84,9 @@ class CoilThreadingTimer(CoilTimerBase):
     def run(self):
         def run_job(index, interval, callback):
             if self._running:
-                self._timers[index] = threading.Timer(period, run_job, (index, interval, callback)).start()
+                self._timers[index] = threading.Timer(
+                    period, run_job, (index, interval, callback)
+                ).start()
                 callback()
 
         self._reset_timers()

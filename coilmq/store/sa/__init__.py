@@ -1,4 +1,5 @@
 """Queue storage module that uses SQLAlchemy to access queue information and frames in a database."""
+
 from sqlalchemy import MetaData, engine_from_config
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import distinct, func, select
@@ -24,8 +25,8 @@ limitations under the License."""
 
 def make_sa():
     """Factory to creates a SQLAlchemy queue store, pulling config values from the CoilMQ configuration."""
-    configuration = dict(config.items('coilmq'))
-    engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
+    configuration = dict(config.items("coilmq"))
+    engine = engine_from_config(configuration, "qstore.sqlalchemy.")
     init_model(engine)
     store = SAQueue()
     return store
@@ -75,11 +76,12 @@ class SAQueue(QueueStore):
 
         """
         session = meta.Session()
-        message_id = frame.headers.get('message-id')
+        message_id = frame.headers.get("message-id")
         if not message_id:
             raise ValueError("Cannot queue a frame without message-id set.")
         ins = model.frames_table.insert().values(
-            message_id=message_id, destination=destination, frame=frame)
+            message_id=message_id, destination=destination, frame=frame
+        )
         session.execute(ins)
         session.commit()
 
@@ -96,13 +98,14 @@ class SAQueue(QueueStore):
         session = meta.Session()
 
         try:
-
-            selstmt = select(
-                [model.frames_table.c.message_id, model.frames_table.c.frame])
-            selstmt = selstmt.where(
-                model.frames_table.c.destination == destination)
+            selstmt = select([
+                model.frames_table.c.message_id,
+                model.frames_table.c.frame,
+            ])
+            selstmt = selstmt.where(model.frames_table.c.destination == destination)
             selstmt = selstmt.order_by(
-                model.frames_table.c.queued, model.frames_table.c.sequence)
+                model.frames_table.c.queued, model.frames_table.c.sequence
+            )
 
             result = session.execute(selstmt)
 
@@ -110,8 +113,10 @@ class SAQueue(QueueStore):
             if not first:
                 return None
 
-            delstmt = model.frames_table.delete().where(model.frames_table.c.message_id ==
-                                                        first[model.frames_table.c.message_id])
+            delstmt = model.frames_table.delete().where(
+                model.frames_table.c.message_id
+                == first[model.frames_table.c.message_id]
+            )
             session.execute(delstmt)
 
             frame = first[model.frames_table.c.frame]
@@ -134,7 +139,8 @@ class SAQueue(QueueStore):
         """
         session = meta.Session()
         sel = select([model.frames_table.c.message_id]).where(
-            model.frames_table.c.destination == destination)
+            model.frames_table.c.destination == destination
+        )
         result = session.execute(sel)
 
         first = result.fetchone()
@@ -151,7 +157,8 @@ class SAQueue(QueueStore):
         """
         session = meta.Session()
         sel = select([func.count(model.frames_table.c.message_id)]).where(
-            model.frames_table.c.destination == destination)
+            model.frames_table.c.destination == destination
+        )
         result = session.execute(sel)
         first = result.fetchone()
         if not first:

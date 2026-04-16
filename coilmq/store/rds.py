@@ -5,13 +5,16 @@ import threading
 try:
     import redis
 except ImportError:  # pragma: no cover
-    sys.exit('please, install redis-py package to use redis-store')
+    sys.exit("please, install redis-py package to use redis-store")
 
 from coilmq.config import config
 from coilmq.store import QueueStore
 from coilmq.util.concurrency import synchronized
 
-__authors__ = ('"Hans Lellelid" <hans@xmpl.org>', '"Alexander Zhukov" <zhukovaa90@gmail.com>')
+__authors__ = (
+    '"Hans Lellelid" <hans@xmpl.org>',
+    '"Alexander Zhukov" <zhukovaa90@gmail.com>',
+)
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +33,8 @@ lock = threading.RLock()
 
 def make_redis_store(cfg=None):
     return RedisQueueStore(
-        redis_conn=redis.Redis(**dict((cfg or config).items('redis'))))
+        redis_conn=redis.Redis(**dict((cfg or config).items("redis")))
+    )
 
 
 class RedisQueueStore(QueueStore):
