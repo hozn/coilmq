@@ -1,8 +1,4 @@
-"""
-Queue storage module that uses SQLAlchemy to access queue information and frames in a database.
-
-
-"""
+"""Queue storage module that uses SQLAlchemy to access queue information and frames in a database."""
 from sqlalchemy import engine_from_config, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import select, func, distinct
@@ -16,7 +12,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -27,9 +23,7 @@ limitations under the License."""
 
 
 def make_sa():
-    """
-    Factory to creates a SQLAlchemy queue store, pulling config values from the CoilMQ configuration.
-    """
+    """Factory to creates a SQLAlchemy queue store, pulling config values from the CoilMQ configuration."""
     configuration = dict(config.items('coilmq'))
     engine = engine_from_config(configuration, 'qstore.sqlalchemy.')
     init_model(engine)
@@ -38,17 +32,15 @@ def make_sa():
 
 
 def init_model(engine, create=True, drop=False):
-    """
-    Initializes the shared SQLAlchemy state in the L{coilmq.store.sa.model} module.
+    """Initializes the shared SQLAlchemy state in the :mod:`coilmq.store.sa.model` module.
 
-    @param engine: The SQLAlchemy engine instance.
-    @type engine: C{sqlalchemy.Engine}
+    :param engine: The SQLAlchemy engine instance.
+    :type engine: sqlalchemy.engine.Engine
+    :param create: Whether to create the tables (if they do not exist).
+    :type create: bool
+    :param drop: Whether to drop the tables (if they exist).
+    :type drop: bool
 
-    @param create: Whether to create the tables (if they do not exist).
-    @type create: C{bool}
-
-    @param drop: Whether to drop the tables (if they exist).
-    @type drop: C{bool}
     """
     meta.engine = engine
     meta.metadata = MetaData(bind=meta.engine)
@@ -57,32 +49,30 @@ def init_model(engine, create=True, drop=False):
 
 
 class SAQueue(QueueStore):
-    """
-    A QueueStore implementation that stores messages in a database and uses SQLAlchemy to interface
+    """A QueueStore implementation that stores messages in a database and uses SQLAlchemy to interface
     with the database.
 
     Note that this implementation does not actually use the ORM capabilities of SQLAlchemy, but simply
     uses SQLAlchemy for the DB abstraction for SQL building and DDL (table creation).
 
-    This L{coilmq.store.sa.model.setup_tables} function is used to actually define (& create) the 
-    database tables.  This class also depends on the L{init_model} method have been called to 
-    define the L{coilmq.store.sa.model.Session} class-like callable (and the engine & metadata).
+    This :func:`coilmq.store.sa.model.setup_tables` function is used to actually define (& create) the
+    database tables.  This class also depends on the :func:`init_model` method has been called to
+    initialize the variables in :mod:`coilmq.store.sa.meta`.
 
     Finally, this class does not explicitly use shared data (db connections); a new Session is created
     in each method.  The actual implementation is handled using SQLAlchemy scoped sessions, which provide
-    thread-local Session class-like callables. As a result of deferring that to the SA layer, we don't 
+    thread-local Session class-like callables. As a result of deferring that to the SA layer, we don't
     need to use synchronization locks to guard calls to the methods in this store implementation.
     """
 
     def enqueue(self, destination, frame):
-        """
-        Store message (frame) for specified destination.
+        """Store message (frame) for specified destination.
 
-        @param destination: The destination queue name for this message (frame).
-        @type destination: C{str}
+        :param destination: The destination queue name for this message (frame).
+        :type destination: str
+        :param frame: The message (frame) to send to specified destination.
+        :type frame: coilmq.util.frames.Frame
 
-        @param frame: The message (frame) to send to specified destination.
-        @type frame: C{stompclient.frame.Frame}
         """
         session = meta.Session()
         message_id = frame.headers.get('message-id')
@@ -94,14 +84,14 @@ class SAQueue(QueueStore):
         session.commit()
 
     def dequeue(self, destination):
-        """
-        Removes and returns an item from the queue (or C{None} if no items in queue).
+        """Removes and returns an item from the queue (or :py:obj:`None` if no items in queue).
 
-        @param destination: The queue name (destination).
-        @type destination: C{str}
+        :param destination: The queue name (destination).
+        :type destination: str
 
-        @return: The first frame in the specified queue, or C{None} if there are none.
-        @rtype: C{stompclient.frame.Frame} 
+        :returns: The first frame in the specified queue, or :py:obj:`None` if there are
+            none.
+        :rtype: coilmq.util.frames.Frame
         """
         session = meta.Session()
 
@@ -134,14 +124,13 @@ class SAQueue(QueueStore):
             return frame
 
     def has_frames(self, destination):
-        """
-        Whether specified queue has any frames.
+        """Whether specified queue has any frames.
 
-        @param destination: The queue name (destination).
-        @type destination: C{str}
+        :param destination: The queue name (destination).
+        :type destination: str
 
-        @return: Whether there are any frames in the specified queue.
-        @rtype: C{bool}
+        :returns: Whether there are any frames in the specified queue.
+        :rtype: bool
         """
         session = meta.Session()
         sel = select([model.frames_table.c.message_id]).where(
@@ -152,14 +141,13 @@ class SAQueue(QueueStore):
         return first is not None
 
     def size(self, destination):
-        """
-        Size of the queue for specified destination.
+        """Size of the queue for specified destination.
 
-        @param destination: The queue destination (e.g. /queue/foo)
-        @type destination: C{str}
+        :param destination: The queue destination (e.g. /queue/foo)
+        :type destination: str
 
-        @return: The number of frames in specified queue.
-        @rtype: C{int}
+        :returns: The number of frames in specified queue.
+        :rtype: int
         """
         session = meta.Session()
         sel = select([func.count(model.frames_table.c.message_id)]).where(
@@ -172,11 +160,10 @@ class SAQueue(QueueStore):
             return int(first[0])
 
     def destinations(self):
-        """
-        Provides a list of destinations (queue "addresses") available.
+        """Provides a list of destinations (queue "addresses") available.
 
-        @return: A list of the destinations available.
-        @rtype: C{set}
+        :returns: A list of the destinations available.
+        :rtype: set
         """
         session = meta.Session()
         sel = select([distinct(model.frames_table.c.destination)])
@@ -184,7 +171,5 @@ class SAQueue(QueueStore):
         return {r[0] for r in result.fetchall()}
 
     def close(self):
-        """
-        Closes the databases, freeing any resources (and flushing any unsaved changes to disk).
-        """
+        """Closes the databases, freeing any resources (and flushing any unsaved changes to disk)."""
         meta.Session.remove()

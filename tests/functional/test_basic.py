@@ -1,5 +1,4 @@
-"""
-Functional tests that use the default memory-based storage backends and default
+"""Functional tests that use the default memory-based storage backends and default
 scheduler implementations.
 """
 import zlib
@@ -13,7 +12,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -24,16 +23,14 @@ limitations under the License."""
 
 
 class BasicTest(BaseFunctionalTestCase):
-    """
-    Functional tests using default storage engine, etc.
-    """
+    """Functional tests using default storage engine, etc."""
 
     def test_connect(self):
-        """ Test a basic (non-auth) connection. """
+        """Test a basic (non-auth) connection."""
         c = self._new_client()
 
     def test_connect_auth(self):
-        """ Test connecting when auth is required. """
+        """Test connecting when auth is required."""
         self.server.authenticator = SimpleAuthenticator(store={'user': 'pass'})
 
         c1 = self._new_client(connect=False)
@@ -74,9 +71,7 @@ class BasicTest(BaseFunctionalTestCase):
         self.assertEqual(r.body, b'A message')
 
     def test_disconnect(self):
-        """
-        Test the 'polite' disconnect.
-        """
+        """Test the 'polite' disconnect."""
         c1 = self._new_client()
         c1.connect()
         response = c1.received_frames.get(timeout=0.5)
@@ -85,9 +80,7 @@ class BasicTest(BaseFunctionalTestCase):
         self.assertRaises(QueueEmpty, lambda: c1.received_frames.get(block=False))
 
     def test_send_binary(self):
-        """
-        Test sending binary data.
-        """
+        """Test sending binary data."""
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
 
@@ -102,9 +95,7 @@ class BasicTest(BaseFunctionalTestCase):
         self.assertEqual(zlib.decompress(res.body), message)
 
     def test_send_utf8(self):
-        """
-        Test sending utf-8-encoded strings.
-        """
+        """Test sending utf-8-encoded strings."""
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
 
@@ -120,9 +111,7 @@ class BasicTest(BaseFunctionalTestCase):
         self.assertEqual(res.body, utf8msg)
 
     def test_send_large_message(self):
-        """
-        Test sending a large message after a short one.
-        """
+        """Test sending a large message after a short one."""
         c1 = self._new_client()
         c1.subscribe('/queue/foo')
 

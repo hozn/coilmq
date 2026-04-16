@@ -1,15 +1,14 @@
-"""
-Configuration support functionality.
+"""Configuration support functionality.
 
-The global C{config} object (C{ConfigParser.SafeConfigParser} instance) is initialized
-with default configuration from the defaults.cfg file, which is located in this package.
-In order to ensure that the config contains custom values, you must call the C{init_config}
-function during application initialization:
+The global ``config`` object, a :py:class:`configparser.ConfigParser`, is initialized
+with default configuration from the ``defaults.cfg`` file, which is located in this package.
+In order to ensure that the config contains custom values, you must call the :func:`init_config`
+function during application initialization::
 
-from coilmq.config import config, init_config
-init_config('/path/to/config.cfg')
+    from coilmq.config import config, init_config
+    init_config('/path/to/config.cfg')
+    config.getint('listen_port')
 
-config.getint('listen_port')
 """
 import os.path
 import importlib
@@ -24,7 +23,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -33,24 +32,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+#: The global configuration object containing the default configuration.
 config = ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), 'defaults.cfg'))
 
 
 def init_config(config_file=None):
-    """
-    Initialize the configuration from a config file.
+    """Initialize the configuration from a config file.
 
-    The values in config_file will override those already loaded from the default
-    configuration file (defaults.cfg, in current package).
+    The values in :paramref:`config_file` will override those already loaded from the default
+    configuration file.
 
     This method does not setup logging.
 
-    @param config_file: The path to a configuration file.
-    @type config_file: C{str}
+    :param config_file: The path to a configuration file.
+    :type config_file: str
 
-    @raise ValueError: if the specified config_file could not be read.
-    @see: L{init_logging}  
+    :raises ValueError: if the specified file could not be read.
+
+    .. seealso:: :func:`init_logging`
     """
     global config
 
@@ -61,26 +61,26 @@ def init_config(config_file=None):
 
 
 def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
-    """
-    Configures the logging using either basic filename + loglevel or passed config file path.
+    """Configures logging with :py:func:`logging.basicConfig` or :py:func:`logging.config.fileConfig`.
 
-    This is performed separately from L{init_config()} in order to support the case where 
-    logging should happen independent of (usu. *after*) other aspects of the configuration 
-    initialization. For example, if logging may need to be initialized within a  daemon 
+    This is performed separately from :func:`init_config` in order to support the case where
+    logging should happen independent of (usu. *after*) other aspects of the configuration
+    initialization. For example, if logging may need to be initialized within a daemon
     context.
 
-    @param logfile: An explicitly specified logfile destination.  If this is specified in addition
-                    to default logging, a warning will be issued.
-    @type logfile: C{str}
+    :param logfile: An explicitly specified logfile destination.  If this is specified
+        in addition to default logging, a warning will be issued.
+    :type logfile: str
+    :param loglevel: Which level to use when logging to explicitly specified file or
+        stdout.
+    :type loglevel: int
+    :param configfile: The path to a configuration file.  This takes precedence over any
+        explicitly specified logfile/loglevel (but a warning will be logged if both are
+        specified). If the file is not specified or does not exist and no logfile was
+        specified, then the default.cfg configuration file will be used to initialize
+        logging.
+    :type configfile: str
 
-    @param loglevel: Which level to use when logging to explicitly specified file or stdout.
-    @type loglevel: C{int}
-
-    @param configfile: The path to a configuration file.  This takes precedence over any explicitly
-                        specified logfile/loglevel (but a warning will be logged if both are specified).
-                        If the file is not specified or does not exist and no logfile was specified,
-                        then the default.cfg configuration file will be used to initialize logging.
-    @type configfile: C{str}
     """
     # If a config file was specified, we will use that in place of the
     # explicitly
@@ -105,12 +105,12 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
 
 
 def resolve_name(name):
-    """
-    Resolve a dotted name to some object (usually class, module, or function).
+    """Resolve a dotted name to some object (usually class, module, or function).
 
     Supported naming formats include:
-        1. path.to.module:method
-        2. path.to.module.ClassName
+
+    1. ``path.to.module:method``
+    2. ``path.to.module.ClassName``
 
     >>> resolve_name('coilmq.store.memory.MemoryQueue')
     <class 'coilmq.store.memory.MemoryQueue'>
@@ -121,10 +121,11 @@ def resolve_name(name):
     >>> t.__name__
     'make_dbm'
 
-    @param name: The dotted name (e.g. path.to.MyClass)
-    @type name: C{str}
+    :param name: The dotted name (e.g. ``path.to.MyClass``)
+    :type name: str
 
-    @return: The resolved object (class, callable, etc.) or None if not found.
+    :returns: The resolved object (class, callable, etc.) or :py:obj:`None` if not
+        found.
     """
     sep_index = max(name.rfind(sep) for sep in (":", "."))
 

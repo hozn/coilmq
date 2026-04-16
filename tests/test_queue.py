@@ -1,6 +1,4 @@
-"""
-Tests for queue-related classes.
-"""
+"""Tests for queue-related classes."""
 import unittest
 import uuid
 
@@ -15,7 +13,7 @@ __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -26,15 +24,14 @@ limitations under the License."""
 
 
 class QueueManagerTest(unittest.TestCase):
-    """ Test the QueueManager class. """
+    """Test the QueueManager class."""
 
     def _queuestore(self):
-        """
-        Returns the configured L{QueueStore} instance to use.
+        """Returns the configured :class:`QueueStore` instance to use.
 
         Can be overridden by subclasses that wish to change out any queue store parameters.
 
-        @rtype: L{QueueStore}
+        :rtype: QueueStore
         """
         return MemoryQueue()
 
@@ -51,7 +48,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertTrue(bool(self.store.frames(dest)))
 
     def test_subscribe(self):
-        """ Test subscribing a connection to the queue. """
+        """Test subscribing a connection to the queue."""
         dest = '/queue/dest'
 
         self.qm.subscribe(self.conn, dest)
@@ -62,7 +59,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(self.conn.frames[0], f)
 
     def test_unsubscribe(self):
-        """ Test unsubscribing a connection from the queue. """
+        """Test unsubscribing a connection from the queue."""
         dest = '/queue/dest'
 
         self.qm.subscribe(self.conn, dest)
@@ -80,7 +77,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(len(self.store.frames(dest)), 1)
 
     def test_send_simple(self):
-        """ Test a basic send command. """
+        """Test a basic send command."""
         dest = '/queue/dest'
 
         f = Frame(frames.SEND, headers={'destination': dest}, body='Empty')
@@ -94,7 +91,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(f.cmd, frames.MESSAGE)
 
     def test_send_err(self):
-        """ Test sending a message when delivery results in error. """
+        """Test sending a message when delivery results in error."""
 
         class ExcThrowingConn:
             reliable_subscriber = True
@@ -116,7 +113,7 @@ class QueueManagerTest(unittest.TestCase):
             pass
 
     def test_send_backlog_err_reliable(self):
-        """ Test errors when sending backlog to reliable subscriber. """
+        """Test errors when sending backlog to reliable subscriber."""
 
         class ExcThrowingConn:
             reliable_subscriber = True
@@ -147,7 +144,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(self.conn.frames[0], f)
 
     def test_send_backlog_err_unreliable(self):
-        """ Test errors when sending backlog to reliable subscriber. """
+        """Test errors when sending backlog to reliable subscriber."""
 
         class ExcThrowingConn:
             reliable_subscriber = False
@@ -183,13 +180,11 @@ class QueueManagerTest(unittest.TestCase):
         self.assertListEqual(list(self.conn.frames), [f2, f])
 
     def test_send_reliableFirst(self):
-        """
-        Test that messages are prioritized to reliable subscribers.
+        """Test that messages are prioritized to reliable subscribers.
 
         This is actually a test of the underlying scheduler more than it is a test
         of the send message, per se.
         """
-
         dest = '/queue/dest'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
@@ -208,7 +203,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(len(conn2.frames), 0)
 
     def test_clear_transaction_frames(self):
-        """ Test the clearing of transaction ACK frames. """
+        """Test the clearing of transaction ACK frames."""
         dest = '/queue/tx'
 
         f = Frame(frames.SEND, headers={'destination': dest,
@@ -226,8 +221,7 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.clear_transaction_frames(conn1, '1')
 
     def test_ack_basic(self):
-        """ Test reliable client (ACK) behavior. """
-
+        """Test reliable client (ACK) behavior."""
         dest = '/queue/ack-basic'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
@@ -257,8 +251,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(conn1.frames[1], m2)
 
     def test_ack_transaction(self):
-        """ Test the reliable client (ACK) behavior with transactions. """
-
+        """Test the reliable client (ACK) behavior with transactions."""
         dest = '/queue/ack-transaction'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
@@ -299,8 +292,7 @@ class QueueManagerTest(unittest.TestCase):
         self.assertEqual(len(pending), 1, "Expected 1 pending (waiting on ACK) frame.""")
 
     def test_disconnect_pending_frames(self):
-        """ Test a queue disconnect when there are pending frames. """
-
+        """Test a queue disconnect when there are pending frames."""
         dest = '/queue/disconnect-pending-frames'
         conn1 = MockConnection()
         conn1.reliable_subscriber = True

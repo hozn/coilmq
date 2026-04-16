@@ -1,6 +1,4 @@
-"""
-Tools to facilitate developing thread-safe components.
-"""
+"""Tools to facilitate developing thread-safe components."""
 
 import abc
 import threading
@@ -23,14 +21,13 @@ limitations under the License."""
 
 def synchronized(lock):
     def synchronize(func):
-        """
-        Decorator to lock and unlock a method (Phillip J. Eby).
+        """Decorator to lock and unlock a method (Phillip J. Eby).
 
         This function is to be used with object instance methods; the object must
-        have a _lock variable (of type C{threading.Lock} or C{threading.RLock}).
+        have a _lock variable (of type :py:class:`threading.Lock` or :py:class:`threading.RLock`).
 
-        @param func: Method to decorate
-        @type func: C{callable}
+        :param func: Method to decorate
+        :type func: callable
         """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
