@@ -1,4 +1,5 @@
 """A simple config-file based authentication module."""
+
 from configparser import ConfigParser
 
 from coilmq.auth import Authenticator
@@ -27,9 +28,9 @@ def make_simple():
     :rtype: SimpleAuthenticator
     :raises ConfigError: If there is a configuration error.
     """
-    authfile = config.get('coilmq', 'auth.simple.file')
+    authfile = config.get("coilmq", "auth.simple.file")
     if not authfile:
-        raise ConfigError('Missing configuration parameter: auth.simple.file')
+        raise ConfigError("Missing configuration parameter: auth.simple.file")
     sa = SimpleAuthenticator()
     sa.from_configfile(authfile)
     return sa
@@ -71,17 +72,17 @@ class SimpleAuthenticator(Authenticator):
             section.
         """
         cfg = ConfigParser()
-        if hasattr(configfile, 'read'):
+        if hasattr(configfile, "read"):
             cfg.read_file(configfile)
         else:
             filesread = cfg.read(configfile)
             if not filesread:
-                raise ValueError(f'Could not parse auth file: {configfile}')
+                raise ValueError(f"Could not parse auth file: {configfile}")
 
-        if not cfg.has_section('auth'):
-            raise ValueError('Config file contains no [auth] section.')
+        if not cfg.has_section("auth"):
+            raise ValueError("Config file contains no [auth] section.")
 
-        self.store = dict(cfg.items('auth'))
+        self.store = dict(cfg.items("auth"))
 
     def authenticate(self, login, passcode):
         """Authenticate the login and passcode.

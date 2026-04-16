@@ -1,5 +1,5 @@
 """Queue storage tests."""
-import unittest
+
 import uuid
 
 from coilmq.util import frames
@@ -28,9 +28,10 @@ class CommonQueueTest:
 
     def test_enqueue(self):
         """Test the enqueue() method."""
-        dest = '/queue/foo'
-        frame = Frame(frames.MESSAGE, headers={
-                      'message-id': str(uuid.uuid4())}, body='some data')
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
+        )
         self.store.enqueue(dest, frame)
 
         self.assertTrue(self.store.has_frames(dest))
@@ -38,9 +39,10 @@ class CommonQueueTest:
 
     def test_dequeue(self):
         """Test the dequeue() method."""
-        dest = '/queue/foo'
-        frame = Frame(frames.MESSAGE, headers={
-                      'message-id': str(uuid.uuid4())}, body='some data')
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
+        )
         self.store.enqueue(dest, frame)
 
         self.assertTrue(self.store.has_frames(dest))
@@ -57,19 +59,22 @@ class CommonQueueTest:
 
     def test_dequeue_specific(self):
         """Test that we only dequeue from the correct queue."""
-        dest = '/queue/foo'
-        notdest = '/queue/other'
+        dest = "/queue/foo"
+        notdest = "/queue/other"
 
-        frame1 = Frame(frames.MESSAGE, headers={
-                       'message-id': str(uuid.uuid4())}, body='message-1')
+        frame1 = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="message-1"
+        )
         self.store.enqueue(dest, frame1)
 
-        frame2 = Frame(frames.MESSAGE, headers={
-                       'message-id': str(uuid.uuid4())}, body='message-2')
+        frame2 = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="message-2"
+        )
         self.store.enqueue(notdest, frame2)
 
-        frame3 = Frame(frames.MESSAGE, headers={
-                       'message-id': str(uuid.uuid4())}, body='message-3')
+        frame3 = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="message-3"
+        )
         self.store.enqueue(dest, frame3)
 
         self.assertTrue(self.store.has_frames(dest))
@@ -86,18 +91,21 @@ class CommonQueueTest:
 
     def test_dequeue_order(self):
         """Test the order that frames are returned by dequeue() method."""
-        dest = '/queue/foo'
+        dest = "/queue/foo"
 
-        frame1 = Frame(frames.MESSAGE, headers={
-                       'message-id': str(uuid.uuid4())}, body='message-1')
+        frame1 = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="message-1"
+        )
         self.store.enqueue(dest, frame1)
 
-        frame2 = Frame(frames.MESSAGE, headers={
-                       'message-id': str(uuid.uuid4())}, body='message-2')
+        frame2 = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="message-2"
+        )
         self.store.enqueue(dest, frame2)
 
-        frame3 = Frame(frames.MESSAGE, headers={
-                       'message-id': str(uuid.uuid4())}, body='message-3')
+        frame3 = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="message-3"
+        )
         self.store.enqueue(dest, frame3)
 
         self.assertTrue(self.store.has_frames(dest))
@@ -117,7 +125,7 @@ class CommonQueueTest:
 
     def test_dequeue_empty(self):
         """Test dequeue() with empty queue."""
-        self.assertIsNone(self.store.dequeue('/queue/nonexist'))
+        self.assertIsNone(self.store.dequeue("/queue/nonexist"))
 
-        self.assertFalse(self.store.has_frames('/queue/nonexist'))
-        self.assertEqual(self.store.size('/queue/nonexist'), 0)
+        self.assertFalse(self.store.has_frames("/queue/nonexist"))
+        self.assertEqual(self.store.size("/queue/nonexist"), 0)

@@ -1,4 +1,5 @@
 """Tests for topic-related functionality."""
+
 import unittest
 
 from coilmq.topic import TopicManager
@@ -30,10 +31,10 @@ class TopicManagerTest(unittest.TestCase):
 
     def test_subscribe(self):
         """Test subscribing a connection to the topic."""
-        dest = '/topic/dest'
+        dest = "/topic/dest"
 
         self.tm.subscribe(self.conn, dest)
-        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
@@ -43,10 +44,10 @@ class TopicManagerTest(unittest.TestCase):
 
     def test_unsubscribe(self):
         """Test unsubscribing a connection from the queue."""
-        dest = '/topic/dest'
+        dest = "/topic/dest"
 
         self.tm.subscribe(self.conn, dest)
-        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
@@ -55,20 +56,20 @@ class TopicManagerTest(unittest.TestCase):
         self.assertEqual(self.conn.frames[0], f)
 
         self.tm.unsubscribe(self.conn, dest)
-        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.tm.send(f)
 
         self.assertEqual(len(self.conn.frames), 1)
 
     def test_send_simple(self):
         """Test a basic send command."""
-        dest = '/topic/dest'
+        dest = "/topic/dest"
 
-        f = Frame(frames.SEND, headers={'destination': dest}, body='Empty')
+        f = Frame(frames.SEND, headers={"destination": dest}, body="Empty")
         self.tm.send(f)
 
         # Assert some side-effects
-        self.assertIn('message-id', f.headers)
+        self.assertIn("message-id", f.headers)
         self.assertEqual(f.cmd, frames.MESSAGE)
 
     def test_send_subscriber_timeout(self):
@@ -83,7 +84,7 @@ class TopicManagerTest(unittest.TestCase):
             def reset(self):
                 pass
 
-        dest = '/topic/dest'
+        dest = "/topic/dest"
 
         bad_client = TimeoutConnection()
 
@@ -91,7 +92,7 @@ class TopicManagerTest(unittest.TestCase):
         self.tm.subscribe(bad_client, dest)
         self.tm.subscribe(self.conn, dest)
 
-        f = Frame(frames.MESSAGE, headers={'destination': dest}, body='Empty')
+        f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.tm.send(f)
 
         # Make sure out good client got the message.

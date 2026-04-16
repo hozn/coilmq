@@ -1,4 +1,5 @@
 """Tests for the subscription management."""
+
 import unittest
 
 from coilmq.subscription import SubscriptionManager

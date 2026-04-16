@@ -1,4 +1,5 @@
 """Test DBM queue storage."""
+
 import shutil
 import tempfile
 import time
@@ -11,7 +12,6 @@ from coilmq.store.dbm import DbmQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest
-
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -29,9 +29,8 @@ limitations under the License."""
 
 
 class DbmQueueTest(CommonQueueTest, unittest.TestCase):
-
     def setUp(self):
-        self.data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
+        self.data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         self.store = DbmQueue(self.data_dir)
 
     def tearDown(self):
@@ -40,9 +39,10 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
     def test_dequeue_identity(self):
         """Test the dequeue() method."""
-        dest = '/queue/foo'
-        frame = Frame(frames.MESSAGE, headers={
-                      'message-id': str(uuid.uuid4())}, body='some data')
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
+        )
         self.store.enqueue(dest, frame)
 
         self.assertTrue(self.store.has_frames(dest))
@@ -58,15 +58,18 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_ops(self):
         """Test a expected sync behavior with checkpoint_operations param."""
-        data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
+        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         max_ops = 5
         try:
             store = DbmQueue(data_dir, checkpoint_operations=max_ops)
-            dest = '/queue/foo'
+            dest = "/queue/foo"
 
             for i in range(max_ops + 1):
-                frame = Frame(frames.MESSAGE, headers={
-                              'message-id': str(uuid.uuid4())}, body=f'some data - {i}')
+                frame = Frame(
+                    frames.MESSAGE,
+                    headers={"message-id": str(uuid.uuid4())},
+                    body=f"some data - {i}",
+                )
                 store.enqueue(dest, frame)
 
             self.assertEqual(store.size(dest), max_ops + 1)
@@ -83,19 +86,25 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_timeout(self):
         """Test a expected sync behavior with checkpoint_timeout param."""
-        data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
+        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         try:
             store = DbmQueue(data_dir, checkpoint_timeout=0.5)
-            dest = '/queue/foo'
+            dest = "/queue/foo"
 
-            frame = Frame(frames.MESSAGE, headers={
-                          'message-id': str(uuid.uuid4())}, body='some data -1')
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body="some data -1",
+            )
             store.enqueue(dest, frame)
 
             time.sleep(0.5)
 
-            frame = Frame(frames.MESSAGE, headers={
-                          'message-id': str(uuid.uuid4())}, body='some data -2')
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body="some data -2",
+            )
             store.enqueue(dest, frame)
 
             self.assertEqual(store.size(dest), 2)
@@ -111,12 +120,15 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
 
     def test_sync_close(self):
         """Test a expected sync behavior of close() call."""
-        data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
+        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         try:
             store = DbmQueue(data_dir)
-            dest = '/queue/foo'
-            frame = Frame(frames.MESSAGE, headers={
-                          'message-id': str(uuid.uuid4())}, body='some data')
+            dest = "/queue/foo"
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body="some data",
+            )
             store.enqueue(dest, frame)
             self.assertEqual(store.size(dest), 1)
 
@@ -132,12 +144,15 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_loss(self):
         """Test metadata loss behavior."""
-        data_dir = tempfile.mkdtemp(prefix='coilmq-dbm-test')
+        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         try:
             store = DbmQueue(data_dir)
-            dest = '/queue/foo'
-            frame = Frame(frames.MESSAGE, headers={
-                          'message-id': str(uuid.uuid4())}, body='some data')
+            dest = "/queue/foo"
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body="some data",
+            )
             store.enqueue(dest, frame)
             self.assertEqual(store.size(dest), 1)
 

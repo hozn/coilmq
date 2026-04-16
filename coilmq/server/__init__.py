@@ -3,6 +3,7 @@
 CoilMQ is designed for the Python StompServer reference socket server (specifically
 multi-threaded); however, some alternative implementation examples are also provided.
 """
+
 import abc
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']

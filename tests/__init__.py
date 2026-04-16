@@ -1,4 +1,5 @@
 """Unit and functional tests for project."""
+
 import coilmq.config
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']

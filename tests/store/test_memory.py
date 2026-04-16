@@ -1,4 +1,5 @@
 """Test memory queue storage."""
+
 import unittest
 import uuid
 
@@ -23,15 +24,15 @@ limitations under the License."""
 
 
 class MemoryQueueTest(CommonQueueTest, unittest.TestCase):
-
     def setUp(self):
         self.store = MemoryQueue()
 
     def test_dequeue_identity(self):
         """Test the dequeue() method."""
-        dest = '/queue/foo'
-        frame = Frame(frames.MESSAGE, headers={
-                      'message-id': str(uuid.uuid4())}, body='some data')
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
+        )
         self.store.enqueue(dest, frame)
 
         self.assertTrue(self.store.has_frames(dest))

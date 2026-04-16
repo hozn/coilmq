@@ -1,23 +1,24 @@
 """Functional tests to test full stack (but not actual socket layer)."""
-import sys
-import time
-import unittest
+
 import logging
-import socket
 import select
+import socket
 import threading
+import unittest
+from queue import Queue
 
-from queue import Queue, Empty
-
-from coilmq.util.frames import Frame, FrameBuffer
+from coilmq.protocol import STOMP10
 from coilmq.queue import QueueManager
+from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
+from coilmq.server.socket_server import (
+    StompRequestHandler,
+    StompServer,
+    ThreadedStompServer,
+)
+from coilmq.store.memory import MemoryQueue
 from coilmq.topic import TopicManager
 from coilmq.util import frames
-from coilmq.server.socket_server import StompServer, StompRequestHandler, ThreadedStompServer
-from coilmq.store.memory import MemoryQueue
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
-from coilmq.protocol import STOMP10
-
+from coilmq.util.frames import Frame, FrameBuffer
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -52,17 +53,18 @@ class BaseFunctionalTestCase(unittest.TestCase):
         addr_bound = threading.Event()
 
         def start_server():
-            self.server = TestStompServer(('127.0.0.1', 0),
-                                          ready_event=self.ready_event,
-                                          authenticator=None,
-                                          queue_manager=self._queuemanager(),
-                                          topic_manager=self._topicmanager())
+            self.server = TestStompServer(
+                ("127.0.0.1", 0),
+                ready_event=self.ready_event,
+                authenticator=None,
+                queue_manager=self._queuemanager(),
+                topic_manager=self._topicmanager(),
+            )
             self.server_address = self.server.socket.getsockname()
             addr_bound.set()
             self.server.serve_forever()
 
-        self.server_thread = threading.Thread(
-            target=start_server, name='server')
+        self.server_thread = threading.Thread(target=start_server, name="server")
         self.server_thread.start()
         self.ready_event.wait()
         addr_bound.wait()
@@ -74,9 +76,11 @@ class BaseFunctionalTestCase(unittest.TestCase):
 
         :rtype: QueueManager
         """
-        return QueueManager(store=MemoryQueue(),
-                            subscriber_scheduler=FavorReliableSubscriberScheduler(),
-                            queue_scheduler=RandomQueueScheduler())
+        return QueueManager(
+            store=MemoryQueue(),
+            subscriber_scheduler=FavorReliableSubscriberScheduler(),
+            queue_scheduler=RandomQueueScheduler(),
+        )
 
     def _topicmanager(self):
         """Returns the configured :class:`TopicManager` instance to use.
@@ -121,17 +125,24 @@ class TestStompServer(ThreadedStompServer):
 
     allow_reuse_address = True
 
-    def __init__(self, server_address,
-                 ready_event=None,
-                 authenticator=None,
-                 queue_manager=None,
-                 topic_manager=None):
+    def __init__(
+        self,
+        server_address,
+        ready_event=None,
+        authenticator=None,
+        queue_manager=None,
+        topic_manager=None,
+    ):
         self.ready_event = ready_event
-        StompServer.__init__(self, server_address, StompRequestHandler,
-                             authenticator=authenticator,
-                             queue_manager=queue_manager,
-                             topic_manager=topic_manager,
-                             protocol=STOMP10)
+        StompServer.__init__(
+            self,
+            server_address,
+            StompRequestHandler,
+            authenticator=authenticator,
+            queue_manager=queue_manager,
+            topic_manager=topic_manager,
+            protocol=STOMP10,
+        )
 
     def server_activate(self):
         self.ready_event.set()
@@ -155,7 +166,7 @@ class TestStompClient:
         :type connect: bool
 
         """
-        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
         self.sock = None
         self.addr = addr
         self.received_frames = Queue()
@@ -169,14 +180,13 @@ class TestStompClient:
 
     def send(self, destination, message, set_content_length=True, extra_headers=None):
         headers = extra_headers or {}
-        headers['destination'] = destination
+        headers["destination"] = destination
         if set_content_length:
-            headers['content-length'] = len(message)
+            headers["content-length"] = len(message)
         self.send_frame(Frame(frames.SEND, headers=headers, body=message))
 
     def subscribe(self, destination):
-        self.send_frame(Frame(frames.SUBSCRIBE, headers={
-                        'destination': destination}))
+        self.send_frame(Frame(frames.SUBSCRIBE, headers={"destination": destination}))
 
     def send_frame(self, frame):
         """Sends a stomp frame.
@@ -192,13 +202,14 @@ class TestStompClient:
         self.sock.connect(self.addr)
         self.connected = True
         self.read_stopped.clear()
-        t = threading.Thread(target=self._read_loop,
-                             name=f"client-receiver-{hex(id(self))}")
+        t = threading.Thread(
+            target=self._read_loop, name=f"client-receiver-{hex(id(self))}"
+        )
         t.start()
 
     def _read_loop(self):
         while self.connected:
-            r, w, e = select.select([self.sock], [], [], 0.1)
+            r, *_ = select.select([self.sock], [], [], 0.1)
             if r:
                 data = self.sock.recv(1024)
                 self.buffer.append(data)

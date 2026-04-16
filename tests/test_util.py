@@ -1,15 +1,13 @@
-import unittest
-import time
 import threading
+import time
+import unittest
 
 from coilmq.util.concurrency import CoilThreadingTimer
 
 
 class CoilTimerTestCase(unittest.TestCase):
-
     def setUp(self):
         class CountedCallback:
-
             def __init__(self):
                 self.lock = threading.Lock()
                 self.n_called = 0
@@ -28,4 +26,9 @@ class CoilTimerTestCase(unittest.TestCase):
         timer.schedule(period, counter)
         with timer:
             time.sleep(period * factor)
-        self.assertAlmostEqual(counter.n_called, factor, delta=factor * 0.5, msg='Should provide 50% accuracy')
+        self.assertAlmostEqual(
+            counter.n_called,
+            factor,
+            delta=factor * 0.5,
+            msg="Should provide 50% accuracy",
+        )

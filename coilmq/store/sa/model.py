@@ -1,6 +1,6 @@
 """Definition of the data model required for SA storage backend."""
 
-from sqlalchemy import Table, Column, BigInteger, String, PickleType, DateTime
+from sqlalchemy import BigInteger, Column, DateTime, PickleType, String, Table
 from sqlalchemy.sql import func
 
 from coilmq.store.sa import meta
@@ -36,13 +36,15 @@ def setup_tables(create=True, drop=False):
 
     """
     global frames_table
-    frames_table = Table('frames', meta.metadata,
-                         Column('message_id', String(255), primary_key=True),
-                         Column('sequence', BigInteger,
-                                primary_key=False, autoincrement=True),
-                         Column('destination', String(255), index=True),
-                         Column('frame', PickleType),
-                         Column('queued', DateTime, default=func.now()))
+    frames_table = Table(
+        "frames",
+        meta.metadata,
+        Column("message_id", String(255), primary_key=True),
+        Column("sequence", BigInteger, primary_key=False, autoincrement=True),
+        Column("destination", String(255), index=True),
+        Column("frame", PickleType),
+        Column("queued", DateTime, default=func.now()),
+    )
 
     if drop:
         meta.metadata.drop_all()

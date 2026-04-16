@@ -25,8 +25,7 @@ extensions = [
 
 exclude_patterns = [
     ".DS_Store",
-    ".gitignore"
-    "Thumbs.db",
+    ".gitignoreThumbs.db",
     "_build",
 ]
 

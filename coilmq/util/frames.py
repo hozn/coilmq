@@ -1,28 +1,42 @@
-import re
-import logging
-from collections import OrderedDict
 import io
+import logging
+import re
+from collections import OrderedDict
 from itertools import starmap
 
-SEND = 'SEND'
-CONNECT = 'CONNECT'
-MESSAGE = 'MESSAGE'
-ERROR = 'ERROR'
-CONNECTED = 'CONNECTED'
-SUBSCRIBE = 'SUBSCRIBE'
-UNSUBSCRIBE = 'UNSUBSCRIBE'
-BEGIN = 'BEGIN'
-COMMIT = 'COMMIT'
-ABORT = 'ABORT'
-ACK = 'ACK'
-NACK = 'NACK'
-STOMP_CMD = 'STOMP'
-DISCONNECT = 'DISCONNECT'
+SEND = "SEND"
+CONNECT = "CONNECT"
+MESSAGE = "MESSAGE"
+ERROR = "ERROR"
+CONNECTED = "CONNECTED"
+SUBSCRIBE = "SUBSCRIBE"
+UNSUBSCRIBE = "UNSUBSCRIBE"
+BEGIN = "BEGIN"
+COMMIT = "COMMIT"
+ABORT = "ABORT"
+ACK = "ACK"
+NACK = "NACK"
+STOMP_CMD = "STOMP"
+DISCONNECT = "DISCONNECT"
 
-VALID_COMMANDS = [MESSAGE, CONNECT, CONNECTED, ERROR, SEND,
-                  SUBSCRIBE, UNSUBSCRIBE, BEGIN, COMMIT, ABORT, ACK, DISCONNECT, NACK, STOMP_CMD]
+VALID_COMMANDS = [
+    MESSAGE,
+    CONNECT,
+    CONNECTED,
+    ERROR,
+    SEND,
+    SUBSCRIBE,
+    UNSUBSCRIBE,
+    BEGIN,
+    COMMIT,
+    ABORT,
+    ACK,
+    DISCONNECT,
+    NACK,
+    STOMP_CMD,
+]
 
-TEXT_PLAIN = 'text/plain'
+TEXT_PLAIN = "text/plain"
 
 
 class IncompleteFrame(Exception):
@@ -37,19 +51,18 @@ class EmptyBuffer(Exception):
     """The buffer is empty."""
 
 
-def parse_headers(buff):
+def parse_headers(buff: io.BytesIO):
     """Parses buffer and returns command and headers as strings.
 
     :param buff: Buffer containing frame
     :type buff: io.BytesIO
     """
-    preamble_lines = list(map(
-        lambda x: x.decode(),
-        iter(lambda: buff.readline().strip(), b''))
-    )
+    preamble_lines = [
+        line.decode() for line in iter(lambda: buff.readline().strip(), b"")
+    ]
     if not preamble_lines:
         raise EmptyBuffer()
-    return preamble_lines[0], OrderedDict([l.split(':') for l in preamble_lines[1:]])
+    return preamble_lines[0], OrderedDict([l.split(":") for l in preamble_lines[1:]])
 
 
 def parse_body(buff, headers):
@@ -59,7 +72,7 @@ def parse_body(buff, headers):
     :type headers: dict
 
     """
-    content_length = int(headers.get('content-length', -1))
+    content_length = int(headers.get("content-length", -1))
     body = buff.read(content_length)
     if content_length >= 0:
         if len(body) < content_length:
@@ -69,7 +82,7 @@ def parse_body(buff, headers):
             raise BodyNotTerminated()
     else:
         # no content length
-        body, terminator, rest = body.partition(b'\x00')
+        body, terminator, rest = body.partition(b"\x00")
         if not terminator:
             raise BodyNotTerminated()
         else:
@@ -89,21 +102,23 @@ class Frame:
     def __init__(self, cmd, headers=None, body=None):
         self.cmd = cmd
         self.headers = headers or {}
-        self.body = body or ''
+        self.body = body or ""
 
     def __str__(self):
-        return f'{{cmd={self.cmd},headers=[{self.headers}],body={self.body if isinstance(self.body, bytes) else self.body.encode()}}}'
+        return f"{{cmd={self.cmd},headers=[{self.headers}],body={self.body if isinstance(self.body, bytes) else self.body.encode()}}}"
 
     def __eq__(self, other):
         """Override equality checking to test for matching command, headers, and body."""
-        return all([isinstance(other, Frame),
-                    self.cmd == other.cmd,
-                    self.headers == other.headers,
-                    self.body == other.body])
+        return all([
+            isinstance(other, Frame),
+            self.cmd == other.cmd,
+            self.headers == other.headers,
+            self.body == other.body,
+        ])
 
     @property
     def transaction(self):
-        return self.headers.get('transaction')
+        return self.headers.get("transaction")
 
     @classmethod
     def from_buffer(cls, buff):
@@ -117,20 +132,25 @@ class Frame:
         :returns: The string (bytes) for this stomp frame.
         :rtype: str
         """
-        self.headers.setdefault('content-length', len(self.body))
+        self.headers.setdefault("content-length", len(self.body))
 
         # See https://stomp.github.io/stomp-specification-1.1.html#Augmented_BNF
         return (
             # command LF
-            self.cmd.encode() + b"\n" +
+            self.cmd.encode()
+            + b"\n"
+            +
             # *( header LF )
-            "".join(starmap("{0}:{1}\n".format, self.headers.items())).encode() +
+            "".join(starmap("{0}:{1}\n".format, self.headers.items())).encode()
+            +
             # LF
-            b"\n" +
+            b"\n"
+            +
             # *OCTET
-            (self.body if isinstance(self.body, bytes) else self.body.encode()) +
+            (self.body if isinstance(self.body, bytes) else self.body.encode())
+            +
             # NULL
-            b'\x00'
+            b"\x00"
         )
 
 
@@ -145,9 +165,8 @@ class ConnectedFrame(Frame):
         """:param session: The (throw-away) session ID to include in response.
         :type session: str
         """
-        super().__init__(
-            cmd=CONNECTED, headers=extra_headers or {})
-        self.headers['session'] = session
+        super().__init__(cmd=CONNECTED, headers=extra_headers or {})
+        self.headers["session"] = session
 
 
 class HeaderValue:
@@ -172,7 +191,7 @@ class HeaderValue:
         :type calculator: callable
         """
         if not callable(calculator):
-            raise ValueError("Non-callable param: {calculator}")
+            raise TypeError("Non-callable param: {calculator}")
         self.calc = calculator
 
     def __get__(self, obj, objtype):
@@ -185,7 +204,7 @@ class HeaderValue:
         self.calc = value
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} calculator={self.calc}>'
+        return f"<{self.__class__.__name__} calculator={self.calc}>"
 
 
 class ErrorFrame(Frame):
@@ -195,14 +214,12 @@ class ErrorFrame(Frame):
         """:param body: The message body bytes.
         :type body: str
         """
-        super().__init__(cmd=ERROR,
-                                         headers=extra_headers or {}, body=body)
-        self.headers['message'] = message
-        self.headers[
-            'content-length'] = HeaderValue(calculator=lambda: len(self.body))
+        super().__init__(cmd=ERROR, headers=extra_headers or {}, body=body)
+        self.headers["message"] = message
+        self.headers["content-length"] = HeaderValue(calculator=lambda: len(self.body))
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} message={self.headers["message"]!r}>'
+        return f"<{self.__class__.__name__} message={self.headers['message']!r}>"
 
 
 class ReceiptFrame(Frame):
@@ -212,9 +229,8 @@ class ReceiptFrame(Frame):
         """:param receipt: The receipt message ID.
         :type receipt: str
         """
-        super().__init__(
-            'RECEIPT', headers=extra_headers or {})
-        self.headers['receipt-id'] = receipt
+        super().__init__("RECEIPT", headers=extra_headers or {})
+        self.headers["receipt-id"] = receipt
 
 
 class FrameBuffer:
@@ -237,23 +253,23 @@ class FrameBuffer:
     """
 
     # regexp to check that the buffer starts with a command.
-    command_re = re.compile('^(.+?)\n')
+    command_re = re.compile("^(.+?)\n")
 
     # regexp to remove everything up to and including the first
     # instance of '\x00' (used in resyncing the buffer).
-    sync_re = re.compile('^.*?\x00')
+    sync_re = re.compile("^.*?\x00")
 
     # regexp to determine the content length. The buffer should always start
     # with a command followed by the headers, so the content-length header will
     # always be preceded by a newline.  It may not always proceeded by a
     # newline, though!
-    content_length_re = re.compile('\ncontent-length\\s*:\\s*(\\d+)\\s*(\n|$)')
+    content_length_re = re.compile("\ncontent-length\\s*:\\s*(\\d+)\\s*(\n|$)")
 
     def __init__(self):
         self._buffer = io.BytesIO()
         self._pointer = 0
         self.debug = False
-        self.log = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
 
     def clear(self):
         """Clears (empties) the internal buffer."""

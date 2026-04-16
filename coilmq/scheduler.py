@@ -6,6 +6,7 @@ reliable subscribers.  Developers can write their own delivery schedulers, which
 should implement the methods defined in :class:`QueuePriorityScheduler` if they would
 like to customize the behavior.
 """
+
 import abc
 import random
 
@@ -41,7 +42,6 @@ class SubscriberPriorityScheduler(abc.ABC):
             chosen (e.g. list is empty).
         :rtype: coilmq.subscription.Subscription
         """
-
 
 
 class QueuePriorityScheduler(abc.ABC):
@@ -100,7 +100,8 @@ class FavorReliableSubscriberScheduler(SubscriberPriorityScheduler):
         if not subscribers:
             return None
         reliable_subscribers = [
-            s for s in subscribers if s.connection.reliable_subscriber]
+            s for s in subscribers if s.connection.reliable_subscriber
+        ]
         if reliable_subscribers:
             return random.choice(reliable_subscribers)
         else:

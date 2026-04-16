@@ -1,4 +1,5 @@
 """Storage containers for durable queues and (planned) durable topics."""
+
 import abc
 import logging
 import threading
@@ -37,8 +38,7 @@ class QueueStore(abc.ABC):
         If you extend this class, you should either call this method or at minimum make sure these values
         get set.
         """
-        self.log = logging.getLogger(
-            f'{self.__module__}.{self.__class__.__name__}')
+        self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
 
     @abc.abstractmethod
     @synchronized(lock)
@@ -113,7 +113,7 @@ class QueueStore(abc.ABC):
         """
         raise NotImplementedError
 
-    @synchronized(lock)  # noqa: B027
+    @synchronized(lock)
     def close(self):
         """May be implemented to perform any necessary cleanup operations when store is closed."""
 
