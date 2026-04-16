@@ -7,6 +7,7 @@ import logging
 import threading
 import uuid
 from copy import deepcopy
+
 from coilmq.subscription import SubscriptionManager
 from coilmq.util import frames
 from coilmq.util.concurrency import synchronized
@@ -120,7 +121,7 @@ class TopicManager:
             frame.headers["subscription"] = subscriber.id
             try:
                 subscriber.connection.send_frame(frame)
-            except:
+            except:  # noqa: E722
                 self.log.exception(
                     "Error delivering message to subscriber %s; client will be disconnected.", subscriber)
                 # We queue for deletion so we are not modifying the topics dict

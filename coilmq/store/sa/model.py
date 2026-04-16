@@ -1,6 +1,6 @@
 """Definition of the data model required for SA storage backend."""
 
-from sqlalchemy import Table, Column, BigInteger, String, PickleType, DateTime
+from sqlalchemy import BigInteger, Column, DateTime, PickleType, String, Table
 from sqlalchemy.sql import func
 
 from coilmq.store.sa import meta

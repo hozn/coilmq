@@ -1,5 +1,4 @@
 """Queue storage tests."""
-import unittest
 import uuid
 
 from coilmq.util import frames

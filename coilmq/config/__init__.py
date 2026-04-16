@@ -10,13 +10,11 @@ function during application initialization::
     config.getint('listen_port')
 
 """
-import os.path
 import importlib
 import logging
 import logging.config
-
+import os.path
 from configparser import ConfigParser
-
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -52,8 +50,6 @@ def init_config(config_file=None):
 
     .. seealso:: :func:`init_logging`
     """
-    global config
-
     if config_file and os.path.exists(config_file):
         read = config.read([config_file])
         if not read:
@@ -94,7 +90,7 @@ def init_logging(logfile=None, loglevel=logging.INFO, configfile=None):
         logging.config.fileConfig(configfile)
         if logfile:
             msg = "Config file conflicts with explicitly specified logfile; config file takes precedence."
-            logging.warning(msg)
+            logging.warning(msg)  # noqa: LOG015
     else:
         log_format = '%(asctime)s [%(threadName)s] %(name)s - %(levelname)s - %(message)s'
         if logfile:

@@ -1,11 +1,8 @@
-#!python
 """Entrypoint for starting the application."""
-import os
 import logging
-
-
-import time
+import os
 import threading
+import time
 import warnings
 from contextlib import contextmanager
 
@@ -19,11 +16,12 @@ else:
 
 import click
 
-from coilmq.config import config as global_config, init_config, init_logging, resolve_name
+from coilmq.config import config as global_config
+from coilmq.config import init_config, init_logging, resolve_name
 from coilmq.protocol import STOMP11
-from coilmq.topic import TopicManager
 from coilmq.queue import QueueManager
 from coilmq.server.socket_server import ThreadedStompServer
+from coilmq.topic import TopicManager
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -59,7 +57,6 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
     :returns: The configured StompServer.
     :rtype: coilmq.server.socket_server.StompServer
     """
-    global global_config
     if not config:
         config = global_config
 
@@ -106,8 +103,6 @@ def context_serve(context, configfile, listen_addr, listen_port, logfile,
 
     .. seealso:: :func:`server_from_config`
     """
-    global global_config
-
     server = None
     try:
         with context:

@@ -1,10 +1,10 @@
 """Queue storage module that uses SQLAlchemy to access queue information and frames in a database."""
-from sqlalchemy import engine_from_config, MetaData
+from sqlalchemy import MetaData, engine_from_config
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.sql import select, func, distinct
+from sqlalchemy.sql import distinct, func, select
 
-from coilmq.store import QueueStore
 from coilmq.config import config
+from coilmq.store import QueueStore
 from coilmq.store.sa import meta, model
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']

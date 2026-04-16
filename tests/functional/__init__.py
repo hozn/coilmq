@@ -1,23 +1,23 @@
 """Functional tests to test full stack (but not actual socket layer)."""
-import sys
-import time
-import unittest
 import logging
-import socket
 import select
+import socket
 import threading
+import unittest
+from queue import Queue
 
-from queue import Queue, Empty
-
-from coilmq.util.frames import Frame, FrameBuffer
+from coilmq.protocol import STOMP10
 from coilmq.queue import QueueManager
+from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
+from coilmq.server.socket_server import (
+    StompRequestHandler,
+    StompServer,
+    ThreadedStompServer,
+)
+from coilmq.store.memory import MemoryQueue
 from coilmq.topic import TopicManager
 from coilmq.util import frames
-from coilmq.server.socket_server import StompServer, StompRequestHandler, ThreadedStompServer
-from coilmq.store.memory import MemoryQueue
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
-from coilmq.protocol import STOMP10
-
+from coilmq.util.frames import Frame, FrameBuffer
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -198,7 +198,7 @@ class TestStompClient:
 
     def _read_loop(self):
         while self.connected:
-            r, w, e = select.select([self.sock], [], [], 0.1)
+            r, *_ = select.select([self.sock], [], [], 0.1)
             if r:
                 data = self.sock.recv(1024)
                 self.buffer.append(data)

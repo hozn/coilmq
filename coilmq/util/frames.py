@@ -1,7 +1,7 @@
-import re
-import logging
-from collections import OrderedDict
 import io
+import logging
+import re
+from collections import OrderedDict
 from itertools import starmap
 
 SEND = 'SEND'
@@ -37,16 +37,16 @@ class EmptyBuffer(Exception):
     """The buffer is empty."""
 
 
-def parse_headers(buff):
+def parse_headers(buff: io.BytesIO):
     """Parses buffer and returns command and headers as strings.
 
     :param buff: Buffer containing frame
     :type buff: io.BytesIO
     """
-    preamble_lines = list(map(
-        lambda x: x.decode(),
-        iter(lambda: buff.readline().strip(), b''))
-    )
+    preamble_lines = [
+        line.decode()
+        for line in iter(lambda: buff.readline().strip(), b'')
+    ]
     if not preamble_lines:
         raise EmptyBuffer()
     return preamble_lines[0], OrderedDict([l.split(':') for l in preamble_lines[1:]])
@@ -172,7 +172,7 @@ class HeaderValue:
         :type calculator: callable
         """
         if not callable(calculator):
-            raise ValueError("Non-callable param: {calculator}")
+            raise TypeError("Non-callable param: {calculator}")
         self.calc = calculator
 
     def __get__(self, obj, objtype):

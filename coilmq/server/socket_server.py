@@ -3,11 +3,10 @@ import logging
 import threading
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 
-
-from coilmq.util.frames import FrameBuffer
-from coilmq.server import StompConnection
 from coilmq.engine import StompEngine
 from coilmq.exception import ClientDisconnected
+from coilmq.server import StompConnection
+from coilmq.util.frames import FrameBuffer
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

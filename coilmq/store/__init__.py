@@ -113,7 +113,7 @@ class QueueStore(abc.ABC):
         """
         raise NotImplementedError
 
-    @synchronized(lock)  # noqa: B027
+    @synchronized(lock)
     def close(self):
         """May be implemented to perform any necessary cleanup operations when store is closed."""
 

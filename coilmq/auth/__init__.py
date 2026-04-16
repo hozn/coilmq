@@ -4,6 +4,7 @@ Because authentication providers are instantiated and configured in the applicat
 (and not in the request handler), the authenticator implementations must be thread-safe.
 """
 import abc
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");

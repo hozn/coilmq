@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 from coilmq.protocol import STOMP11
 from coilmq.util import frames
-from coilmq.util.frames import Frame, ErrorFrame
+from coilmq.util.frames import ErrorFrame, Frame
 from tests.protocol import ProtocolBaseTestCase
 
 
@@ -15,7 +15,6 @@ class STOMP11TestCase(ProtocolBaseTestCase):
     @contextmanager
     def with_heartbeat(self, protocol):
         try:
-            old = self.engine.protocol
             self.engine.protocol = protocol
             yield
         finally:

@@ -1,8 +1,8 @@
 """Tools to facilitate developing thread-safe components."""
 
 import abc
-import threading
 import functools
+import threading
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

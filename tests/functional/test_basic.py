@@ -2,10 +2,11 @@
 scheduler implementations.
 """
 import zlib
+from queue import Empty as QueueEmpty
 
 from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.util import frames
-from tests.functional import BaseFunctionalTestCase, Empty as QueueEmpty
+from tests.functional import BaseFunctionalTestCase
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -27,7 +28,7 @@ class BasicTest(BaseFunctionalTestCase):
 
     def test_connect(self):
         """Test a basic (non-auth) connection."""
-        c = self._new_client()
+        self._new_client()
 
     def test_connect_auth(self):
         """Test connecting when auth is required."""
@@ -54,7 +55,7 @@ class BasicTest(BaseFunctionalTestCase):
     def test_send_receipt(self):
         c1 = self._new_client()
         c1.send('/topic/foo', 'A message', extra_headers={'receipt': 'FOOBAR'})
-        r = c1.received_frames.get(timeout=1)
+        c1.received_frames.get(timeout=1)
 
     def test_subscribe(self):
         c1 = self._new_client()

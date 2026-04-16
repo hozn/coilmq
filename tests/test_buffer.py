@@ -1,12 +1,18 @@
 """Test the FrameBuffer utility class."""
+import io
 import unittest
 import uuid
-import io
-import zlib
 from collections import OrderedDict
 
-from coilmq.util.frames import Frame, FrameBuffer, parse_headers, parse_body, IncompleteFrame, BodyNotTerminated
 from coilmq.util import frames
+from coilmq.util.frames import (
+    BodyNotTerminated,
+    Frame,
+    FrameBuffer,
+    IncompleteFrame,
+    parse_body,
+    parse_headers,
+)
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2010 Hans Lellelid"
@@ -112,7 +118,7 @@ class FrameTestCase(unittest.TestCase):
         buff = io.BytesIO(
             b'CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00')
         cmd, headers = parse_headers(buff)
-        body = parse_body(buff, headers)
+        parse_body(buff, headers)
 
         self.assertIsInstance(cmd, str)
         self.assertEqual(cmd, frames.CONNECT)
@@ -133,7 +139,7 @@ class FrameTestCase(unittest.TestCase):
     def test_parse_frame_empty_body(self):
         buff = io.BytesIO(
             b'SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00fdffdfd')
-        f = Frame.from_buffer(buff)
+        Frame.from_buffer(buff)
 
     def test_pack(self):
         frame = Frame(frames.CONNECT, OrderedDict(foo='bar'), 'body')

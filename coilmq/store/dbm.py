@@ -7,18 +7,17 @@ Because of how the :py:mod:`shelve` module works (and how we're using it) and ca
 documentation this is likely a BAD storage module to use if you are expecting to traffic in
 large frames.
 """
-import threading
 import os
 import os.path
 import shelve
+import threading
 from collections import deque
+from configparser import NoOptionError
 from datetime import datetime, timedelta
-from configparser import ConfigParser, NoOptionError
 
-
-from coilmq.store import QueueStore
 from coilmq.config import config
 from coilmq.exception import ConfigError
+from coilmq.store import QueueStore
 from coilmq.util.concurrency import synchronized
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -118,14 +117,14 @@ class DbmQueue(QueueStore):
         # The queue metadata stores mutable (dict) objects.  For this reason we set
         # writeback=True and rely on the sync() method to keep the cache & disk
         # in-sync.
-        self.queue_metadata = shelve.open(os.path.join(
+        self.queue_metadata = shelve.open(os.path.join(  # noqa: SIM115
             self.data_dir, 'metadata'), writeback=True)
 
         # Since we do not need mutable objects on the frame stores (we don't modify them, we just
         # put/get values), we do NOT use writeback=True here.  This should also conserve on memory
         # usage, since apparently that can get hefty with the caching when
         # writeback=True.
-        self.frame_store = shelve.open(os.path.join(
+        self.frame_store = shelve.open(os.path.join(  # noqa: SIM115
             self.data_dir, 'frames'), writeback=False)
 
     @synchronized(lock)

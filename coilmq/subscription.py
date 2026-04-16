@@ -1,7 +1,8 @@
 import itertools
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Any
+
 from coilmq.server import StompConnection
 
 DEFAULT_SUBSCRIPTION_ID = 0

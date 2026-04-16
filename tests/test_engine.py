@@ -4,7 +4,12 @@ import unittest
 from coilmq.engine import StompEngine
 from coilmq.util import frames
 from coilmq.util.frames import Frame, ReceiptFrame
-from tests.mock import (MockAuthenticator, MockConnection, MockQueueManager, MockTopicManager)
+from tests.mock import (
+    MockAuthenticator,
+    MockConnection,
+    MockQueueManager,
+    MockTopicManager,
+)
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"

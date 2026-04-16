@@ -4,9 +4,7 @@ import unittest
 
 from sqlalchemy import create_engine
 
-from coilmq.store.sa import SAQueue
-from coilmq.store.sa import init_model
-from coilmq.store.sa import meta, model
+from coilmq.store.sa import SAQueue, init_model, meta, model
 from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest

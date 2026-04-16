@@ -1,12 +1,15 @@
-import abc
-import uuid
-import socket
-import datetime
+from __future__ import annotations
 
-from coilmq.exception import ProtocolError, AuthError
+import abc
+import datetime
+import socket
+import uuid
+from typing import ClassVar
+
+from coilmq.exception import AuthError, ProtocolError
 from coilmq.util import frames
-from coilmq.util.frames import Frame, ErrorFrame, ReceiptFrame
 from coilmq.util.concurrency import CoilThreadingTimer
+from coilmq.util.frames import ErrorFrame, Frame, ReceiptFrame
 
 
 class STOMP(abc.ABC):
@@ -225,7 +228,7 @@ class STOMP10(STOMP):
 
 class STOMP11(STOMP10):
 
-    SUPPORTED_VERSIONS = {'1.0', '1.1'}
+    SUPPORTED_VERSIONS: ClassVar[set[str]] = {'1.0', '1.1'}
 
     def __init__(self, engine, send_heartbeat_interval=100, receive_heartbeat_interval=100, *args, **kwargs):
         super().__init__(engine)
@@ -333,7 +336,7 @@ class STOMP11(STOMP10):
 
 class STOMP12(STOMP11):
 
-    SUPPORTED_VERSIONS = STOMP11.SUPPORTED_VERSIONS.union({'1.2', })
+    SUPPORTED_VERSIONS: ClassVar[set[str]] = STOMP11.SUPPORTED_VERSIONS.union({'1.2', })
 
     def connect(self, frame, response=None):
         host = frame.headers.get('host')

@@ -1,6 +1,6 @@
-import unittest
-import time
 import threading
+import time
+import unittest
 
 from coilmq.util.concurrency import CoilThreadingTimer
 

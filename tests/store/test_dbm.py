@@ -12,7 +12,6 @@ from coilmq.util import frames
 from coilmq.util.frames import Frame
 from tests.store import CommonQueueTest
 
-
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
