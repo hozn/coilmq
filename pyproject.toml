@@ -80,6 +80,14 @@ packages = [ "coilmq" ]
 
 [tool.setuptools_scm]
 
+[tool.ruff]
+line-length = 88
+preview = true
+lint.ignore = [
+    "DTZ001", # call-datetime-without-tzinfo
+    "DTZ005", # call-datetime-now-without-tzinfo
+]
+
 [tool.pyproject-fmt]
 indent = 4
 keep_full_version = true
