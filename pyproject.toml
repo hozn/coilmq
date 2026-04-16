@@ -88,14 +88,14 @@ keep_full_version = true
 ini_options.addopts = "--doctest-modules --cov=coilmq --cov=tests"
 ini_options.python_files = "*.py"
 
-[tool.coverage.report]
-exclude_also = [
+[tool.coverage]
+report.exclude_also = [
     "def __repr__",
+    "if __name__ == '__main__':",
+    "if 0:",
     "if self.debug:",
     "if settings.DEBUG",
     "raise AssertionError",
     "raise NotImplementedError",
     "raise NotImplementedError()",
-    "if 0:",
-    "if __name__ == '__main__':",
 ]
