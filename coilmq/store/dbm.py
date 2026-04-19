@@ -119,10 +119,8 @@ class DbmQueue(QueueStore):
         # The queue metadata stores mutable (dict) objects.  For this reason we set
         # writeback=True and rely on the sync() method to keep the cache & disk
         # in-sync.
-        self.queue_metadata = shelve.open(
-            os.path.join(  # noqa: SIM115
-                self.data_dir, "metadata"
-            ),
+        self.queue_metadata = shelve.open(  # noqa: SIM115
+            os.path.join(self.data_dir, "metadata"),
             writeback=True,
         )
 
@@ -130,10 +128,8 @@ class DbmQueue(QueueStore):
         # put/get values), we do NOT use writeback=True here.  This should also conserve on memory
         # usage, since apparently that can get hefty with the caching when
         # writeback=True.
-        self.frame_store = shelve.open(
-            os.path.join(  # noqa: SIM115
-                self.data_dir, "frames"
-            ),
+        self.frame_store = shelve.open(  # noqa: SIM115
+            os.path.join(self.data_dir, "frames"),
             writeback=False,
         )
 
