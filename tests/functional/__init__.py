@@ -146,8 +146,6 @@ class StompClient:
         :param frame: The stomp frame to send.
         :type frame: coilmq.util.frames.Frame.
         """
-        if not self.connected:
-            raise RuntimeError("Not connected")
         self.sock.send(frame.pack())
 
     def _connect(self):
@@ -175,8 +173,6 @@ class StompClient:
         self.send_frame(Frame(frames.DISCONNECT))
 
     def close(self):
-        if not self.connected:
-            raise RuntimeError("Not connected")
         self.connected = False
         self.read_stopped.wait(timeout=0.5)
         self.sock.close()
