@@ -1,9 +1,12 @@
 """Test SQLAlchemy storage."""
 
 import datetime
+from typing import Generator
 
+import pytest
 from sqlalchemy import create_engine
 
+from coilmq.store import QueueStore
 from coilmq.store.sa import SAQueue, init_model, meta, model
 from coilmq.util import frames
 from coilmq.util.frames import Frame
@@ -24,30 +27,33 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
+@pytest.fixture
+def store() -> Generator[SAQueue, None, None]:
+    engine = create_engine("sqlite:///:memory:", echo=True)
+    init_model(engine)
+    store = SAQueue()
+    try:
+        yield store
+    finally:
+        store.close()
+
+
 class TestSAQueue(BaseQueueTests):
-    def setup_method(self, method):
-        engine = create_engine("sqlite:///:memory:", echo=True)
-        init_model(engine)
-        self.store = SAQueue()
-
-    def teardown_method(self, method):
-        meta.Session.remove()
-
-    def test_dequeue_order(self):
+    def test_dequeue_order(self, store: QueueStore) -> None:
         """Test the order that frames are returned by dequeue() method."""
         dest = "/queue/foo"
 
         frame1 = Frame(frames.MESSAGE, headers={"message-id": "id-1"}, body="message-1")
-        self.store.enqueue(dest, frame1)
+        store.enqueue(dest, frame1)
 
         frame2 = Frame(frames.MESSAGE, headers={"message-id": "id-2"}, body="message-2")
-        self.store.enqueue(dest, frame2)
+        store.enqueue(dest, frame2)
 
         frame3 = Frame(frames.MESSAGE, headers={"message-id": "id-3"}, body="message-3")
-        self.store.enqueue(dest, frame3)
+        store.enqueue(dest, frame3)
 
-        assert self.store.has_frames(dest)
-        assert self.store.size(dest) == 3
+        assert store.has_frames(dest)
+        assert store.size(dest) == 3
 
         # Perform some updates to change the expected order.
 
@@ -72,14 +78,14 @@ class TestSAQueue(BaseQueueTests):
         )
         sess.commit()
 
-        rframe1 = self.store.dequeue(dest)
+        rframe1 = store.dequeue(dest)
         assert frame3 == rframe1
 
-        rframe2 = self.store.dequeue(dest)
+        rframe2 = store.dequeue(dest)
         assert frame2 == rframe2
 
-        rframe3 = self.store.dequeue(dest)
+        rframe3 = store.dequeue(dest)
         assert frame1 == rframe3
 
-        assert self.store.has_frames(dest) == False
-        assert self.store.size(dest) == 0
+        assert store.has_frames(dest) == False
+        assert store.size(dest) == 0

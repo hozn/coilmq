@@ -1,13 +1,14 @@
 """Test DBM queue storage."""
 
-import shutil
-import tempfile
 import time
 import uuid
+from contextlib import closing
 from pathlib import Path
+from typing import Generator
 
 import pytest
 
+from coilmq.store import QueueStore
 from coilmq.store.dbm import DbmQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
@@ -28,105 +29,100 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
+@pytest.fixture
+def store(tmp_path: Path) -> Generator[QueueStore, None, None]:
+    with closing(DbmQueue(tmp_path)) as queue:
+        yield queue
+
+
 class TestDbmQueue(BaseQueueTests):
-    def setup_method(self, method):
-        self.data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
-        self.store = DbmQueue(self.data_dir)
-
-    def teardown_method(self, method):
-        self.store.close()
-        shutil.rmtree(self.data_dir)
-
-    def test_dequeue_identity(self):
+    def test_dequeue_identity(self, store: QueueStore) -> None:
         """Test the dequeue() method."""
         dest = "/queue/foo"
         frame = Frame(
             frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
         )
-        self.store.enqueue(dest, frame)
+        store.enqueue(dest, frame)
 
-        assert self.store.has_frames(dest)
-        assert self.store.size(dest) == 1
+        assert store.has_frames(dest)
+        assert store.size(dest) == 1
 
-        rframe = self.store.dequeue(dest)
+        rframe = store.dequeue(dest)
         assert frame == rframe
         assert frame is not rframe
 
-        assert not self.store.has_frames(dest)
-        assert self.store.size(dest) == 0
+        assert not store.has_frames(dest)
+        assert store.size(dest) == 0
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_checkpoint_ops(self, tmp_path: Path):
+    def test_sync_checkpoint_ops(self, tmp_path: Path) -> None:
         """Test a expected sync behavior with checkpoint_operations param."""
         max_ops = 5
-        store = DbmQueue(tmp_path, checkpoint_operations=max_ops)
-        dest = "/queue/foo"
+        with closing(DbmQueue(tmp_path, checkpoint_operations=max_ops)) as store:
+            dest = "/queue/foo"
 
-        for i in range(max_ops + 1):
+            for i in range(max_ops + 1):
+                frame = Frame(
+                    frames.MESSAGE,
+                    headers={"message-id": str(uuid.uuid4())},
+                    body=f"some data - {i}",
+                )
+                store.enqueue(dest, frame)
+
+            assert store.size(dest) == max_ops + 1
+
+            # No close()!
+
+            with closing(DbmQueue(tmp_path)) as store2:
+                assert store2.size(dest) == max_ops + 1
+
+    @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
+    def test_sync_checkpoint_timeout(self, tmp_path: Path) -> None:
+        """Test a expected sync behavior with checkpoint_timeout param."""
+        with closing(DbmQueue(tmp_path, checkpoint_timeout=0.5)) as store:
+            dest = "/queue/foo"
+
             frame = Frame(
                 frames.MESSAGE,
                 headers={"message-id": str(uuid.uuid4())},
-                body=f"some data - {i}",
+                body="some data -1",
             )
             store.enqueue(dest, frame)
 
-        assert store.size(dest) == max_ops + 1
+            time.sleep(0.5)
 
-        # No close()!
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body="some data -2",
+            )
+            store.enqueue(dest, frame)
 
-        store2 = DbmQueue(tmp_path)
-        assert store2.size(dest) == max_ops + 1
+            assert store.size(dest) == 2
 
-    @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_checkpoint_timeout(self, tmp_path: Path):
-        """Test a expected sync behavior with checkpoint_timeout param."""
-        store = DbmQueue(tmp_path, checkpoint_timeout=0.5)
-        dest = "/queue/foo"
+            # No close()!
 
-        frame = Frame(
-            frames.MESSAGE,
-            headers={"message-id": str(uuid.uuid4())},
-            body="some data -1",
-        )
-        store.enqueue(dest, frame)
+            with closing(DbmQueue(tmp_path)) as store2:
+                assert store2.size(dest) == 2
 
-        time.sleep(0.5)
-
-        frame = Frame(
-            frames.MESSAGE,
-            headers={"message-id": str(uuid.uuid4())},
-            body="some data -2",
-        )
-        store.enqueue(dest, frame)
-
-        assert store.size(dest) == 2
-
-        # No close()!
-
-        store2 = DbmQueue(tmp_path)
-        assert store2.size(dest) == 2
-
-    def test_sync_close(self, tmp_path: Path):
+    def test_sync_close(self, tmp_path: Path) -> None:
         """Test a expected sync behavior of close() call."""
-        store = DbmQueue(tmp_path)
-        dest = "/queue/foo"
-        frame = Frame(
-            frames.MESSAGE,
-            headers={"message-id": str(uuid.uuid4())},
-            body="some data",
-        )
-        store.enqueue(dest, frame)
-        assert store.size(dest) == 1
+        with closing(DbmQueue(tmp_path)) as store:
+            dest = "/queue/foo"
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body="some data",
+            )
+            store.enqueue(dest, frame)
+            assert store.size(dest) == 1
 
-        store.close()
-
-        store2 = DbmQueue(tmp_path)
-        assert store2.size(dest) == 1
+        with closing(DbmQueue(tmp_path)) as store2:
+            assert store2.size(dest) == 1
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_loss(self, tmp_path: Path):
+    def test_sync_loss(self, tmp_path: Path, store: DbmQueue) -> None:
         """Test metadata loss behavior."""
-        store = DbmQueue(tmp_path)
         dest = "/queue/foo"
         frame = Frame(
             frames.MESSAGE,
@@ -136,5 +132,5 @@ class TestDbmQueue(BaseQueueTests):
         store.enqueue(dest, frame)
         assert store.size(dest) == 1
 
-        store2 = DbmQueue(tmp_path)
-        assert store2.size(dest) == 0
+        with closing(DbmQueue(tmp_path)) as store2:
+            assert store2.size(dest) == 0
