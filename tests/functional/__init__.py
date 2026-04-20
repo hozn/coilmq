@@ -84,14 +84,14 @@ class FunctionalTestsFixture:
         del self.server_thread
 
     def _new_client(self, connect=True):
-        """Get a new :class:`TestStompClient` connected to our test server.
+        """Get a new :class:`StompClient` connected to our test server.
 
-        The client will also be registered for close in the tearDown method.
+        The client will also be registered for close during teardown.
 
         :param connect: Whether to issue the CONNECT command.
         :type connect: bool
 
-        :rtype: TestStompClient
+        :rtype: StompClient
         """
         client = StompClient(self.server_address)
         self.clients.append(client)
