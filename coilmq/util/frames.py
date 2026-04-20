@@ -9,6 +9,7 @@ CONNECT = "CONNECT"
 MESSAGE = "MESSAGE"
 ERROR = "ERROR"
 CONNECTED = "CONNECTED"
+RECEIPT = "RECEIPT"
 SUBSCRIBE = "SUBSCRIBE"
 UNSUBSCRIBE = "UNSUBSCRIBE"
 BEGIN = "BEGIN"
@@ -229,7 +230,7 @@ class ReceiptFrame(Frame):
         """:param receipt: The receipt message ID.
         :type receipt: str
         """
-        super().__init__("RECEIPT", headers=extra_headers or {})
+        super().__init__(RECEIPT, headers=extra_headers or {})
         self.headers["receipt-id"] = receipt
 
 

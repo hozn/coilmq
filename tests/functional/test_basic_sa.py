@@ -5,10 +5,9 @@ scheduler implementations.
 import os
 import os.path
 
+import pytest
 from sqlalchemy import engine_from_config
 
-from coilmq.queue import QueueManager
-from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 from coilmq.store.sa import SAQueue, init_model
 from tests.functional.test_basic import (
     TestServerWithDefaultClasses as _TestServerWithDefaultClasses,
@@ -29,20 +28,17 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
+@pytest.fixture
+def store() -> SAQueue:
+    """Returns the :func:`server` fixture's ``store`` argument."""
+    data_dir = os.path.join(os.getcwd(), "data")
+    os.makedirs(data_dir, exist_ok=True)
+    configuration = {"qstore.sqlalchemy.url": "sqlite:///data/coilmq.db"}
+    engine = engine_from_config(configuration, "qstore.sqlalchemy.")
+    init_model(engine, drop=True)
+
+    return SAQueue()
+
+
 class TestServerWithSAQueue(_TestServerWithDefaultClasses):
     """Run all the tests from :class:`TestServerWithDefaultClasses` using a :class:`SAQueue` store."""
-
-    def _queuemanager(self):
-        """Returns the configured :class:`QueueManager` instance to use."""
-        data_dir = os.path.join(os.getcwd(), "data")
-        os.makedirs(data_dir, exist_ok=True)
-        configuration = {"qstore.sqlalchemy.url": "sqlite:///data/coilmq.db"}
-        engine = engine_from_config(configuration, "qstore.sqlalchemy.")
-        init_model(engine, drop=True)
-        store = SAQueue()
-
-        return QueueManager(
-            store=store,
-            subscriber_scheduler=FavorReliableSubscriberScheduler(),
-            queue_scheduler=RandomQueueScheduler(),
-        )

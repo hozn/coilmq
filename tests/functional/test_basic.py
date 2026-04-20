@@ -2,14 +2,18 @@
 scheduler implementations.
 """
 
+from __future__ import annotations
+
 import zlib
-from queue import Empty as QueueEmpty
+from queue import Empty
 
 import pytest
 
 from coilmq.auth.simple import SimpleAuthenticator
+from coilmq.server.socket_server import ThreadedStompServer
+from coilmq.store.memory import MemoryQueue
 from coilmq.util import frames
-from tests.functional import FunctionalTestsFixture
+from tests.functional import Client
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -26,113 +30,150 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class TestServerWithDefaultClasses(FunctionalTestsFixture):
+@pytest.fixture
+def store() -> MemoryQueue:
+    """Returns the :func:`server` fixture's ``store`` argument."""
+    return MemoryQueue()
+
+
+class TestServerWithDefaultClasses:
     """Functional tests using default storage engine, etc."""
 
-    def test_connect(self):
+    def test_connect(self, c1: Client) -> None:
         """Test a basic (non-auth) connection."""
-        self._new_client()
-
-    def test_connect_auth(self):
-        """Test connecting when auth is required."""
-        self.server.authenticator = SimpleAuthenticator(store={"user": "pass"})
-
-        c1 = self._new_client(connect=False)
         c1.connect()
-        r = c1.received_frames.get(timeout=1)
-        assert r.cmd == frames.ERROR
-        assert b"Auth" in r.body
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
 
-        c2 = self._new_client(connect=False)
+    @pytest.mark.parametrize(
+        "server",
+        [(SimpleAuthenticator(store={"user": "pass"}))],
+        indirect=["server"],
+    )
+    def test_connect_auth(
+        self,
+        server: ThreadedStompServer,
+        c1: Client,
+        c2: Client,
+        c3: Client,
+    ) -> None:
+        """Test connecting when auth is required."""
+        c1.connect()
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.ERROR
+        assert b"Auth" in frame.body
+
         c2.connect(headers={"login": "user", "passcode": "pass"})
-        r2 = c2.received_frames.get(timeout=1)
+        frame = c2.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
 
-        assert r2.cmd == frames.CONNECTED
-
-        c3 = self._new_client(connect=False)
         c3.connect(headers={"login": "user", "passcode": "pass-invalid"})
-        r3 = c3.received_frames.get(timeout=1)
+        frame = c3.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.ERROR
 
-        assert r3.cmd == frames.ERROR
+    def test_send_receipt(self, c1: Client) -> None:
+        c1.connect()
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
 
-    def test_send_receipt(self):
-        c1 = self._new_client()
         c1.send("/topic/foo", "A message", extra_headers={"receipt": "FOOBAR"})
-        c1.received_frames.get(timeout=1)
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.RECEIPT
 
-    def test_subscribe(self):
-        c1 = self._new_client()
+    def test_subscribe(self, c1: Client, c2: Client) -> None:
+        c1.connect()
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
+        c2.connect()
+        frame = c2.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
         c1.subscribe("/queue/foo")
 
-        c2 = self._new_client()
         c2.subscribe("/queue/foo2")
 
         c2.send("/queue/foo", "A message")
         assert c2.received_frames.qsize() == 0
 
-        r = c1.received_frames.get()
-        assert r.cmd == frames.MESSAGE
-        assert r.body == b"A message"
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.MESSAGE
+        assert frame.body == b"A message"
 
-    def test_disconnect(self):
+    def test_disconnect(self, c1: Client) -> None:
         """Test the 'polite' disconnect."""
-        c1 = self._new_client()
         c1.connect()
-        response = c1.received_frames.get(timeout=0.5)
-        assert response.cmd == frames.CONNECTED
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
         c1.disconnect()
-        with pytest.raises(QueueEmpty):
-            c1.received_frames.get(block=False)
+        with pytest.raises(Empty):
+            c1.received_frames.get(timeout=0.5)
 
-    def test_send_binary(self):
+    def test_send_binary(self, c1: Client, c2: Client) -> None:
         """Test sending binary data."""
-        c1 = self._new_client()
+        c1.connect()
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
+        c2.connect()
+        frame = c2.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
         c1.subscribe("/queue/foo")
 
         # Read some random binary data.
         # (This should be cross-platform.)
         message = b"This is the message that will be compressed."
-        c2 = self._new_client()
         c2.send("/queue/foo", zlib.compress(message))
 
-        res = c1.received_frames.get()
-        assert res.cmd == frames.MESSAGE
-        assert zlib.decompress(res.body) == message
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.MESSAGE
+        assert zlib.decompress(frame.body) == message
 
-    def test_send_utf8(self):
+    def test_send_utf8(self, c1: Client, c2: Client) -> None:
         """Test sending utf-8-encoded strings."""
-        c1 = self._new_client()
+        c1.connect()
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
+        c2.connect()
+        frame = c2.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
         c1.subscribe("/queue/foo")
 
         unicodemsg = "我能吞下玻璃而不伤身体"
         utf8msg = unicodemsg.encode("utf-8")
 
-        c2 = self._new_client()
-
         c2.send("/queue/foo", utf8msg)
 
-        res = c1.received_frames.get()
-        assert res.cmd == frames.MESSAGE
-        assert res.body == utf8msg
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.MESSAGE
+        assert frame.body == utf8msg
 
-    def test_send_large_message(self):
+    def test_send_large_message(self, c1: Client, c2: Client) -> None:
         """Test sending a large message after a short one."""
-        c1 = self._new_client()
+        c1.connect()
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
+        c2.connect()
+        frame = c2.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+
         c1.subscribe("/queue/foo")
 
         shortmessage = b"x"
         longmessage = b"y" * 1024 * 16
 
-        c2 = self._new_client()
-
         c2.send("/queue/foo", shortmessage)
 
-        res = c1.received_frames.get()
-        assert res.cmd == frames.MESSAGE
-        assert res.body == shortmessage
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.MESSAGE
+        assert frame.body == shortmessage
 
         c2.send("/queue/foo", longmessage)
 
-        res2 = c1.received_frames.get()
-        assert res2.cmd == frames.MESSAGE
-        assert res2.body == longmessage
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.MESSAGE
+        assert frame.body == longmessage
