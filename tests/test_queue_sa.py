@@ -34,8 +34,7 @@ class TestQueueManagerSAQueue(_TestQueueManager):
         :rtype: QueueStore
         """
         data_dir = os.path.join(os.getcwd(), "data")
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
+        os.makedirs(data_dir, exist_ok=True)
 
         configuration = {"qstore.sqlalchemy.url": "sqlite:///data/coilmq.db"}
         engine = engine_from_config(configuration, "qstore.sqlalchemy.")
