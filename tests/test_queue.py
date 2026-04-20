@@ -1,7 +1,10 @@
 """Tests for queue-related classes."""
 
 import unittest
+import re
 import uuid
+
+import pytest
 
 from coilmq.queue import QueueManager
 from coilmq.store.memory import MemoryQueue
@@ -46,7 +49,7 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame(frames.SEND, headers={"destination": dest}, body="Empty")
         self.qm.send(f)
 
-        self.assertTrue(bool(self.store.frames(dest)))
+        assert bool(self.store.frames(dest))
 
     def test_subscribe(self):
         """Test subscribing a connection to the queue."""
@@ -56,8 +59,8 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.qm.send(f)
 
-        self.assertEqual(len(self.conn.frames), 1)
-        self.assertEqual(self.conn.frames[0], f)
+        assert len(self.conn.frames) == 1
+        assert self.conn.frames[0] == f
 
     def test_unsubscribe(self):
         """Test unsubscribing a connection from the queue."""
@@ -67,15 +70,15 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.qm.send(f)
 
-        self.assertEqual(len(self.conn.frames), 1)
-        self.assertEqual(self.conn.frames[0], f)
+        assert len(self.conn.frames) == 1
+        assert self.conn.frames[0] == f
 
         self.qm.unsubscribe(self.conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
         self.qm.send(f)
 
-        self.assertEqual(len(self.conn.frames), 1)
-        self.assertEqual(len(self.store.frames(dest)), 1)
+        assert len(self.conn.frames) == 1
+        assert len(self.store.frames(dest)) == 1
 
     def test_send_simple(self):
         """Test a basic send command."""
@@ -84,12 +87,12 @@ class QueueManagerTest(unittest.TestCase):
         f = Frame(frames.SEND, headers={"destination": dest}, body="Empty")
         self.qm.send(f)
 
-        self.assertIn(dest, self.store.destinations())
-        self.assertEqual(len(self.store.frames(dest)), 1)
+        assert dest in self.store.destinations()
+        assert len(self.store.frames(dest)) == 1
 
         # Assert some side-effects
-        self.assertIn("message-id", f.headers)
-        self.assertEqual(f.cmd, frames.MESSAGE)
+        assert "message-id" in f.headers
+        assert f.cmd == frames.MESSAGE
 
     def test_send_err(self):
         """Test sending a message when delivery results in error."""
@@ -107,11 +110,8 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.subscribe(conn, dest)
 
         f = Frame(frames.SEND, headers={"destination": dest}, body="Empty")
-        try:
+        with pytest.raises(RuntimeError, match=re.escape("Error sending data.")):
             self.qm.send(f)
-            self.fail("Expected failure when there was an error sending.")
-        except RuntimeError:
-            pass
 
     def test_send_backlog_err_reliable(self):
         """Test errors when sending backlog to reliable subscriber."""
@@ -128,21 +128,18 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.send(f)
 
         conn = ExcThrowingConn()
-        try:
+        with pytest.raises(RuntimeError, match=re.escape("Error sending data.")):
             self.qm.subscribe(conn, dest)
-            self.fail("Expected error when sending backlog.")
-        except RuntimeError:
-            pass
 
         # The message will have been requeued at this point, so add a valid
         # subscriber
 
         self.qm.subscribe(self.conn, dest)
 
-        self.assertEqual(len(self.conn.frames), 1, "Expected frame to be delivered")
+        assert len(self.conn.frames) == 1, "Expected frame to be delivered"
         subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
-        self.assertEqual(self.conn.frames[0], f)
+        assert subscription == 0
+        assert self.conn.frames[0] == f
 
     def test_send_backlog_err_unreliable(self):
         """Test errors when sending backlog to reliable subscriber."""
@@ -162,23 +159,20 @@ class QueueManagerTest(unittest.TestCase):
         self.qm.send(f2)
 
         conn = ExcThrowingConn()
-        try:
+        with pytest.raises(RuntimeError, match=re.escape("Error sending data.")):
             self.qm.subscribe(conn, dest)
-            self.fail("Expected error when sending backlog.")
-        except RuntimeError:
-            pass
 
         # The message will have been requeued at this point, so add a valid
         # subscriber
 
         self.qm.subscribe(self.conn, dest)
 
-        self.assertEqual(len(self.conn.frames), 2, "Expected frame to be delivered")
+        assert len(self.conn.frames) == 2, "Expected frame to be delivered"
         for frame in self.conn.frames:
             subscription = frame.headers.pop("subscription", None)
-            self.assertEqual(subscription, 0)
+            assert subscription == 0
 
-        self.assertListEqual(list(self.conn.frames), [f2, f])
+        assert list(self.conn.frames) == [f2, f]
 
     def test_send_reliableFirst(self):
         """Test that messages are prioritized to reliable subscribers.
@@ -203,8 +197,8 @@ class QueueManagerTest(unittest.TestCase):
         )
         self.qm.send(f)
 
-        self.assertEqual(len(conn1.frames), 1)
-        self.assertEqual(len(conn2.frames), 0)
+        assert len(conn1.frames) == 1
+        assert len(conn2.frames) == 0
 
     def test_clear_transaction_frames(self):
         """Test the clearing of transaction ACK frames."""
@@ -217,13 +211,13 @@ class QueueManagerTest(unittest.TestCase):
         )
         self.qm.send(f)
 
-        self.assertIn(dest, self.store.destinations())
+        assert dest in self.store.destinations()
 
         conn1 = MockConnection()
         conn1.reliable_subscriber = True
         self.qm.subscribe(conn1, dest)
 
-        self.assertEqual(len(conn1.frames), 1)
+        assert len(conn1.frames) == 1
 
         self.qm.clear_transaction_frames(conn1, "1")
 
@@ -240,15 +234,15 @@ class QueueManagerTest(unittest.TestCase):
         )
         self.qm.send(m1)
 
-        self.assertEqual(conn1.frames[0], m1)
+        assert conn1.frames[0] == m1
 
         m2 = Frame(
             frames.MESSAGE, headers={"destination": dest}, body="Message body (2)"
         )
         self.qm.send(m2)
 
-        self.assertEqual(len(conn1.frames), 1)
-        self.assertEqual(conn1.frames[0], m1)
+        assert len(conn1.frames) == 1
+        assert conn1.frames[0] == m1
 
         ack = Frame(
             frames.ACK,
@@ -256,10 +250,10 @@ class QueueManagerTest(unittest.TestCase):
         )
         self.qm.ack(conn1, ack)
 
-        self.assertEqual(len(conn1.frames), 2, "Expected 2 frames now, after ACK.")
+        assert len(conn1.frames) == 2, "Expected 2 frames now, after ACK."
         subscription = conn1.frames[1].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
-        self.assertEqual(conn1.frames[1], m2)
+        assert subscription == 0
+        assert conn1.frames[1] == m2
 
     def test_ack_transaction(self):
         """Test the reliable client (ACK) behavior with transactions."""
@@ -308,16 +302,16 @@ class QueueManagerTest(unittest.TestCase):
         )
         self.qm.ack(conn1, ack, transaction="abc")
 
-        self.assertEqual(len(conn1.frames), 2, "Expected 2 frames now, after ACK.")
+        assert len(conn1.frames) == 2, "Expected 2 frames now, after ACK."
         subscription = conn1.frames[1].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
-        self.assertEqual(conn1.frames[1], m2)
+        assert subscription == 0
+        assert conn1.frames[1] == m2
 
         self.qm.resend_transaction_frames(conn1, transaction="abc")
 
-        self.assertEqual(len(conn1.frames), 3, "Expected 3 frames after re-transmit.")
+        assert len(conn1.frames) == 3, "Expected 3 frames after re-transmit."
         pending = {s for s in self.qm._pending if s.connection == conn1}
-        self.assertEqual(len(pending), 1, "Expected 1 pending (waiting on ACK) frame.")
+        assert len(pending) == 1, "Expected 1 pending (waiting on ACK) frame."
 
     def test_disconnect_pending_frames(self):
         """Test a queue disconnect when there are pending frames."""
@@ -332,9 +326,9 @@ class QueueManagerTest(unittest.TestCase):
         )
         self.qm.send(m1)
 
-        self.assertEqual(conn1.frames[0], m1)
+        assert conn1.frames[0] == m1
 
         self.qm.disconnect(conn1)
 
         # Now we need to ensure that the frame we sent is re-queued.
-        self.assertEqual(len(self.store.frames(dest)), 1)
+        assert len(self.store.frames(dest)) == 1

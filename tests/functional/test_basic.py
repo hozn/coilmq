@@ -5,6 +5,8 @@ scheduler implementations.
 import zlib
 from queue import Empty as QueueEmpty
 
+import pytest
+
 from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.util import frames
 from tests.functional import BaseFunctionalTestCase
@@ -38,20 +40,20 @@ class BasicTest(BaseFunctionalTestCase):
         c1 = self._new_client(connect=False)
         c1.connect()
         r = c1.received_frames.get(timeout=1)
-        self.assertEqual(r.cmd, frames.ERROR)
-        self.assertIn(b"Auth", r.body)
+        assert r.cmd == frames.ERROR
+        assert b"Auth" in r.body
 
         c2 = self._new_client(connect=False)
         c2.connect(headers={"login": "user", "passcode": "pass"})
         r2 = c2.received_frames.get(timeout=1)
 
-        self.assertEqual(r2.cmd, frames.CONNECTED)
+        assert r2.cmd == frames.CONNECTED
 
         c3 = self._new_client(connect=False)
         c3.connect(headers={"login": "user", "passcode": "pass-invalid"})
         r3 = c3.received_frames.get(timeout=1)
 
-        self.assertEqual(r3.cmd, frames.ERROR)
+        assert r3.cmd == frames.ERROR
 
     def test_send_receipt(self):
         c1 = self._new_client()
@@ -66,20 +68,21 @@ class BasicTest(BaseFunctionalTestCase):
         c2.subscribe("/queue/foo2")
 
         c2.send("/queue/foo", "A message")
-        self.assertEqual(c2.received_frames.qsize(), 0)
+        assert c2.received_frames.qsize() == 0
 
         r = c1.received_frames.get()
-        self.assertEqual(r.cmd, frames.MESSAGE)
-        self.assertEqual(r.body, b"A message")
+        assert r.cmd == frames.MESSAGE
+        assert r.body == b"A message"
 
     def test_disconnect(self):
         """Test the 'polite' disconnect."""
         c1 = self._new_client()
         c1.connect()
         response = c1.received_frames.get(timeout=0.5)
-        self.assertEqual(response.cmd, frames.CONNECTED)
+        assert response.cmd == frames.CONNECTED
         c1.disconnect()
-        self.assertRaises(QueueEmpty, lambda: c1.received_frames.get(block=False))
+        with pytest.raises(QueueEmpty):
+            c1.received_frames.get(block=False)
 
     def test_send_binary(self):
         """Test sending binary data."""
@@ -93,8 +96,8 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send("/queue/foo", zlib.compress(message))
 
         res = c1.received_frames.get()
-        self.assertEqual(res.cmd, frames.MESSAGE)
-        self.assertEqual(zlib.decompress(res.body), message)
+        assert res.cmd == frames.MESSAGE
+        assert zlib.decompress(res.body) == message
 
     def test_send_utf8(self):
         """Test sending utf-8-encoded strings."""
@@ -109,8 +112,8 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send("/queue/foo", utf8msg)
 
         res = c1.received_frames.get()
-        self.assertEqual(res.cmd, frames.MESSAGE)
-        self.assertEqual(res.body, utf8msg)
+        assert res.cmd == frames.MESSAGE
+        assert res.body == utf8msg
 
     def test_send_large_message(self):
         """Test sending a large message after a short one."""
@@ -125,11 +128,11 @@ class BasicTest(BaseFunctionalTestCase):
         c2.send("/queue/foo", shortmessage)
 
         res = c1.received_frames.get()
-        self.assertEqual(res.cmd, frames.MESSAGE)
-        self.assertEqual(res.body, shortmessage)
+        assert res.cmd == frames.MESSAGE
+        assert res.body == shortmessage
 
         c2.send("/queue/foo", longmessage)
 
         res2 = c1.received_frames.get()
-        self.assertEqual(res2.cmd, frames.MESSAGE)
-        self.assertEqual(res2.body, longmessage)
+        assert res2.cmd == frames.MESSAGE
+        assert res2.body == longmessage

@@ -1,12 +1,15 @@
 """Tests for authenticators."""
 
 import unittest
+import re
 
 try:
     from importlib.resources import as_file, files
 except ImportError:
     from importlib_resources import as_file, files
 from io import StringIO
+
+import pytest
 
 from coilmq.auth.simple import SimpleAuthenticator
 
@@ -65,19 +68,17 @@ class SimpleAuthenticatorTest(unittest.TestCase):
     def test_from_configfile_invalid(self):
         """Test loading store with invalid file path."""
         auth = SimpleAuthenticator()
-        with as_file(files("tests.resources").joinpath("auth-invalid.ini")) as filename:
-            try:
+        with as_file(files("tests.resources").joinpath("auth-invalid.ini")) as filename:  # noqa: SIM117
+            with pytest.raises(
+                ValueError, match=r"Could not parse auth file: .+?/auth-invalid\.ini"
+            ):
                 auth.from_configfile(filename)
-                self.fail("Expected error with invalid filename.")
-            except ValueError:
-                pass
 
     def test_from_configfile_fp_invalid(self):
         """Test loading store with missing section in config."""
         fp = StringIO("[invalid]\nusername=password")
         auth = SimpleAuthenticator()
-        try:
+        with pytest.raises(
+            ValueError, match=re.escape("Config file contains no [auth] section.")
+        ):
             auth.from_configfile(fp)
-            self.fail("Expected error with missing section.")
-        except ValueError:
-            pass

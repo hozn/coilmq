@@ -23,4 +23,4 @@ class RedisStoreFactoryTestCase(unittest.TestCase):
         config.set("redis", "port", value="28222")
 
         store = make_redis_store(cfg=config)
-        self.assertIsInstance(store, RedisQueueStore)
+        assert isinstance(store, RedisQueueStore)

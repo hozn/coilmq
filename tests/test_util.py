@@ -26,9 +26,6 @@ class CoilTimerTestCase(unittest.TestCase):
         timer.schedule(period, counter)
         with timer:
             time.sleep(period * factor)
-        self.assertAlmostEqual(
-            counter.n_called,
-            factor,
-            delta=factor * 0.5,
-            msg="Should provide 50% accuracy",
+        assert abs(counter.n_called - factor) < factor * 0.5, (
+            "Should provide 50% accuracy"
         )

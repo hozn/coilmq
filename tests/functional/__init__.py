@@ -99,7 +99,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
         if connect:
             client.connect()
             res = client.received_frames.get(timeout=1)
-            self.assertEqual(res.cmd, frames.CONNECTED)
+            assert res.cmd == frames.CONNECTED
         return client
 
 

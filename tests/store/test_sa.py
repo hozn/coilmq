@@ -47,8 +47,8 @@ class SAQueueTest(CommonQueueTest, unittest.TestCase):
         frame3 = Frame(frames.MESSAGE, headers={"message-id": "id-3"}, body="message-3")
         self.store.enqueue(dest, frame3)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 3)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 3
 
         # Perform some updates to change the expected order.
 

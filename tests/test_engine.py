@@ -101,13 +101,13 @@ class EngineTest(unittest.TestCase):
             frames.SEND, headers={"destination": "/queue/foo"}, body="QUEUEMSG-BODY"
         )
         self.engine.process_frame(msg)
-        self.assertEqual(msg, self.qm.messages[-1])
+        assert msg == self.qm.messages[-1]
 
         msg = Frame(
             frames.SEND, headers={"destination": "/topic/foo"}, body="TOPICMSG-BODY"
         )
         self.engine.process_frame(msg)
-        self.assertEqual(msg, self.tm.messages[-1])
+        assert msg == self.tm.messages[-1]
 
         msg = Frame(frames.SEND, headers={}, body="TOPICMSG-BODY")
         self.engine.process_frame(msg)
@@ -125,8 +125,8 @@ class EngineTest(unittest.TestCase):
         )
         self.engine.process_frame(msg)
         rframe = self.conn.frames[-1]
-        self.assertIsInstance(rframe, ReceiptFrame)
-        self.assertEqual(receipt_id, rframe.headers.get("receipt-id"))
+        assert isinstance(rframe, ReceiptFrame)
+        assert receipt_id == rframe.headers.get("receipt-id")
 
         receipt_id = "FOOBAR2"
         self.engine.process_frame(
@@ -136,8 +136,8 @@ class EngineTest(unittest.TestCase):
             )
         )
         rframe = self.conn.frames[-1]
-        self.assertIsInstance(rframe, ReceiptFrame)
-        self.assertEqual(receipt_id, rframe.headers.get("receipt-id"))
+        assert isinstance(rframe, ReceiptFrame)
+        assert receipt_id == rframe.headers.get("receipt-id")
 
     def test_subscribe_ack(self):
         """Test subscribing to a queue with ack=true."""

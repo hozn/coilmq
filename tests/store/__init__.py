@@ -34,8 +34,8 @@ class CommonQueueTest:
         )
         self.store.enqueue(dest, frame)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 1)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 1
 
     def test_dequeue(self):
         """Test the dequeue() method."""
@@ -45,17 +45,17 @@ class CommonQueueTest:
         )
         self.store.enqueue(dest, frame)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 1)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 1
 
         rframe = self.store.dequeue(dest)
-        self.assertEqual(frame, rframe)
+        assert frame == rframe
 
         # We cannot generically assert whether or not frame and rframe are
         # the *same* object.
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not self.store.has_frames(dest)
+        assert self.store.size(dest) == 0
 
     def test_dequeue_specific(self):
         """Test that we only dequeue from the correct queue."""
@@ -77,17 +77,17 @@ class CommonQueueTest:
         )
         self.store.enqueue(dest, frame3)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 2)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 2
 
         rframe1 = self.store.dequeue(dest)
-        self.assertEqual(frame1, rframe1)
+        assert frame1 == rframe1
 
         rframe2 = self.store.dequeue(dest)
-        self.assertEqual(frame3, rframe2)
+        assert frame3 == rframe2
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not self.store.has_frames(dest)
+        assert self.store.size(dest) == 0
 
     def test_dequeue_order(self):
         """Test the order that frames are returned by dequeue() method."""
@@ -108,24 +108,24 @@ class CommonQueueTest:
         )
         self.store.enqueue(dest, frame3)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 3)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 3
 
         rframe1 = self.store.dequeue(dest)
-        self.assertEqual(frame1, rframe1)
+        assert frame1 == rframe1
 
         rframe2 = self.store.dequeue(dest)
-        self.assertEqual(frame2, rframe2)
+        assert frame2 == rframe2
 
         rframe3 = self.store.dequeue(dest)
-        self.assertEqual(frame3, rframe3)
+        assert frame3 == rframe3
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not self.store.has_frames(dest)
+        assert self.store.size(dest) == 0
 
     def test_dequeue_empty(self):
         """Test dequeue() with empty queue."""
-        self.assertIsNone(self.store.dequeue("/queue/nonexist"))
+        assert self.store.dequeue("/queue/nonexist") is None
 
-        self.assertFalse(self.store.has_frames("/queue/nonexist"))
-        self.assertEqual(self.store.size("/queue/nonexist"), 0)
+        assert not self.store.has_frames("/queue/nonexist")
+        assert self.store.size("/queue/nonexist") == 0

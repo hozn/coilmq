@@ -35,4 +35,4 @@ class QueueDeliverySchedulerTest(unittest.TestCase):
 
         choice = sched.choice((sub1, sub2), None)
 
-        self.assertIs(choice, sub1, "Expected reliable connection to be selected.")
+        assert choice is sub1, "Expected reliable connection to be selected."

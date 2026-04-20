@@ -35,13 +35,13 @@ class MemoryQueueTest(CommonQueueTest, unittest.TestCase):
         )
         self.store.enqueue(dest, frame)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 1)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 1
 
         rframe = self.store.dequeue(dest)
-        self.assertEqual(frame, rframe)
+        assert frame == rframe
         # Currently we expect these to be the /same/ object.
-        self.assertIs(frame, rframe)
+        assert frame is rframe
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not self.store.has_frames(dest)
+        assert self.store.size(dest) == 0

@@ -45,15 +45,15 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
         )
         self.store.enqueue(dest, frame)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 1)
+        assert self.store.has_frames(dest)
+        assert self.store.size(dest) == 1
 
         rframe = self.store.dequeue(dest)
-        self.assertEqual(frame, rframe)
-        self.assertIsNot(frame, rframe)
+        assert frame == rframe
+        assert frame is not rframe
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not self.store.has_frames(dest)
+        assert self.store.size(dest) == 0
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_ops(self):
@@ -72,12 +72,12 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
                 )
                 store.enqueue(dest, frame)
 
-            self.assertEqual(store.size(dest), max_ops + 1)
+            assert store.size(dest) == max_ops + 1
 
             # No close()!
 
             store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), max_ops + 1)
+            assert store2.size(dest) == max_ops + 1
 
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
@@ -107,12 +107,12 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             )
             store.enqueue(dest, frame)
 
-            self.assertEqual(store.size(dest), 2)
+            assert store.size(dest) == 2
 
             # No close()!
 
             store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), 2)
+            assert store2.size(dest) == 2
 
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
@@ -130,12 +130,12 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
                 body="some data",
             )
             store.enqueue(dest, frame)
-            self.assertEqual(store.size(dest), 1)
+            assert store.size(dest) == 1
 
             store.close()
 
             store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), 1)
+            assert store2.size(dest) == 1
 
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
@@ -154,10 +154,10 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
                 body="some data",
             )
             store.enqueue(dest, frame)
-            self.assertEqual(store.size(dest), 1)
+            assert store.size(dest) == 1
 
             store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), 0)
+            assert store2.size(dest) == 0
 
         except:
             shutil.rmtree(data_dir, ignore_errors=True)
