@@ -98,6 +98,8 @@ ini_options.python_files = "*.py"
 
 [tool.coverage]
 report.exclude_also = [
+    # ignore in-line stubs like ``def func() -> None: ...``:
+    "^\\s*(((async )?def .*?)?\\)(\\s*0>.*?)?:\\s*)?\\.\\.\\.\\s*(#|$)",
     "def __repr__",
     "if __name__ == '__main__':",
     "if 0:",

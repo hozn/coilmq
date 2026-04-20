@@ -79,8 +79,7 @@ class TestTopicManager:
             def send_frame(self, frame):
                 raise TimeoutError("timed out")
 
-            def reset(self):
-                pass
+            def reset(self): ...
 
         dest = "/topic/dest"
 
