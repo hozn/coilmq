@@ -4,10 +4,10 @@ from contextlib import contextmanager
 from coilmq.protocol import STOMP11
 from coilmq.util import frames
 from coilmq.util.frames import ErrorFrame, Frame
-from tests.protocol import ProtocolBaseTestCase
+from tests.protocol import ProtocolTestsFixture
 
 
-class STOMP11TestCase(ProtocolBaseTestCase):
+class TestSTOMP11(ProtocolTestsFixture):
     def get_protocol(self):
         return STOMP11
 

@@ -1,12 +1,11 @@
 """Test memory queue storage."""
 
-import unittest
 import uuid
 
 from coilmq.store.memory import MemoryQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
-from tests.store import CommonQueueTest
+from tests.store import BaseQueueTests
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -23,8 +22,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class MemoryQueueTest(CommonQueueTest, unittest.TestCase):
-    def setUp(self):
+class TestMemoryQueue(BaseQueueTests):
+    def setup_method(self, method):
         self.store = MemoryQueue()
 
     def test_dequeue_identity(self):

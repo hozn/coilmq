@@ -1,6 +1,5 @@
 """Tests for queue-related classes."""
 
-import unittest
 import re
 import uuid
 
@@ -27,8 +26,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class QueueManagerTest(unittest.TestCase):
-    """Test the QueueManager class."""
+class TestQueueManager:
+    """Test :class:`QueueManager`."""
 
     def _queuestore(self):
         """Returns the configured :class:`QueueStore` instance to use.
@@ -39,10 +38,13 @@ class QueueManagerTest(unittest.TestCase):
         """
         return MemoryQueue()
 
-    def setUp(self):
+    def setup_method(self, method):
         self.store = self._queuestore()
         self.qm = QueueManager(self.store)
         self.conn = MockConnection()
+
+    def teardown_method(self, method):
+        self.qm.close()
 
     def test_frames_iterator(self):
         dest = "/queue/dest"

@@ -10,7 +10,9 @@ from sqlalchemy import engine_from_config
 from coilmq.queue import QueueManager
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 from coilmq.store.sa import SAQueue, init_model
-from tests.functional.test_basic import BasicTest
+from tests.functional.test_basic import (
+    TestServerWithDefaultClasses as _TestServerWithDefaultClasses,
+)
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -27,8 +29,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class BasicSqlAlchemyStoreTest(BasicTest):
-    """Run all the tests from BasicTest using a SQLite database store."""
+class TestServerWithSAQueue(_TestServerWithDefaultClasses):
+    """Run all the tests from :class:`TestServerWithDefaultClasses` using a :class:`SAQueue` store."""
 
     def _queuemanager(self):
         """Returns the configured :class:`QueueManager` instance to use."""

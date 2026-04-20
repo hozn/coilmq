@@ -1,26 +1,23 @@
-import unittest
 from configparser import ConfigParser
 from unittest import mock
 
 import fakeredis
 
 from coilmq.store.rds import RedisQueueStore, make_redis_store
-from tests.store import CommonQueueTest
+from tests.store import BaseQueueTests
 
 
-class RedisStoreTestCase(CommonQueueTest, unittest.TestCase):
-    def setUp(self):
+class TestRedisQueueStore(BaseQueueTests):
+    def setup_method(self, method):
         self.store = RedisQueueStore(redis_conn=fakeredis.FakeStrictRedis())
 
 
 @mock.patch("coilmq.store.rds.redis.Redis", fakeredis.FakeStrictRedis)
-class RedisStoreFactoryTestCase(unittest.TestCase):
-    def test_from_config(self):
+def test_make_redis_store():
+    config = ConfigParser()
+    config.add_section("redis")
+    config.set("redis", "host", value="localhost")
+    config.set("redis", "port", value="28222")
 
-        config = ConfigParser()
-        config.add_section("redis")
-        config.set("redis", "host", value="localhost")
-        config.set("redis", "port", value="28222")
-
-        store = make_redis_store(cfg=config)
-        assert isinstance(store, RedisQueueStore)
+    store = make_redis_store(cfg=config)
+    assert isinstance(store, RedisQueueStore)

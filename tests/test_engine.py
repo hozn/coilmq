@@ -1,7 +1,5 @@
 """Tests for the transport-agnostic engine module."""
 
-import unittest
-
 from coilmq.engine import StompEngine
 from coilmq.util import frames
 from coilmq.util.frames import Frame, ReceiptFrame
@@ -27,8 +25,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class EngineTest(unittest.TestCase):
-    def setUp(self):
+class TestEngine:
+    def setup_method(self, method):
         self.qm = MockQueueManager()
         self.tm = MockTopicManager()
         self.conn = MockConnection()
@@ -40,7 +38,7 @@ class EngineTest(unittest.TestCase):
             authenticator=None,
         )
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.conn.reset()
 
     def _connect(self):

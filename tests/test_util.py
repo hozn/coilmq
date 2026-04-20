@@ -1,12 +1,11 @@
 import threading
 import time
-import unittest
 
 from coilmq.util.concurrency import CoilThreadingTimer
 
 
-class CoilTimerTestCase(unittest.TestCase):
-    def setUp(self):
+class TestCoilThreadingTimer:
+    def setup_method(self, method):
         class CountedCallback:
             def __init__(self):
                 self.lock = threading.Lock()

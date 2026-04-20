@@ -1,12 +1,10 @@
 """Tests for the subscription management."""
 
-import unittest
-
 from coilmq.subscription import SubscriptionManager
 from tests.mock import MockConnection
 
 
-class SubscriptionManagerTest(unittest.TestCase):
+class TestSubscriptionManager:
     """Tests for the subscription manager."""
 
     def test_subscribing(self):

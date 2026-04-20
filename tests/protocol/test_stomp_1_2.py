@@ -2,12 +2,12 @@ import socket
 
 from coilmq.protocol import STOMP11
 from coilmq.util import frames
-from tests.protocol import ProtocolBaseTestCase
+from tests.protocol import ProtocolTestsFixture
 
 
-class STOMP12TestCase(ProtocolBaseTestCase):
-    def setUp(self):
-        super().setUp()
+class TestSTOMP12(ProtocolTestsFixture):
+    def setup_method(self, method):
+        super().setup_method(method)
         self.host = socket.getfqdn()
 
     def test_host_valid(self):

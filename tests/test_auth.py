@@ -1,6 +1,5 @@
 """Tests for authenticators."""
 
-import unittest
 import re
 
 try:
@@ -28,13 +27,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SimpleAuthenticatorTest(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
+class TestSimpleAuthenticator:
     def test_constructor(self):
         """Test the with passing auth store in constructor."""
         auth = SimpleAuthenticator({"user": "pass"})

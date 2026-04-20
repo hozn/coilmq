@@ -1,7 +1,5 @@
 """Tests for topic-related functionality."""
 
-import unittest
-
 from coilmq.topic import TopicManager
 from coilmq.util import frames
 from coilmq.util.frames import Frame
@@ -22,10 +20,10 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class TopicManagerTest(unittest.TestCase):
-    """Tests for the :class:`TopicManager` class."""
+class TestTopicManager:
+    """Test :class:`TopicManager`."""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.tm = TopicManager()
         self.conn = MockConnection()
 

@@ -6,7 +6,7 @@ import os.path
 from sqlalchemy import engine_from_config
 
 from coilmq.store.sa import SAQueue, init_model
-from tests.test_queue import QueueManagerTest
+from tests.test_queue import TestQueueManager as _TestQueueManager
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -23,8 +23,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SAQueueManagerTest(QueueManagerTest):
-    """Run all the tests from BasicTest using a SQLite database store."""
+class TestQueueManagerSAQueue(_TestQueueManager):
+    """Run all the tests from :class:`QueueManagerTest` using a :class:`SAQueue` database store."""
 
     def _queuestore(self):
         """Returns the configured :class:`QueueStore` instance to use.

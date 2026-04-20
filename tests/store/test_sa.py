@@ -1,14 +1,13 @@
 """Test SQLAlchemy storage."""
 
 import datetime
-import unittest
 
 from sqlalchemy import create_engine
 
 from coilmq.store.sa import SAQueue, init_model, meta, model
 from coilmq.util import frames
 from coilmq.util.frames import Frame
-from tests.store import CommonQueueTest
+from tests.store import BaseQueueTests
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -25,13 +24,13 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SAQueueTest(CommonQueueTest, unittest.TestCase):
-    def setUp(self):
+class TestSAQueue(BaseQueueTests):
+    def setup_method(self, method):
         engine = create_engine("sqlite:///:memory:", echo=True)
         init_model(engine)
         self.store = SAQueue()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         meta.Session.remove()
 
     def test_dequeue_order(self):

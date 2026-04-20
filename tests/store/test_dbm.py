@@ -3,7 +3,6 @@
 import shutil
 import tempfile
 import time
-import unittest
 import uuid
 
 import pytest
@@ -11,7 +10,7 @@ import pytest
 from coilmq.store.dbm import DbmQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
-from tests.store import CommonQueueTest
+from tests.store import BaseQueueTests
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -28,12 +27,12 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class DbmQueueTest(CommonQueueTest, unittest.TestCase):
-    def setUp(self):
+class TestDbmQueue(BaseQueueTests):
+    def setup_method(self, method):
         self.data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         self.store = DbmQueue(self.data_dir)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.store.close()
         shutil.rmtree(self.data_dir)
 

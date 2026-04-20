@@ -5,7 +5,7 @@ import os.path
 import shutil
 
 from coilmq.store.dbm import DbmQueue
-from tests.test_queue import QueueManagerTest
+from tests.test_queue import TestQueueManager as _TestQueueManager
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -22,8 +22,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class DBMQueueManagerTest(QueueManagerTest):
-    """Run all the tests from BasicTest using a SQLite database store."""
+class TestQueueManagerDbmQueue(_TestQueueManager):
+    """Run all the tests from BasicTest using a :class:`DbmQueue` database store."""
 
     def _queuestore(self):
         """Returns the configured :class:`QueueStore` instance to use.

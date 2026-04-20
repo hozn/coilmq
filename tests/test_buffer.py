@@ -1,7 +1,6 @@
 """Test the FrameBuffer utility class."""
 
 import io
-import unittest
 import uuid
 from collections import OrderedDict
 
@@ -32,14 +31,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class TestFrameBuffer(unittest.TestCase):
+class TestFrameBuffer:
     """Test the :class:`coilmq.utils.frames.FrameBuffer` class."""
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def createMessage(self, cmd, headers, body):
         """Creates a package STOMP message."""
@@ -121,7 +114,7 @@ class TestFrameBuffer(unittest.TestCase):
         assert idx == 2
 
 
-class FrameTestCase(unittest.TestCase):
+class TestFrame:
     def test_parse_frame(self):
         buff = io.BytesIO(
             b"CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00"

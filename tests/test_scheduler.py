@@ -1,7 +1,5 @@
 """Tests for the scheduler implementation."""
 
-import unittest
-
 from coilmq.scheduler import FavorReliableSubscriberScheduler
 from tests.mock import MockSubscription
 
@@ -20,11 +18,11 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class QueueDeliverySchedulerTest(unittest.TestCase):
-    """Tests for various message delivery schedulers."""
+class TestFavorReliableSubscriberScheduler:
+    """Test :class:`FavorReliableSubscriberScheduler`."""
 
-    def test_favorReliable(self):
-        """Test the favor reliable delivery scheduler."""
+    def test_choice(self):
+        """Test :meth:`FavorReliableSubscriberScheduler.choice`."""
         sched = FavorReliableSubscriberScheduler()
 
         sub1 = MockSubscription()

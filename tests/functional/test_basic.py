@@ -9,7 +9,7 @@ import pytest
 
 from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.util import frames
-from tests.functional import BaseFunctionalTestCase
+from tests.functional import FunctionalTestsFixture
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -26,7 +26,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class BasicTest(BaseFunctionalTestCase):
+class TestServerWithDefaultClasses(FunctionalTestsFixture):
     """Functional tests using default storage engine, etc."""
 
     def test_connect(self):

@@ -20,11 +20,8 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class CommonQueueTest:
-    """An abstract set of base tests for queue storage engines.
-
-    This class must be mixed in with something that extends :py:class:`unittest.TestCase`.
-    """
+class BaseQueueTests:
+    """An abstract set of base tests for queue storage engines."""
 
     def test_enqueue(self):
         """Test the enqueue() method."""

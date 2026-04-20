@@ -4,7 +4,6 @@ import logging
 import select
 import socket
 import threading
-import unittest
 from queue import Queue
 
 from coilmq.protocol import STOMP10
@@ -31,7 +30,7 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class BaseFunctionalTestCase(unittest.TestCase):
+class FunctionalTestsFixture:
     """Base class for test cases provides the fixtures for setting up the multi-threaded
     unit test infrastructure.
 
@@ -39,7 +38,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
     inter-thread communication and lock-stepping the assertions.
     """
 
-    def setUp(self):
+    def setup_method(self, method):
 
         self.clients = []
         self.server = ThreadedStompServer(
@@ -77,7 +76,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
         """
         return TopicManager()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         for c in self.clients:
             c.close()
         self.server.shutdown()

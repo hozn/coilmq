@@ -1,5 +1,3 @@
-import unittest
-
 from coilmq.engine import StompEngine
 from coilmq.protocol import STOMP12
 from coilmq.util.frames import Frame
@@ -11,11 +9,11 @@ from tests.mock import (
 )
 
 
-class ProtocolBaseTestCase(unittest.TestCase):
+class ProtocolTestsFixture:
     def get_protocol(self):
         return STOMP12
 
-    def setUp(self):
+    def setup_method(self, method):
         self.qm = MockQueueManager()
         self.tm = MockTopicManager()
         self.conn = MockConnection()
@@ -32,5 +30,5 @@ class ProtocolBaseTestCase(unittest.TestCase):
         self.engine.process_frame(Frame(cmd, headers or {}, body))
         return self.conn.frames[-1]
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.conn.reset()
