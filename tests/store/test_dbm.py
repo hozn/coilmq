@@ -59,98 +59,82 @@ class TestDbmQueue(BaseQueueTests):
     def test_sync_checkpoint_ops(self, tmp_path: Path):
         """Test a expected sync behavior with checkpoint_operations param."""
         max_ops = 5
-        try:
-            store = DbmQueue(tmp_path, checkpoint_operations=max_ops)
-            dest = "/queue/foo"
+        store = DbmQueue(tmp_path, checkpoint_operations=max_ops)
+        dest = "/queue/foo"
 
-            for i in range(max_ops + 1):
-                frame = Frame(
-                    frames.MESSAGE,
-                    headers={"message-id": str(uuid.uuid4())},
-                    body=f"some data - {i}",
-                )
-                store.enqueue(dest, frame)
+        for i in range(max_ops + 1):
+            frame = Frame(
+                frames.MESSAGE,
+                headers={"message-id": str(uuid.uuid4())},
+                body=f"some data - {i}",
+            )
+            store.enqueue(dest, frame)
 
-            assert store.size(dest) == max_ops + 1
+        assert store.size(dest) == max_ops + 1
 
-            # No close()!
+        # No close()!
 
-            store2 = DbmQueue(tmp_path)
-            assert store2.size(dest) == max_ops + 1
-
-        except:
-            raise
+        store2 = DbmQueue(tmp_path)
+        assert store2.size(dest) == max_ops + 1
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_checkpoint_timeout(self, tmp_path: Path):
         """Test a expected sync behavior with checkpoint_timeout param."""
-        try:
-            store = DbmQueue(tmp_path, checkpoint_timeout=0.5)
-            dest = "/queue/foo"
+        store = DbmQueue(tmp_path, checkpoint_timeout=0.5)
+        dest = "/queue/foo"
 
-            frame = Frame(
-                frames.MESSAGE,
-                headers={"message-id": str(uuid.uuid4())},
-                body="some data -1",
-            )
-            store.enqueue(dest, frame)
+        frame = Frame(
+            frames.MESSAGE,
+            headers={"message-id": str(uuid.uuid4())},
+            body="some data -1",
+        )
+        store.enqueue(dest, frame)
 
-            time.sleep(0.5)
+        time.sleep(0.5)
 
-            frame = Frame(
-                frames.MESSAGE,
-                headers={"message-id": str(uuid.uuid4())},
-                body="some data -2",
-            )
-            store.enqueue(dest, frame)
+        frame = Frame(
+            frames.MESSAGE,
+            headers={"message-id": str(uuid.uuid4())},
+            body="some data -2",
+        )
+        store.enqueue(dest, frame)
 
-            assert store.size(dest) == 2
+        assert store.size(dest) == 2
 
-            # No close()!
+        # No close()!
 
-            store2 = DbmQueue(tmp_path)
-            assert store2.size(dest) == 2
-
-        except:
-            raise
+        store2 = DbmQueue(tmp_path)
+        assert store2.size(dest) == 2
 
     def test_sync_close(self, tmp_path: Path):
         """Test a expected sync behavior of close() call."""
-        try:
-            store = DbmQueue(tmp_path)
-            dest = "/queue/foo"
-            frame = Frame(
-                frames.MESSAGE,
-                headers={"message-id": str(uuid.uuid4())},
-                body="some data",
-            )
-            store.enqueue(dest, frame)
-            assert store.size(dest) == 1
+        store = DbmQueue(tmp_path)
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE,
+            headers={"message-id": str(uuid.uuid4())},
+            body="some data",
+        )
+        store.enqueue(dest, frame)
+        assert store.size(dest) == 1
 
-            store.close()
+        store.close()
 
-            store2 = DbmQueue(tmp_path)
-            assert store2.size(dest) == 1
-
-        except:
-            raise
+        store2 = DbmQueue(tmp_path)
+        assert store2.size(dest) == 1
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
     def test_sync_loss(self, tmp_path: Path):
         """Test metadata loss behavior."""
-        try:
-            store = DbmQueue(tmp_path)
-            dest = "/queue/foo"
-            frame = Frame(
-                frames.MESSAGE,
-                headers={"message-id": str(uuid.uuid4())},
-                body="some data",
-            )
-            store.enqueue(dest, frame)
-            assert store.size(dest) == 1
+        store = DbmQueue(tmp_path)
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE,
+            headers={"message-id": str(uuid.uuid4())},
+            body="some data",
+        )
+        store.enqueue(dest, frame)
+        assert store.size(dest) == 1
 
-            store2 = DbmQueue(tmp_path)
-            assert store2.size(dest) == 0
-
-        except:
-            raise
+        store2 = DbmQueue(tmp_path)
+        assert store2.size(dest) == 0
