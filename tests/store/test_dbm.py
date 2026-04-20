@@ -4,6 +4,7 @@ import shutil
 import tempfile
 import time
 import uuid
+from pathlib import Path
 
 import pytest
 
@@ -55,12 +56,11 @@ class TestDbmQueue(BaseQueueTests):
         assert self.store.size(dest) == 0
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_checkpoint_ops(self):
+    def test_sync_checkpoint_ops(self, tmp_path: Path):
         """Test a expected sync behavior with checkpoint_operations param."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         max_ops = 5
         try:
-            store = DbmQueue(data_dir, checkpoint_operations=max_ops)
+            store = DbmQueue(tmp_path, checkpoint_operations=max_ops)
             dest = "/queue/foo"
 
             for i in range(max_ops + 1):
@@ -75,19 +75,17 @@ class TestDbmQueue(BaseQueueTests):
 
             # No close()!
 
-            store2 = DbmQueue(data_dir)
+            store2 = DbmQueue(tmp_path)
             assert store2.size(dest) == max_ops + 1
 
         except:
-            shutil.rmtree(data_dir, ignore_errors=True)
             raise
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_checkpoint_timeout(self):
+    def test_sync_checkpoint_timeout(self, tmp_path: Path):
         """Test a expected sync behavior with checkpoint_timeout param."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         try:
-            store = DbmQueue(data_dir, checkpoint_timeout=0.5)
+            store = DbmQueue(tmp_path, checkpoint_timeout=0.5)
             dest = "/queue/foo"
 
             frame = Frame(
@@ -110,18 +108,16 @@ class TestDbmQueue(BaseQueueTests):
 
             # No close()!
 
-            store2 = DbmQueue(data_dir)
+            store2 = DbmQueue(tmp_path)
             assert store2.size(dest) == 2
 
         except:
-            shutil.rmtree(data_dir, ignore_errors=True)
             raise
 
-    def test_sync_close(self):
+    def test_sync_close(self, tmp_path: Path):
         """Test a expected sync behavior of close() call."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         try:
-            store = DbmQueue(data_dir)
+            store = DbmQueue(tmp_path)
             dest = "/queue/foo"
             frame = Frame(
                 frames.MESSAGE,
@@ -133,19 +129,17 @@ class TestDbmQueue(BaseQueueTests):
 
             store.close()
 
-            store2 = DbmQueue(data_dir)
+            store2 = DbmQueue(tmp_path)
             assert store2.size(dest) == 1
 
         except:
-            shutil.rmtree(data_dir, ignore_errors=True)
             raise
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_loss(self):
+    def test_sync_loss(self, tmp_path: Path):
         """Test metadata loss behavior."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         try:
-            store = DbmQueue(data_dir)
+            store = DbmQueue(tmp_path)
             dest = "/queue/foo"
             frame = Frame(
                 frames.MESSAGE,
@@ -155,9 +149,8 @@ class TestDbmQueue(BaseQueueTests):
             store.enqueue(dest, frame)
             assert store.size(dest) == 1
 
-            store2 = DbmQueue(data_dir)
+            store2 = DbmQueue(tmp_path)
             assert store2.size(dest) == 0
 
         except:
-            shutil.rmtree(data_dir, ignore_errors=True)
             raise
