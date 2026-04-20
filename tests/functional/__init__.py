@@ -10,11 +10,7 @@ from queue import Queue
 from coilmq.protocol import STOMP10
 from coilmq.queue import QueueManager
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
-from coilmq.server.socket_server import (
-    StompRequestHandler,
-    StompServer,
-    ThreadedStompServer,
-)
+from coilmq.server.socket_server import ThreadedStompServer
 from coilmq.store.memory import MemoryQueue
 from coilmq.topic import TopicManager
 from coilmq.util import frames
@@ -46,28 +42,18 @@ class BaseFunctionalTestCase(unittest.TestCase):
     def setUp(self):
 
         self.clients = []
-        self.server = None  # This gets set in the server thread.
-        self.server_address = None  # This gets set in the server thread.
-        self.ready_event = threading.Event()
-
-        addr_bound = threading.Event()
-
-        def start_server():
-            self.server = TestStompServer(
-                ("127.0.0.1", 0),
-                ready_event=self.ready_event,
-                authenticator=None,
-                queue_manager=self._queuemanager(),
-                topic_manager=self._topicmanager(),
-            )
-            self.server_address = self.server.socket.getsockname()
-            addr_bound.set()
-            self.server.serve_forever()
-
-        self.server_thread = threading.Thread(target=start_server, name="server")
+        self.server = ThreadedStompServer(
+            ("127.0.0.1", 0),
+            authenticator=None,
+            queue_manager=self._queuemanager(),
+            topic_manager=self._topicmanager(),
+            protocol=STOMP10,
+        )
+        self.server_address = self.server.socket.getsockname()
+        self.server_thread = threading.Thread(
+            target=self.server.serve_forever, name="server"
+        )
         self.server_thread.start()
-        self.ready_event.wait()
-        addr_bound.wait()
 
     def _queuemanager(self):
         """Returns the configured :class:`QueueManager` instance to use.
@@ -96,7 +82,6 @@ class BaseFunctionalTestCase(unittest.TestCase):
             c.close()
         self.server.shutdown()
         self.server_thread.join()
-        self.ready_event.clear()
         del self.server_thread
 
     def _new_client(self, connect=True):
@@ -116,37 +101,6 @@ class BaseFunctionalTestCase(unittest.TestCase):
             res = client.received_frames.get(timeout=1)
             self.assertEqual(res.cmd, frames.CONNECTED)
         return client
-
-
-class TestStompServer(ThreadedStompServer):
-    """A stomp server for functional tests that uses :py:class:`threading.Event` objects
-    to ensure that it stays in sync with the test suite.
-    """
-
-    allow_reuse_address = True
-
-    def __init__(
-        self,
-        server_address,
-        ready_event=None,
-        authenticator=None,
-        queue_manager=None,
-        topic_manager=None,
-    ):
-        self.ready_event = ready_event
-        StompServer.__init__(
-            self,
-            server_address,
-            StompRequestHandler,
-            authenticator=authenticator,
-            queue_manager=queue_manager,
-            topic_manager=topic_manager,
-            protocol=STOMP10,
-        )
-
-    def server_activate(self):
-        self.ready_event.set()
-        StompServer.server_activate(self)
 
 
 class TestStompClient:
