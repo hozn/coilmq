@@ -94,7 +94,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
 
         :rtype: TestStompClient
         """
-        client = TestStompClient(self.server_address)
+        client = StompClient(self.server_address)
         self.clients.append(client)
         if connect:
             client.connect()
@@ -103,7 +103,7 @@ class BaseFunctionalTestCase(unittest.TestCase):
         return client
 
 
-class TestStompClient:
+class StompClient:
     """A stomp client for use in testing.
 
     This client spawns a listener thread and pushes anything that comes in onto the
