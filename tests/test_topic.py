@@ -23,48 +23,52 @@ limitations under the License."""
 class TestTopicManager:
     """Test :class:`TopicManager`."""
 
-    def setup_method(self, method):
-        self.tm = TopicManager()
-        self.conn = MockConnection()
-
     def test_subscribe(self):
         """Test subscribing a connection to the topic."""
+        tm = TopicManager()
+        conn = MockConnection()
+
         dest = "/topic/dest"
 
-        self.tm.subscribe(self.conn, dest)
+        tm.subscribe(conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
-        assert len(self.conn.frames) == 1
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        assert len(conn.frames) == 1
+        subscription = conn.frames[0].headers.pop("subscription", None)
         assert subscription == 0
-        assert self.conn.frames[0] == f
+        assert conn.frames[0] == f
 
     def test_unsubscribe(self):
         """Test unsubscribing a connection from the queue."""
+        tm = TopicManager()
+        conn = MockConnection()
+
         dest = "/topic/dest"
 
-        self.tm.subscribe(self.conn, dest)
+        tm.subscribe(conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
-        assert len(self.conn.frames) == 1
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        assert len(conn.frames) == 1
+        subscription = conn.frames[0].headers.pop("subscription", None)
         assert subscription == 0
-        assert self.conn.frames[0] == f
+        assert conn.frames[0] == f
 
-        self.tm.unsubscribe(self.conn, dest)
+        tm.unsubscribe(conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
-        assert len(self.conn.frames) == 1
+        assert len(conn.frames) == 1
 
     def test_send_simple(self):
         """Test a basic send command."""
+        tm = TopicManager()
+
         dest = "/topic/dest"
 
         f = Frame(frames.SEND, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
         # Assert some side-effects
         assert "message-id" in f.headers
@@ -72,6 +76,8 @@ class TestTopicManager:
 
     def test_send_subscriber_timeout(self):
         """Test a send command when one subscriber errs out."""
+        tm = TopicManager()
+        conn = MockConnection()
 
         class TimeoutConnection:
             reliable_subscriber = False
@@ -86,19 +92,19 @@ class TestTopicManager:
         bad_client = TimeoutConnection()
 
         # Subscribe both a good client and a bad client.
-        self.tm.subscribe(bad_client, dest)
-        self.tm.subscribe(self.conn, dest)
+        tm.subscribe(bad_client, dest)
+        tm.subscribe(conn, dest)
 
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
         # Make sure out good client got the message.
-        assert len(self.conn.frames) == 1
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
+        assert len(conn.frames) == 1
+        subscription = conn.frames[0].headers.pop("subscription", None)
         assert subscription == 0
-        assert self.conn.frames[0] == f
+        assert conn.frames[0] == f
 
         # Make sure our bad client got disconnected
         # (This might be a bit too intimate.)
-        connections = {s.connection for s in self.tm._subscriptions.subscribers(dest)}
+        connections = {s.connection for s in tm._subscriptions.subscribers(dest)}
         assert bad_client not in connections
