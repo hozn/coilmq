@@ -34,7 +34,7 @@ limitations under the License."""
 class TestFrameBuffer:
     """Test the :class:`coilmq.utils.frames.FrameBuffer` class."""
 
-    def test_extract_frame(self):
+    def test_extract_frame(self) -> None:
         """Test extracting a single frame."""
         sb = FrameBuffer()
         m1 = Frame(frames.CONNECT, {"session": uuid.uuid4()}, "This is the body").pack()
@@ -43,7 +43,7 @@ class TestFrameBuffer:
         assert isinstance(msg, Frame)
         assert m1 == msg.pack()
 
-    def test_extract_frame_binary(self):
+    def test_extract_frame_binary(self) -> None:
         """Test extracting a binary frame."""
         sb = FrameBuffer()
         binmsg = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
@@ -57,7 +57,7 @@ class TestFrameBuffer:
         assert isinstance(msg, Frame)
         assert msg.pack() == m1
 
-    def test_extract_frame_multi(self):
+    def test_extract_frame_multi(self) -> None:
         """Test the handling of multiple concatenated messages by the buffer."""
         m1 = b"CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00"
         m2 = b"SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00SEND\ndestination:/queue/test\n\n\x00"
@@ -84,7 +84,7 @@ class TestFrameBuffer:
 
         assert sb.extract_frame() is None
 
-    def test_iteration(self):
+    def test_iteration(self) -> None:
         """Test the iteration feature of our buffer."""
         sb = FrameBuffer()
         m1 = Frame(
@@ -109,7 +109,7 @@ class TestFrameBuffer:
 
 
 class TestFrame:
-    def test_parse_frame(self):
+    def test_parse_frame(self) -> None:
         buff = io.BytesIO(
             b"CONNECT\nsession:207567f3-cce7-4a0a-930b-46fc394dd53d\n\n0123456789\x00"
         )
@@ -123,27 +123,27 @@ class TestFrame:
         for e in [cmd] + list(headers.keys()) + list(headers.values()):
             assert isinstance(e, str)
 
-    def test_parse_frame_incomplete_body(self):
+    def test_parse_frame_incomplete_body(self) -> None:
         buff = io.BytesIO(b"CONNECT\ncontent-length:1000\n\n0123456789\x00")
         with pytest.raises(IncompleteFrame):
             Frame.from_buffer(buff)
 
-    def test_parse_frame_body_not_terminated(self):
+    def test_parse_frame_body_not_terminated(self) -> None:
         buff = io.BytesIO(b"CONNECT\ncontent-length:10\n\n0123456789")
         with pytest.raises(BodyNotTerminated):
             Frame.from_buffer(buff)
 
-    def test_parse_frame_empty_body(self):
+    def test_parse_frame_empty_body(self) -> None:
         buff = io.BytesIO(
             b"SUBSCRIBE\nack:auto\ndestination:/queue/test\n\n\x00fdffdfd"
         )
         Frame.from_buffer(buff)
 
-    def test_pack(self):
+    def test_pack(self) -> None:
         frame = Frame(frames.CONNECT, OrderedDict(foo="bar"), "body")
         assert frame.pack() == b"CONNECT\nfoo:bar\ncontent-length:4\n\nbody\x00"
 
-    def test_pack_binary(self):
+    def test_pack_binary(self) -> None:
         bin_body = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
         frame = Frame(frames.CONNECT, body=bin_body)
         assert (

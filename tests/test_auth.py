@@ -28,14 +28,14 @@ limitations under the License."""
 
 
 class TestSimpleAuthenticator:
-    def test_constructor(self):
+    def test_constructor(self) -> None:
         """Test the with passing auth store in constructor."""
         auth = SimpleAuthenticator({"user": "pass"})
         assert auth.authenticate("user", "pass") == True
         assert auth.authenticate("user1", "pass") == False
         assert auth.authenticate("user", "pass2") == False
 
-    def test_from_configfile(self):
+    def test_from_configfile(self) -> None:
         """Test the loading store from config file path."""
         auth = SimpleAuthenticator()
         with as_file(files("tests.resources").joinpath("auth.ini")) as filename:
@@ -45,7 +45,7 @@ class TestSimpleAuthenticator:
         assert auth.authenticate("pinetree", "str0bus") == True
         assert auth.authenticate("foo", "bar") == False
 
-    def test_from_configfile_fp(self):
+    def test_from_configfile_fp(self) -> None:
         """Test loading store from file-like object."""
         auth = SimpleAuthenticator()
         with as_file(
@@ -58,7 +58,7 @@ class TestSimpleAuthenticator:
         assert auth.authenticate("pinetree", "str0bus") == True
         assert auth.authenticate("foo", "bar") == False
 
-    def test_from_configfile_invalid(self):
+    def test_from_configfile_invalid(self) -> None:
         """Test loading store with invalid file path."""
         auth = SimpleAuthenticator()
         with as_file(files("tests.resources").joinpath("auth-invalid.ini")) as filename:  # noqa: SIM117
@@ -67,7 +67,7 @@ class TestSimpleAuthenticator:
             ):
                 auth.from_configfile(filename)
 
-    def test_from_configfile_fp_invalid(self):
+    def test_from_configfile_fp_invalid(self) -> None:
         """Test loading store with missing section in config."""
         fp = StringIO("[invalid]\nusername=password")
         auth = SimpleAuthenticator()
