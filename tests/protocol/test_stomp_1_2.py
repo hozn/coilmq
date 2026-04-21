@@ -1,45 +1,77 @@
+from __future__ import annotations
+
 import socket
 
-from coilmq.protocol import STOMP11
+import pytest
+
+from coilmq.engine import StompEngine
+from coilmq.protocol import STOMP11, STOMP12
 from coilmq.util import frames
-from tests.protocol import ProtocolTestsFixture
+from coilmq.util.frames import Frame
 
 
-class TestSTOMP12(ProtocolTestsFixture):
-    def setup_method(self, method):
-        super().setup_method(method)
-        self.host = socket.getfqdn()
+@pytest.fixture
+def protocol() -> type[STOMP12]:
+    """Returns the :func:`engine` fixture's ``protocol`` argument."""
+    return STOMP12
 
-    def test_host_valid(self):
-        response = self.feed_frame(
-            frames.CONNECT, {"host": self.host, "accept-version": "1.2"}
+
+class TestSTOMP12:
+    def test_host_valid(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                {
+                    "host": socket.getfqdn(),
+                    "accept-version": "1.2",
+                },
+            )
         )
-        assert response.cmd == frames.CONNECTED
+        assert engine.connection.frames[-1].cmd == frames.CONNECTED
 
-    def test_host_invalid(self):
-        host = "nothing.nowhere.com"
-        response = self.feed_frame(
-            frames.CONNECT, {"host": host, "accept-version": "1.2"}
+    def test_host_invalid(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                {
+                    "host": "nothing.nowhere.com",
+                    "accept-version": "1.2",
+                },
+            )
         )
-        assert response.cmd == frames.ERROR
+        assert engine.connection.frames[-1].cmd == frames.ERROR
         assert (
-            response.headers["message"]
+            engine.connection.frames[-1].headers["message"]
             == "Virtual hosting is not supported or host is unknown"
         )
 
-    def test_no_host_header(self):
-        response = self.feed_frame(frames.CONNECT, {"accept-version": "1.2"})
-        assert response.cmd == frames.ERROR
-        assert response.headers["message"] == '"host" header is required'
-
-    def test_protocol_downgrade(self):
-        response = self.feed_frame(
-            frames.CONNECT, {"host": self.host, "accept-version": "1.1"}
+    def test_no_host_header(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                {"accept-version": "1.2"},
+            )
         )
-        assert response.cmd == frames.CONNECTED
-        assert response.headers["version"] == "1.1"
+        assert engine.connection.frames[-1].cmd == frames.ERROR
+        assert (
+            engine.connection.frames[-1].headers["message"]
+            == '"host" header is required'
+        )
+
+    def test_protocol_downgrade(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                {
+                    "host": socket.getfqdn(),
+                    "accept-version": "1.1",
+                },
+            )
+        )
+        assert engine.connection.frames[-1].cmd == frames.CONNECTED
+        assert engine.connection.frames[-1].headers["version"] == "1.1"
         # Note: assertIsInstance is not appropriate here because the test would
         # pass if self.engine.protocol was STOMP10 which is not what we want.
         # `assertIs(type(obj), cls)` is appropriate way to check for an object's
         # exact type.
-        assert type(self.engine.protocol) is STOMP11
+        assert type(engine.protocol) is STOMP11
