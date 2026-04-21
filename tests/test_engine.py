@@ -1,5 +1,12 @@
 """Tests for the transport-agnostic engine module."""
 
+from __future__ import annotations
+
+from typing import Generator
+
+import pytest
+
+from coilmq.auth import Authenticator
 from coilmq.engine import StompEngine
 from coilmq.util import frames
 from coilmq.util.frames import Frame, ReceiptFrame
@@ -25,49 +32,47 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
+@pytest.fixture
+def engine(request: pytest.FixtureRequest) -> Generator[StompEngine, None, None]:
+    authenticator: Authenticator | None = (
+        request.param if hasattr(request, "param") else None
+    )
+
+    engine = StompEngine(
+        connection=MockConnection(),
+        queue_manager=MockQueueManager(),
+        topic_manager=MockTopicManager(),
+        authenticator=authenticator,
+    )
+
+    try:
+        yield engine
+    finally:
+        engine.unbind()
+
+
+def assertErrorFrame(frame: Frame, msgsub: str) -> None:
+    """Assert frame is an ERROR frame whose message header contains msgsub."""
+    assert frame.cmd == frames.ERROR
+    assert msgsub.lower() in frame.headers["message"].lower()
+
+
 class TestEngine:
-    def setup_method(self, method):
-        self.qm = MockQueueManager()
-        self.tm = MockTopicManager()
-        self.conn = MockConnection()
-        self.auth = MockAuthenticator()
-        self.engine = StompEngine(
-            connection=self.conn,
-            queue_manager=self.qm,
-            topic_manager=self.tm,
-            authenticator=None,
-        )
-
-    def teardown_method(self, method):
-        self.conn.reset()
-
-    def _connect(self):
-        """Call the engine connect() method so that we have a valid 'session'."""
-        self.engine.process_frame(Frame(frames.CONNECT))
-
-    def assertErrorFrame(self, frame, msgsub):
-        """Assert that the passed in frame is an error frame and that message contains specified
-        string.
-        """
-        assert frame.cmd == frames.ERROR
-        assert msgsub.lower() in frame.headers["message"].lower()
-
-    def test_connect_no_auth(self):
+    def test_connect_no_auth(self, engine: StompEngine) -> None:
         """Test the CONNECT command with no auth required."""
-        assert self.engine.connected == False
-        self.engine.process_frame(Frame(frames.CONNECT))
-        assert self.engine.connected == True
+        assert engine.connected == False
+        engine.process_frame(Frame(frames.CONNECT))
+        assert engine.connected == True
 
-    def test_connect_auth(self):
+    @pytest.mark.parametrize("engine", [MockAuthenticator()], indirect=["engine"])
+    def test_connect_auth(self, engine: StompEngine) -> None:
         """Test the CONNECT command when auth is required."""
-        self.engine.authenticator = self.auth
+        assert engine.connected == False
+        engine.process_frame(Frame(frames.CONNECT))
+        assertErrorFrame(engine.connection.frames[-1], "Auth")
+        assert engine.connected == False
 
-        assert self.engine.connected == False
-        self.engine.process_frame(Frame(frames.CONNECT))
-        self.assertErrorFrame(self.conn.frames[-1], "Auth")
-        assert self.engine.connected == False
-
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(
                 frames.CONNECT,
                 headers={
@@ -76,44 +81,44 @@ class TestEngine:
                 },
             )
         )
-        assert self.engine.connected == True
+        assert engine.connected == True
 
-    def test_subscribe_noack(self):
+    def test_subscribe_noack(self, engine: StompEngine) -> None:
         """Test subscribing to topics and queues w/ no ACK."""
-        self._connect()
-        self.engine.process_frame(
+        engine.process_frame(Frame(frames.CONNECT))
+        engine.process_frame(
             Frame(frames.SUBSCRIBE, headers={"destination": "/queue/bar"})
         )
-        assert self.conn in self.qm.queues["/queue/bar"]
+        assert engine.connection in engine.queue_manager.queues["/queue/bar"]
 
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(frames.SUBSCRIBE, headers={"destination": "/foo/bar"})
         )
-        assert self.conn in self.tm.topics["/foo/bar"]
+        assert engine.connection in engine.topic_manager.topics["/foo/bar"]
 
-    def test_send(self):
+    def test_send(self, engine: StompEngine) -> None:
         """Test sending to a topic and queue."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
         msg = Frame(
             frames.SEND, headers={"destination": "/queue/foo"}, body="QUEUEMSG-BODY"
         )
-        self.engine.process_frame(msg)
-        assert msg == self.qm.messages[-1]
+        engine.process_frame(msg)
+        assert msg == engine.queue_manager.messages[-1]
 
         msg = Frame(
             frames.SEND, headers={"destination": "/topic/foo"}, body="TOPICMSG-BODY"
         )
-        self.engine.process_frame(msg)
-        assert msg == self.tm.messages[-1]
+        engine.process_frame(msg)
+        assert msg == engine.topic_manager.messages[-1]
 
         msg = Frame(frames.SEND, headers={}, body="TOPICMSG-BODY")
-        self.engine.process_frame(msg)
-        self.assertErrorFrame(self.conn.frames[-1], "Missing destination")
+        engine.process_frame(msg)
+        assertErrorFrame(engine.connection.frames[-1], "Missing destination")
 
-    def test_receipt(self):
+    def test_receipt(self, engine: StompEngine) -> None:
         """Test pushing frames with a receipt specified."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
         receipt_id = "FOOBAR"
         msg = Frame(
@@ -121,79 +126,79 @@ class TestEngine:
             headers={"destination": "/queue/foo", "receipt": receipt_id},
             body="QUEUEMSG-BODY",
         )
-        self.engine.process_frame(msg)
-        rframe = self.conn.frames[-1]
+        engine.process_frame(msg)
+        rframe = engine.connection.frames[-1]
         assert isinstance(rframe, ReceiptFrame)
         assert receipt_id == rframe.headers.get("receipt-id")
 
         receipt_id = "FOOBAR2"
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(
                 frames.SUBSCRIBE,
                 headers={"destination": "/queue/bar", "receipt": receipt_id},
             )
         )
-        rframe = self.conn.frames[-1]
+        rframe = engine.connection.frames[-1]
         assert isinstance(rframe, ReceiptFrame)
         assert receipt_id == rframe.headers.get("receipt-id")
 
-    def test_subscribe_ack(self):
+    def test_subscribe_ack(self, engine: StompEngine) -> None:
         """Test subscribing to a queue with ack=true."""
-        self._connect()
-        self.engine.process_frame(
+        engine.process_frame(Frame(frames.CONNECT))
+        engine.process_frame(
             Frame(
                 frames.SUBSCRIBE, headers={"destination": "/queue/bar", "ack": "client"}
             )
         )
-        assert self.conn.reliable_subscriber == True
-        assert self.conn in self.qm.queues["/queue/bar"]
+        assert engine.connection.reliable_subscriber == True
+        assert engine.connection in engine.queue_manager.queues["/queue/bar"]
 
-    def test_unsubscribe(self):
+    def test_unsubscribe(self, engine: StompEngine) -> None:
         """Test the UNSUBSCRIBE command."""
-        self._connect()
-        self.engine.process_frame(
+        engine.process_frame(Frame(frames.CONNECT))
+        engine.process_frame(
             Frame(frames.SUBSCRIBE, headers={"destination": "/queue/bar"})
         )
-        assert self.conn in self.qm.queues["/queue/bar"]
+        assert engine.connection in engine.queue_manager.queues["/queue/bar"]
 
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(frames.UNSUBSCRIBE, headers={"destination": "/queue/bar"})
         )
-        assert self.conn not in self.qm.queues["/queue/bar"]
+        assert engine.connection not in engine.queue_manager.queues["/queue/bar"]
 
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(frames.UNSUBSCRIBE, headers={"destination": "/invalid"})
         )
 
-    def test_begin(self):
+    def test_begin(self, engine: StompEngine) -> None:
         """Test transaction BEGIN."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
-        assert "abc" in self.engine.transactions
-        assert len(self.engine.transactions["abc"]) == 0
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
+        assert "abc" in engine.transactions
+        assert len(engine.transactions["abc"]) == 0
 
-    def test_commit(self):
+    def test_commit(self, engine: StompEngine) -> None:
         """Test transaction COMMIT."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "123"}))
-        self.engine.process_frame(
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "123"}))
+        engine.process_frame(
             Frame(
                 frames.SEND,
                 headers={"destination": "/dest", "transaction": "abc"},
                 body="ASDF",
             )
         )
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(
                 frames.SEND,
                 headers={"destination": "/dest", "transaction": "abc"},
                 body="ASDF",
             )
         )
-        self.engine.process_frame(
+        engine.process_frame(
             Frame(
                 frames.SEND,
                 headers={"destination": "/dest", "transaction": "123"},
@@ -201,22 +206,22 @@ class TestEngine:
             )
         )
 
-        assert len(self.tm.messages) == 0
+        assert len(engine.topic_manager.messages) == 0
 
-        self.engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
 
-        assert len(self.tm.messages) == 2
+        assert len(engine.topic_manager.messages) == 2
 
-        assert len(self.engine.transactions) == 1
+        assert len(engine.transactions) == 1
 
-        self.engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "123"}))
-        assert len(self.tm.messages) == 3
+        engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "123"}))
+        assert len(engine.topic_manager.messages) == 3
 
-        assert len(self.engine.transactions) == 0
+        assert len(engine.transactions) == 0
 
-    def test_commit_invalid(self):
+    def test_commit_invalid(self, engine: StompEngine) -> None:
         """Test invalid states for transaction COMMIT."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
         # Send a message with invalid transaction
         f = Frame(
@@ -224,69 +229,69 @@ class TestEngine:
             headers={"destination": "/dest", "transaction": "123"},
             body="ASDF",
         )
-        self.engine.process_frame(f)
-        self.assertErrorFrame(self.conn.frames[-1], "invalid transaction")
+        engine.process_frame(f)
+        assertErrorFrame(engine.connection.frames[-1], "invalid transaction")
 
         # Attempt to commit invalid transaction
-        self.engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
 
         # Attempt to commit already-committed transaction
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
-        self.engine.process_frame(
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
+        engine.process_frame(
             Frame(
                 frames.SEND,
                 headers={"destination": "/dest", "transaction": "abc"},
                 body="FOO",
             )
         )
-        self.engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
 
-        self.engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
-        self.assertErrorFrame(self.conn.frames[-1], "invalid transaction")
+        engine.process_frame(Frame(frames.COMMIT, headers={"transaction": "abc"}))
+        assertErrorFrame(engine.connection.frames[-1], "invalid transaction")
 
-    def test_abort(self):
+    def test_abort(self, engine: StompEngine) -> None:
         """Test transaction ABORT."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "123"}))
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "123"}))
 
         f1 = Frame(
             frames.SEND,
             headers={"destination": "/dest", "transaction": "abc"},
             body="ASDF",
         )
-        self.engine.process_frame(f1)
+        engine.process_frame(f1)
         f2 = Frame(
             frames.SEND,
             headers={"destination": "/dest", "transaction": "abc"},
             body="ASDF",
         )
-        self.engine.process_frame(f2)
+        engine.process_frame(f2)
         f3 = Frame(
             frames.SEND,
             headers={"destination": "/dest", "transaction": "123"},
             body="ASDF",
         )
-        self.engine.process_frame(f3)
+        engine.process_frame(f3)
 
-        assert len(self.tm.messages) == 0
+        assert len(engine.topic_manager.messages) == 0
 
-        self.engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc"}))
-        assert len(self.tm.messages) == 0
+        engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc"}))
+        assert len(engine.topic_manager.messages) == 0
 
-        assert len(self.engine.transactions) == 1
+        assert len(engine.transactions) == 1
 
-    def test_abort_invalid(self):
+    def test_abort_invalid(self, engine: StompEngine) -> None:
         """Test invalid states for transaction ABORT."""
-        self._connect()
+        engine.process_frame(Frame(frames.CONNECT))
 
-        self.engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc"}))
 
-        self.assertErrorFrame(self.conn.frames[-1], "invalid transaction")
+        assertErrorFrame(engine.connection.frames[-1], "invalid transaction")
 
-        self.engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
-        self.engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.BEGIN, headers={"transaction": "abc"}))
+        engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc"}))
 
-        self.engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc2"}))
-        self.assertErrorFrame(self.conn.frames[-1], "invalid transaction")
+        engine.process_frame(Frame(frames.ABORT, headers={"transaction": "abc2"}))
+        assertErrorFrame(engine.connection.frames[-1], "invalid transaction")
