@@ -34,16 +34,10 @@ limitations under the License."""
 class TestFrameBuffer:
     """Test the :class:`coilmq.utils.frames.FrameBuffer` class."""
 
-    def createMessage(self, cmd, headers, body):
-        """Creates a package STOMP message."""
-        return Frame(cmd, headers=headers, body=body).pack()
-
     def test_extract_frame(self):
         """Test extracting a single frame."""
         sb = FrameBuffer()
-        m1 = self.createMessage(
-            frames.CONNECT, {"session": uuid.uuid4()}, "This is the body"
-        )
+        m1 = Frame(frames.CONNECT, {"session": uuid.uuid4()}, "This is the body").pack()
         sb.append(m1)
         msg = sb.extract_frame()
         assert isinstance(msg, Frame)
@@ -53,11 +47,11 @@ class TestFrameBuffer:
         """Test extracting a binary frame."""
         sb = FrameBuffer()
         binmsg = "\x00\x00HELLO\x00\x00DONKEY\x00\x00"
-        m1 = self.createMessage(
+        m1 = Frame(
             frames.SEND,
             OrderedDict({"content-length": len(binmsg), "x-other-header": "value"}),
             binmsg,
-        )
+        ).pack()
         sb.append(m1)
         msg = sb.extract_frame()
         assert isinstance(msg, Frame)
@@ -93,12 +87,12 @@ class TestFrameBuffer:
     def test_iteration(self):
         """Test the iteration feature of our buffer."""
         sb = FrameBuffer()
-        m1 = self.createMessage(
+        m1 = Frame(
             frames.CONNECT, {"session": uuid.uuid4()}, b"This is the body"
-        )
-        m2 = self.createMessage(
+        ).pack()
+        m2 = Frame(
             frames.SEND, {"destination": "/queue/sample"}, b"This is the body-2"
-        )
+        ).pack()
         sb.append(m1)
         sb.append(m2)
 
