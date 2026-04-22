@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import engine_from_config
 
 from coilmq.store.sa import SAQueue, init_model
-from tests.functional.test_basic import (
+from tests.functional.test_memory import (
     TestServerWithDefaultClasses as _TestServerWithDefaultClasses,
 )
 
