@@ -58,7 +58,6 @@ scripts.coilmq = "coilmq.start:main"
 
 [dependency-groups]
 dev = [
-    { include-group = "docs" },
     { include-group = "tests" },
 ]
 docs = [
@@ -81,6 +80,9 @@ packages = [ "coilmq" ]
 [tool.setuptools_scm]
 
 [tool.uv]
+# Keep the minimum-supported-interpreter version for the docs group
+# pinned to the oldest version of Python still receiving bug fixes.
+# See https://devguide.python.org/versions/#versions.
 dependency-groups.docs = { requires-python = ">=3.13" }
 
 [tool.ruff]
