@@ -264,16 +264,12 @@ sqlalchemy = [
 [package.dev-dependencies]
 dev = [
     { name = "fakeredis" },
-    { name = "furo", marker = "python_full_version >= '3.13'" },
     { name = "importlib-resources", marker = "python_full_version < '3.9'" },
     { name = "pytest", version = "8.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
     { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-cov", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "pytest-cov", version = "7.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "sphinx", marker = "python_full_version >= '3.13'" },
-    { name = "sphinx-autodoc-typehints", marker = "python_full_version >= '3.13'" },
-    { name = "sphinx-paramlinks", marker = "python_full_version >= '3.13'" },
     { name = "sqlalchemy" },
 ]
 docs = [
@@ -306,13 +302,9 @@ provides-extras = ["redis", "sqlalchemy"]
 [package.metadata.requires-dev]
 dev = [
     { name = "fakeredis", specifier = ">=2.34.1" },
-    { name = "furo", marker = "python_full_version >= '3.13'", specifier = ">=2025.12.19" },
     { name = "importlib-resources", marker = "python_full_version < '3.9'", specifier = ">=6.4.5" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "sphinx", marker = "python_full_version >= '3.13'", specifier = ">=9.1.0" },
-    { name = "sphinx-autodoc-typehints", marker = "python_full_version >= '3.13'", specifier = ">=3.9.11" },
-    { name = "sphinx-paramlinks", marker = "python_full_version >= '3.13'", specifier = ">=0.6.0" },
     { name = "sqlalchemy", specifier = "<2" },
 ]
 docs = [
