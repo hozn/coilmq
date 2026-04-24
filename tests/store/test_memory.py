@@ -1,12 +1,13 @@
 """Test memory queue storage."""
 
-import unittest
 import uuid
+
+import pytest
 
 from coilmq.store.memory import MemoryQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
-from tests.store import CommonQueueTest
+from tests.store import BaseQueueTests
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -23,25 +24,27 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class MemoryQueueTest(CommonQueueTest, unittest.TestCase):
-    def setUp(self):
-        self.store = MemoryQueue()
+@pytest.fixture
+def store() -> MemoryQueue:
+    return MemoryQueue()
 
-    def test_dequeue_identity(self):
+
+class TestMemoryQueue(BaseQueueTests):
+    def test_dequeue_identity(self, store: MemoryQueue) -> None:
         """Test the dequeue() method."""
         dest = "/queue/foo"
         frame = Frame(
             frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
         )
-        self.store.enqueue(dest, frame)
+        store.enqueue(dest, frame)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 1)
+        assert store.has_frames(dest)
+        assert store.size(dest) == 1
 
-        rframe = self.store.dequeue(dest)
-        self.assertEqual(frame, rframe)
+        rframe = store.dequeue(dest)
+        assert frame == rframe
         # Currently we expect these to be the /same/ object.
-        self.assertIs(frame, rframe)
+        assert frame is rframe
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not store.has_frames(dest)
+        assert store.size(dest) == 0

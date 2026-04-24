@@ -1,12 +1,10 @@
 """Tests for the subscription management."""
 
-import unittest
-
 from coilmq.subscription import SubscriptionManager
 from tests.mock import MockConnection
 
 
-class SubscriptionManagerTest(unittest.TestCase):
+class TestSubscriptionManager:
     """Tests for the subscription manager."""
 
     def test_subscribing(self):
@@ -23,17 +21,17 @@ class SubscriptionManagerTest(unittest.TestCase):
             subscriptions.subscribe(conn1, "dest2", id=2)
             subscriptions.subscribe(conn2, "dest2", id=1)
 
-        self.assertEqual(subscriptions.subscriber_count("dest1"), 3)
-        self.assertEqual(subscriptions.subscriber_count("dest2"), 3)
-        self.assertEqual(subscriptions.subscriber_count(), 6)
+        assert subscriptions.subscriber_count("dest1") == 3
+        assert subscriptions.subscriber_count("dest2") == 3
+        assert subscriptions.subscriber_count() == 6
 
         subscriptions.unsubscribe(conn1, "dest2", id=2)
 
-        self.assertEqual(subscriptions.subscriber_count("dest1"), 3)
-        self.assertEqual(subscriptions.subscriber_count("dest2"), 2)
-        self.assertEqual(subscriptions.subscriber_count(), 5)
+        assert subscriptions.subscriber_count("dest1") == 3
+        assert subscriptions.subscriber_count("dest2") == 2
+        assert subscriptions.subscriber_count() == 5
 
         subscriptions.disconnect(conn2)
-        self.assertEqual(subscriptions.subscriber_count("dest1"), 2)
-        self.assertEqual(subscriptions.subscriber_count("dest2"), 1)
-        self.assertEqual(subscriptions.subscriber_count(), 3)
+        assert subscriptions.subscriber_count("dest1") == 2
+        assert subscriptions.subscriber_count("dest2") == 1
+        assert subscriptions.subscriber_count() == 3

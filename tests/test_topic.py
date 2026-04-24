@@ -1,7 +1,5 @@
 """Tests for topic-related functionality."""
 
-import unittest
-
 from coilmq.topic import TopicManager
 from coilmq.util import frames
 from coilmq.util.frames import Frame
@@ -22,58 +20,64 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class TopicManagerTest(unittest.TestCase):
-    """Tests for the :class:`TopicManager` class."""
-
-    def setUp(self):
-        self.tm = TopicManager()
-        self.conn = MockConnection()
+class TestTopicManager:
+    """Test :class:`TopicManager`."""
 
     def test_subscribe(self):
         """Test subscribing a connection to the topic."""
+        tm = TopicManager()
+        conn = MockConnection()
+
         dest = "/topic/dest"
 
-        self.tm.subscribe(self.conn, dest)
+        tm.subscribe(conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
-        self.assertEqual(len(self.conn.frames), 1)
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
-        self.assertEqual(self.conn.frames[0], f)
+        assert len(conn.frames) == 1
+        subscription = conn.frames[0].headers.pop("subscription", None)
+        assert subscription == 0
+        assert conn.frames[0] == f
 
     def test_unsubscribe(self):
         """Test unsubscribing a connection from the queue."""
+        tm = TopicManager()
+        conn = MockConnection()
+
         dest = "/topic/dest"
 
-        self.tm.subscribe(self.conn, dest)
+        tm.subscribe(conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
-        self.assertEqual(len(self.conn.frames), 1)
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
-        self.assertEqual(self.conn.frames[0], f)
+        assert len(conn.frames) == 1
+        subscription = conn.frames[0].headers.pop("subscription", None)
+        assert subscription == 0
+        assert conn.frames[0] == f
 
-        self.tm.unsubscribe(self.conn, dest)
+        tm.unsubscribe(conn, dest)
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
-        self.assertEqual(len(self.conn.frames), 1)
+        assert len(conn.frames) == 1
 
     def test_send_simple(self):
         """Test a basic send command."""
+        tm = TopicManager()
+
         dest = "/topic/dest"
 
         f = Frame(frames.SEND, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
         # Assert some side-effects
-        self.assertIn("message-id", f.headers)
-        self.assertEqual(f.cmd, frames.MESSAGE)
+        assert "message-id" in f.headers
+        assert f.cmd == frames.MESSAGE
 
     def test_send_subscriber_timeout(self):
         """Test a send command when one subscriber errs out."""
+        tm = TopicManager()
+        conn = MockConnection()
 
         class TimeoutConnection:
             reliable_subscriber = False
@@ -81,27 +85,26 @@ class TopicManagerTest(unittest.TestCase):
             def send_frame(self, frame):
                 raise TimeoutError("timed out")
 
-            def reset(self):
-                pass
+            def reset(self): ...
 
         dest = "/topic/dest"
 
         bad_client = TimeoutConnection()
 
         # Subscribe both a good client and a bad client.
-        self.tm.subscribe(bad_client, dest)
-        self.tm.subscribe(self.conn, dest)
+        tm.subscribe(bad_client, dest)
+        tm.subscribe(conn, dest)
 
         f = Frame(frames.MESSAGE, headers={"destination": dest}, body="Empty")
-        self.tm.send(f)
+        tm.send(f)
 
         # Make sure out good client got the message.
-        self.assertEqual(len(self.conn.frames), 1)
-        subscription = self.conn.frames[0].headers.pop("subscription", None)
-        self.assertEqual(subscription, 0)
-        self.assertEqual(self.conn.frames[0], f)
+        assert len(conn.frames) == 1
+        subscription = conn.frames[0].headers.pop("subscription", None)
+        assert subscription == 0
+        assert conn.frames[0] == f
 
         # Make sure our bad client got disconnected
         # (This might be a bit too intimate.)
-        connections = {s.connection for s in self.tm._subscriptions.subscribers(dest)}
-        self.assertNotIn(bad_client, connections)
+        connections = {s.connection for s in tm._subscriptions.subscribers(dest)}
+        assert bad_client not in connections

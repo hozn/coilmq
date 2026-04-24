@@ -1,80 +1,74 @@
-import time
-from contextlib import contextmanager
+from __future__ import annotations
 
+import time
+
+import pytest
+
+from coilmq.engine import StompEngine
 from coilmq.protocol import STOMP11
 from coilmq.util import frames
 from coilmq.util.frames import ErrorFrame, Frame
-from tests.protocol import ProtocolBaseTestCase
 
 
-class STOMP11TestCase(ProtocolBaseTestCase):
-    def get_protocol(self):
-        return STOMP11
+@pytest.fixture
+def protocol() -> type[STOMP11]:
+    """Returns the :func:`engine` fixture's ``protocol`` argument."""
+    return STOMP11
 
-    @contextmanager
-    def with_heartbeat(self, protocol):
-        try:
-            self.engine.protocol = protocol
-            yield
-        finally:
-            protocol.disable_heartbeat()
 
-    def test_heartbeat_from_server(self):
-        with self.with_heartbeat(self.engine.protocol):
-            self.engine.process_frame(
-                Frame(
-                    frames.CONNECT,
-                    headers={"heart-beat": "0,100", "accept-version": "1.1"},
-                )
+class TestSTOMP11:
+    def test_heartbeat_from_server(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                headers={"heart-beat": "0,100", "accept-version": "1.1"},
             )
-            time.sleep(0.53)
-            self.assertAlmostEqual(self.conn.heartbeat_count, 5, delta=1)
+        )
+        time.sleep(0.53)
+        assert abs(engine.connection.heartbeat_count - 5) < 1
 
-    def test_no_heartbeat_from_client(self):
-        with self.with_heartbeat(STOMP11(self.engine, receive_heartbeat_interval=50)):
-            self.engine.process_frame(
-                Frame(
-                    frames.CONNECT,
-                    headers={"heart-beat": "50,50", "accept-version": "1.1"},
-                )
+    def test_no_heartbeat_from_client(self, engine: StompEngine) -> None:
+        # FIXME: set the protocol's receive_heartbeat_interval to 50; see #64.
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                headers={"heart-beat": "100,100", "accept-version": "1.1"},
             )
-            self.assertTrue(self.engine.connected)
-            self.assertTrue(self.engine.protocol.timer._running)
-            time.sleep(0.53)
-            self.assertFalse(self.engine.connected)
+        )
+        assert engine.connected
+        assert engine.protocol.timer._running
+        time.sleep(0.203)
+        assert not engine.connected
 
-    def test_no_heartbeat(self):
-        with self.with_heartbeat(STOMP11(self.engine)):
-            self.engine.process_frame(
-                Frame(
-                    frames.CONNECT,
-                    headers={"heart-beat": "0,0", "accept-version": "1.1"},
-                )
+    def test_no_heartbeat(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                headers={"heart-beat": "0,0", "accept-version": "1.1"},
             )
-            self.assertTrue(self.engine.connected)
-            self.assertTrue(self.engine.protocol.timer._running)
+        )
+        assert engine.connected
+        assert engine.protocol.timer._running
 
-    def test_protocol_version_common_exists(self):
-        self.engine.process_frame(
+    def test_protocol_version_common_exists(self, engine: StompEngine) -> None:
+        engine.process_frame(
             Frame(
                 frames.CONNECT, headers={"heart-beat": "0,0", "accept-version": "1.1"}
             )
         )
-        self.assertEqual(self.conn.frames[-1].cmd, frames.CONNECTED)
-        self.assertIn("version", self.conn.frames[-1].headers)
+        assert engine.connection.frames[-1].cmd == frames.CONNECTED
+        assert "version" in engine.connection.frames[-1].headers
 
-    def test_nack_valid_frame(self):
-        self.engine.connected = True
-        self.engine.process_frame(
+    def test_nack_valid_frame(self, engine: StompEngine) -> None:
+        engine.connected = True
+        engine.process_frame(
             Frame(frames.NACK, headers={"message-id": 1, "subscription": "foo"})
         )
-        # just make sure it works
-        self.assertTrue(1)
 
-    def test_nack_invalid_frame(self):
-        self.engine.connected = True
+    def test_nack_invalid_frame(self, engine: StompEngine) -> None:
+        engine.connected = True
 
-        self.engine.process_frame(Frame(frames.NACK, headers={"subscription": "foo"}))
-        self.assertIsInstance(self.conn.frames[-1], ErrorFrame)
-        self.engine.process_frame(Frame(frames.NACK, headers={"message-id": 1}))
-        self.assertIsInstance(self.conn.frames[-1], ErrorFrame)
+        engine.process_frame(Frame(frames.NACK, headers={"subscription": "foo"}))
+        assert isinstance(engine.connection.frames[-1], ErrorFrame)
+        engine.process_frame(Frame(frames.NACK, headers={"message-id": 1}))
+        assert isinstance(engine.connection.frames[-1], ErrorFrame)

@@ -1,17 +1,18 @@
 """Test DBM queue storage."""
 
-import shutil
-import tempfile
 import time
-import unittest
 import uuid
+from contextlib import closing
+from pathlib import Path
+from typing import Generator
 
 import pytest
 
+from coilmq.store import QueueStore
 from coilmq.store.dbm import DbmQueue
 from coilmq.util import frames
 from coilmq.util.frames import Frame
-from tests.store import CommonQueueTest
+from tests.store import BaseQueueTests
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -28,40 +29,36 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class DbmQueueTest(CommonQueueTest, unittest.TestCase):
-    def setUp(self):
-        self.data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
-        self.store = DbmQueue(self.data_dir)
+@pytest.fixture
+def store(tmp_path: Path) -> Generator[QueueStore, None, None]:
+    with closing(DbmQueue(tmp_path)) as queue:
+        yield queue
 
-    def tearDown(self):
-        self.store.close()
-        shutil.rmtree(self.data_dir)
 
-    def test_dequeue_identity(self):
+class TestDbmQueue(BaseQueueTests):
+    def test_dequeue_identity(self, store: QueueStore) -> None:
         """Test the dequeue() method."""
         dest = "/queue/foo"
         frame = Frame(
             frames.MESSAGE, headers={"message-id": str(uuid.uuid4())}, body="some data"
         )
-        self.store.enqueue(dest, frame)
+        store.enqueue(dest, frame)
 
-        self.assertTrue(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 1)
+        assert store.has_frames(dest)
+        assert store.size(dest) == 1
 
-        rframe = self.store.dequeue(dest)
-        self.assertEqual(frame, rframe)
-        self.assertIsNot(frame, rframe)
+        rframe = store.dequeue(dest)
+        assert frame == rframe
+        assert frame is not rframe
 
-        self.assertFalse(self.store.has_frames(dest))
-        self.assertEqual(self.store.size(dest), 0)
+        assert not store.has_frames(dest)
+        assert store.size(dest) == 0
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_checkpoint_ops(self):
+    def test_sync_checkpoint_ops(self, tmp_path: Path) -> None:
         """Test a expected sync behavior with checkpoint_operations param."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
         max_ops = 5
-        try:
-            store = DbmQueue(data_dir, checkpoint_operations=max_ops)
+        with closing(DbmQueue(tmp_path, checkpoint_operations=max_ops)) as store:
             dest = "/queue/foo"
 
             for i in range(max_ops + 1):
@@ -72,23 +69,17 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
                 )
                 store.enqueue(dest, frame)
 
-            self.assertEqual(store.size(dest), max_ops + 1)
+            assert store.size(dest) == max_ops + 1
 
             # No close()!
 
-            store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), max_ops + 1)
-
-        except:
-            shutil.rmtree(data_dir, ignore_errors=True)
-            raise
+            with closing(DbmQueue(tmp_path)) as store2:
+                assert store2.size(dest) == max_ops + 1
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_checkpoint_timeout(self):
+    def test_sync_checkpoint_timeout(self, tmp_path: Path) -> None:
         """Test a expected sync behavior with checkpoint_timeout param."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
-        try:
-            store = DbmQueue(data_dir, checkpoint_timeout=0.5)
+        with closing(DbmQueue(tmp_path, checkpoint_timeout=0.5)) as store:
             dest = "/queue/foo"
 
             frame = Frame(
@@ -107,22 +98,16 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
             )
             store.enqueue(dest, frame)
 
-            self.assertEqual(store.size(dest), 2)
+            assert store.size(dest) == 2
 
             # No close()!
 
-            store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), 2)
+            with closing(DbmQueue(tmp_path)) as store2:
+                assert store2.size(dest) == 2
 
-        except:
-            shutil.rmtree(data_dir, ignore_errors=True)
-            raise
-
-    def test_sync_close(self):
+    def test_sync_close(self, tmp_path: Path) -> None:
         """Test a expected sync behavior of close() call."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
-        try:
-            store = DbmQueue(data_dir)
+        with closing(DbmQueue(tmp_path)) as store:
             dest = "/queue/foo"
             frame = Frame(
                 frames.MESSAGE,
@@ -130,35 +115,22 @@ class DbmQueueTest(CommonQueueTest, unittest.TestCase):
                 body="some data",
             )
             store.enqueue(dest, frame)
-            self.assertEqual(store.size(dest), 1)
+            assert store.size(dest) == 1
 
-            store.close()
-
-            store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), 1)
-
-        except:
-            shutil.rmtree(data_dir, ignore_errors=True)
-            raise
+        with closing(DbmQueue(tmp_path)) as store2:
+            assert store2.size(dest) == 1
 
     @pytest.mark.xfail(reason="https://github.com/hozn/coilmq/issues/41")
-    def test_sync_loss(self):
+    def test_sync_loss(self, tmp_path: Path, store: DbmQueue) -> None:
         """Test metadata loss behavior."""
-        data_dir = tempfile.mkdtemp(prefix="coilmq-dbm-test")
-        try:
-            store = DbmQueue(data_dir)
-            dest = "/queue/foo"
-            frame = Frame(
-                frames.MESSAGE,
-                headers={"message-id": str(uuid.uuid4())},
-                body="some data",
-            )
-            store.enqueue(dest, frame)
-            self.assertEqual(store.size(dest), 1)
+        dest = "/queue/foo"
+        frame = Frame(
+            frames.MESSAGE,
+            headers={"message-id": str(uuid.uuid4())},
+            body="some data",
+        )
+        store.enqueue(dest, frame)
+        assert store.size(dest) == 1
 
-            store2 = DbmQueue(data_dir)
-            self.assertEqual(store2.size(dest), 0)
-
-        except:
-            shutil.rmtree(data_dir, ignore_errors=True)
-            raise
+        with closing(DbmQueue(tmp_path)) as store2:
+            assert store2.size(dest) == 0

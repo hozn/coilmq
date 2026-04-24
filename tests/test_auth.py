@@ -1,12 +1,14 @@
 """Tests for authenticators."""
 
-import unittest
+import re
 
 try:
     from importlib.resources import as_file, files
-except ImportError:
+except ImportError:  # pragma: no cover
     from importlib_resources import as_file, files
 from io import StringIO
+
+import pytest
 
 from coilmq.auth.simple import SimpleAuthenticator
 
@@ -25,21 +27,15 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 
-class SimpleAuthenticatorTest(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_constructor(self):
+class TestSimpleAuthenticator:
+    def test_constructor(self) -> None:
         """Test the with passing auth store in constructor."""
         auth = SimpleAuthenticator({"user": "pass"})
         assert auth.authenticate("user", "pass") == True
         assert auth.authenticate("user1", "pass") == False
         assert auth.authenticate("user", "pass2") == False
 
-    def test_from_configfile(self):
+    def test_from_configfile(self) -> None:
         """Test the loading store from config file path."""
         auth = SimpleAuthenticator()
         with as_file(files("tests.resources").joinpath("auth.ini")) as filename:
@@ -49,7 +45,7 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         assert auth.authenticate("pinetree", "str0bus") == True
         assert auth.authenticate("foo", "bar") == False
 
-    def test_from_configfile_fp(self):
+    def test_from_configfile_fp(self) -> None:
         """Test loading store from file-like object."""
         auth = SimpleAuthenticator()
         with as_file(
@@ -62,22 +58,20 @@ class SimpleAuthenticatorTest(unittest.TestCase):
         assert auth.authenticate("pinetree", "str0bus") == True
         assert auth.authenticate("foo", "bar") == False
 
-    def test_from_configfile_invalid(self):
+    def test_from_configfile_invalid(self) -> None:
         """Test loading store with invalid file path."""
         auth = SimpleAuthenticator()
-        with as_file(files("tests.resources").joinpath("auth-invalid.ini")) as filename:
-            try:
+        with as_file(files("tests.resources").joinpath("auth-invalid.ini")) as filename:  # noqa: SIM117
+            with pytest.raises(
+                ValueError, match=r"Could not parse auth file: .+?/auth-invalid\.ini"
+            ):
                 auth.from_configfile(filename)
-                self.fail("Expected error with invalid filename.")
-            except ValueError:
-                pass
 
-    def test_from_configfile_fp_invalid(self):
+    def test_from_configfile_fp_invalid(self) -> None:
         """Test loading store with missing section in config."""
         fp = StringIO("[invalid]\nusername=password")
         auth = SimpleAuthenticator()
-        try:
+        with pytest.raises(
+            ValueError, match=re.escape("Config file contains no [auth] section.")
+        ):
             auth.from_configfile(fp)
-            self.fail("Expected error with missing section.")
-        except ValueError:
-            pass
