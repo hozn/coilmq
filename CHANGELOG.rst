@@ -18,6 +18,8 @@ Unreleased
 * ``QueuePriorityScheduler`` is now a subclasses of ``abc.ABC``;
   ``QueuePriorityScheduler.choice()`` is now an ``abc.abstractmethod``
   (issue 53)
+* Use ``importlib.resources`` to load the default configuration
+  (issue 56)
 
 1.0.1
 -----
