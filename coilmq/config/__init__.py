@@ -17,6 +17,12 @@ import logging.config
 import os.path
 from configparser import ConfigParser
 
+try:
+    from importlib.resources import as_file, files
+except ImportError:  # pragma: no cover
+    from importlib_resources import as_file, files
+
+
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
 __license__ = """Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +39,8 @@ limitations under the License."""
 
 #: The global configuration object containing the default configuration.
 config = ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), "defaults.cfg"))
+with as_file(files("coilmq.config").joinpath("defaults.cfg")) as filename:
+    config.read(filename)
 
 
 def init_config(config_file=None):
