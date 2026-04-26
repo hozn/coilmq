@@ -1,4 +1,12 @@
-on: [push]
+on:
+  push:
+
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
 
 jobs:
   pytest-linux:
