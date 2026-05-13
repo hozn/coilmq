@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Generator
 import pytest
 
 from coilmq.engine import StompEngine
+from coilmq.protocol import STOMP10
 from coilmq.util import frames
 from coilmq.util.frames import Frame, ReceiptFrame
 from tests.mock import (
@@ -45,6 +46,7 @@ def engine(request: pytest.FixtureRequest) -> Generator[StompEngine, None, None]
         queue_manager=MockQueueManager(),
         topic_manager=MockTopicManager(),
         authenticator=authenticator,
+        protocol=STOMP10,
     )
 
     try:

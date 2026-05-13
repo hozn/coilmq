@@ -1,5 +1,3 @@
-from coilmq.protocol import STOMP10
-
 """
 Core STOMP server logic, abstracted from socket transport implementation.
 
@@ -17,8 +15,15 @@ access).  For the default memory storage engines, this shouldn't be a problem.
 This code is inspired by the design of the Ruby stompserver project, by
 Patrick Hurley and Lionel Bouton.  See https://stompserver.rubyforge.org/
 """
+
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from coilmq.protocol import STOMP
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -59,7 +64,12 @@ class StompEngine:
     """
 
     def __init__(
-        self, connection, authenticator, queue_manager, topic_manager, protocol=STOMP10
+        self,
+        connection,
+        authenticator,
+        queue_manager,
+        topic_manager,
+        protocol: type[STOMP],
     ):
         """:param connection: The stomp connection backing this engine.
         :type connection: coilmq.server.StompConnection
