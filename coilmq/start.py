@@ -19,7 +19,6 @@ import click
 
 from coilmq.config import config as global_config
 from coilmq.config import init_config, init_logging, resolve_name
-from coilmq.protocol import STOMP11
 from coilmq.queue import QueueManager
 from coilmq.server.socket_server import ThreadedStompServer
 from coilmq.topic import TopicManager
@@ -84,7 +83,6 @@ def server_from_config(config=None, server_class=None, additional_kwargs=None):
         ),
         topic_manager=TopicManager(),
         authenticator=authenticator,
-        protocol=STOMP11,
     )
     logger.info("Created server:%r", server)
     return server

@@ -4,6 +4,9 @@ scheduler implementations.
 
 from __future__ import annotations
 
+import logging
+import socket
+import time
 import zlib
 from queue import Empty
 from typing import TYPE_CHECKING
@@ -12,10 +15,10 @@ import pytest
 
 from coilmq.auth.simple import SimpleAuthenticator
 from coilmq.util import frames
+from tests.functional import Client
 
 if TYPE_CHECKING:
     from coilmq.server.socket_server import ThreadedStompServer
-    from tests.functional import Client
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -173,3 +176,47 @@ class TestServerWithDefaultClasses:
         frame = c1.received_frames.get(timeout=0.5)
         assert frame.cmd == frames.MESSAGE
         assert frame.body == longmessage
+
+    def test_shutdown_during_first_frame(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        server: ThreadedStompServer,
+        server_addr: tuple[str, int],
+    ) -> None:
+        """Verify that server tolerates no first frame.
+
+        This test verifies that the server handles the case where no CONNECT or STOMP
+        frame arrives.
+
+        """
+        with caplog.at_level(logging.DEBUG), Client(server_addr):
+            # Wait briefly to ensure that the server has accepted the client's
+            # connection and handed it off to a `StompRequestHandler`.
+            time.sleep(0.1)
+
+            # Shut the server down to force `StompRequestHandler.iter_frames` to raise
+            # `StopIteration`.
+            server.shutdown()
+
+            # Wait long enough to guarantee that the `StompRequestHandler` has acted on
+            # the shutdown request. Otherwise, caplog will not capture the log message
+            # we are interested in.
+            time.sleep(server.timeout)
+
+        assert "First frame did not arrive" in caplog.text
+
+    def test_invalid_first_frame(
+        self,
+        c1: Client,
+    ) -> None:
+        """Verify that server tolerates an invalid first frame.
+
+        This test verifies that the server handles the case where no CONNECT or STOMP
+        frame arrives.
+
+        """
+        c1.subscribe("/queue/foo")
+
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.ERROR
+        assert frame.headers["message"] == "Expected CONNECT or STOMP command"

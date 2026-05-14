@@ -1,13 +1,23 @@
 """The default/recommended SocketServer-based server implementation."""
 
+from __future__ import annotations
+
 import logging
 import threading
+from itertools import chain
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
+from typing import TYPE_CHECKING, Generator
 
 from coilmq.engine import StompEngine
-from coilmq.exception import ClientDisconnected
+from coilmq.exception import AuthError, ProtocolError
+from coilmq.protocol import protocol_class_from_first_frame
 from coilmq.server import StompConnection
-from coilmq.util.frames import FrameBuffer
+from coilmq.util.frames import ErrorFrame, FrameBuffer
+
+if TYPE_CHECKING:
+    from socket import socket
+
+    from coilmq.util.frames import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -36,67 +46,83 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     :var buffer: A StompBuffer instance which buffers received data (to ensure we deal
         with complete STOMP messages.
     :vartype buffer: coilmq.util.frames.FrameBuffer
-    :var engine: The STOMP protocol engine.
-    :vartype engine: coilmq.engine.StompEngine
     :var debug: Whether to enable extra-verbose debug logging.  (Will be logged at debug
         level.)
     :vartype debug: bool
 
     """
 
-    def setup(self):
+    server: StompServer
+    request: socket
+    """The TCP socket connected to the client."""
+
+    def setup(self) -> None:
         if self.server.timeout is not None:
             self.request.settimeout(self.server.timeout)
         self.debug = False
         self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
         self.buffer = FrameBuffer()
-        self.engine = StompEngine(
+
+    def handle(self) -> None:
+        """Handle a new socket connection."""
+        iframes = self.iter_frames()
+
+        # Determine the protocol version to use from the first frame.
+        try:
+            first = next(iframes)
+        except StopIteration:
+            self.log.debug("First frame did not arrive")
+            return
+
+        try:
+            protocol_class = protocol_class_from_first_frame(first)
+        except ProtocolError as err:
+            self.log.debug("Failed to determine protocol from first frame")
+            self.send_frame(ErrorFrame(err.args[0]))
+            return
+
+        # Instantiate the engine.
+        engine = StompEngine(
             connection=self,
             authenticator=self.server.authenticator,
             queue_manager=self.server.queue_manager,
             topic_manager=self.server.topic_manager,
-            protocol=self.server.protocol,
+            protocol=protocol_class,
         )
 
-    def handle(self):
-        """Handle a new socket connection."""
-        # self.request is the TCP socket connected to the client
+        # Process frames forever, starting with the first frame acquired above.
         try:
-            while not self.server._shutdown_request_event.is_set():
-                try:
-                    data = self.request.recv(8192)
-                    if not data:
-                        break
-                    if self.debug:
-                        self.log.debug("RECV: %r", data)
-                    self.buffer.append(data)
+            for frame in chain([first], iframes):
+                engine.process_frame(frame)
+        except AuthError:
+            self.log.debug("Authentication error, discontinuing read loop.")
+        except ProtocolError:
+            self.log.debug("Protocol error, discontinuing read loop.")
+        finally:
+            engine.unbind()
 
-                    if not self.buffer.buffer_empty():
-                        self.engine.protocol.process_heartbeat()
+    def iter_frames(self) -> Generator[Frame]:
+        """Return a generator that yields frames.
 
-                    for frame in self.buffer:
-                        self.log.debug("Processing frame: %s", frame)
-                        self.engine.process_frame(frame)
-                        if not self.engine.connected:
-                            raise ClientDisconnected()
-                except TimeoutError:  # pragma: no cover
-                    pass
-        except ClientDisconnected:
-            self.log.debug("Client disconnected, discontinuing read loop.")
-        except Exception:  # pragma: no cover
-            self.log.exception("Error receiving data (unbinding)")
-            self.engine.unbind()
-            raise
+        This generator runs until the server shuts down or the client disconnects.
 
-    def finish(self):
-        """Normal (non-error) termination of request.
-
-        Unbinds the engine.
-        .. seealso:: :meth:`coilmq.engine.StompEngine.unbind`
         """
-        self.engine.unbind()
+        while not self.server.shutdown_requested.is_set():
+            try:
+                data = self.request.recv(4096)
+            except TimeoutError:
+                continue
 
-    def send_frame(self, frame):
+            if not data:
+                break
+
+            self.log.debug("RECV: %r", data)
+
+            self.buffer.append(data)
+
+            yield from self.buffer
+
+    def send_frame(self, frame: Frame) -> None:
         """Sends a frame to connected socket client.
 
         @param frame: The frame to send.
@@ -107,7 +133,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
             self.log.debug("SEND: %r", packed)
         self.request.sendall(packed)
 
-    def send_heartbeat(self):
+    def send_heartbeat(self) -> None:
         """Sends an EOL to connected socket client."""
         heartbeat = b"\n"
         if self.debug:  # pragma: no cover
@@ -128,6 +154,12 @@ class StompServer(TCPServer):
 
     """
 
+    timeout: int | float
+    """The underlying socket timeout in seconds."""
+
+    shutdown_requested: threading.Event
+    """Request handlers stop when this event is set."""
+
     # This causes the SO_REUSEADDR option to be set on the socket, allowing
     # server to rebind to the same address (w/o waiting for connections to
     # leave TIME_WAIT after unclean disconnect).
@@ -141,7 +173,6 @@ class StompServer(TCPServer):
         authenticator=None,
         queue_manager=None,
         topic_manager=None,
-        protocol=None,
     ):
         """Extension to :py:class:`TCPServer` constructor to provide mechanism for providing implementation classes.
 
@@ -162,9 +193,7 @@ class StompServer(TCPServer):
         self.authenticator = authenticator
         self.queue_manager = queue_manager
         self.topic_manager = topic_manager
-        self.protocol = protocol
-        self._serving_event = threading.Event()
-        self._shutdown_request_event = threading.Event()
+        self.shutdown_requested = threading.Event()
         TCPServer.__init__(self, server_address, RequestHandlerClass)
 
     def server_close(self):
@@ -175,24 +204,10 @@ class StompServer(TCPServer):
         self.topic_manager.close()
         if hasattr(self.authenticator, "close"):
             self.authenticator.close()
-        self.shutdown()
 
     def shutdown(self):
-        if self._serving_event.is_set():
-            self._shutdown_request_event.set()
-            self._serving_event.clear()
-            TCPServer.shutdown(self)
-
-    def serve_forever(self, poll_interval=0.5):
-        """Handle one request at a time until shutdown.
-
-        Polls for shutdown every poll_interval seconds. Ignores
-        self.timeout. If you need to do periodic tasks, do them in
-        another thread.
-        """
-        self._serving_event.set()
-        self._shutdown_request_event.clear()
-        TCPServer.serve_forever(self, poll_interval=poll_interval)
+        self.shutdown_requested.set()
+        TCPServer.shutdown(self)
 
 
 class ThreadedStompServer(ThreadingMixIn, StompServer):
