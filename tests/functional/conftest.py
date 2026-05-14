@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Generator
 
 import pytest
 
-from coilmq.protocol import STOMP10
 from coilmq.queue import QueueManager
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 from coilmq.server.socket_server import ThreadedStompServer
@@ -15,7 +14,6 @@ from tests.functional import Client
 
 if TYPE_CHECKING:
     from coilmq.auth import Authenticator
-    from coilmq.protocol import STOMP
     from coilmq.store import QueueStore
 
 
@@ -26,16 +24,9 @@ def store() -> MemoryQueue:
 
 
 @pytest.fixture
-def protocol_class() -> type[STOMP]:
-    """Returns the :func:`server` fixture's ``protocol_class`` argument."""
-    return STOMP10
-
-
-@pytest.fixture
 def server(
     request: pytest.FixtureRequest,
     store: QueueStore,
-    protocol_class: type[STOMP],
 ) -> Generator[ThreadedStompServer, None, None]:
     """Returns a :class:`ThreadedStompServer` instance.
 
@@ -60,7 +51,6 @@ def server(
             RandomQueueScheduler(),
         ),
         topic_manager=TopicManager(),
-        protocol=protocol_class,
     )
     thread = threading.Thread(target=server.serve_forever, name="server")
     thread.start()
@@ -68,8 +58,9 @@ def server(
     try:
         yield server
     finally:
-        server.server_close()
+        server.shutdown()
         thread.join()
+        server.server_close()
 
 
 @pytest.fixture

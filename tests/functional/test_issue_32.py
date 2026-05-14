@@ -5,18 +5,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from coilmq.protocol import STOMP11
 from coilmq.util.frames import CONNECTED
 
 if TYPE_CHECKING:
-    from coilmq.protocol import STOMP
     from tests.functional import Client
-
-
-@pytest.fixture
-def protocol_class() -> type[STOMP]:
-    """Returns the :func:`server` fixture's ``protocol_class`` argument."""
-    return STOMP11
 
 
 def test_connected_response(c1: Client) -> None:

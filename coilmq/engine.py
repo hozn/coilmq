@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from coilmq.protocol import STOMP
+    from coilmq.util.frames import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
 __copyright__ = "Copyright 2009 Hans Lellelid"
@@ -86,7 +87,8 @@ class StompEngine:
 
         self.protocol = protocol(self)
 
-    def process_frame(self, frame):
+    def process_frame(self, frame: Frame) -> None:
+        self.log.debug("Processing frame: %s", frame)
         self.protocol.process_frame(frame)
 
     def unbind(self):
