@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from coilmq.auth.simple import SimpleAuthenticator
-from coilmq.store.memory import MemoryQueue
 from coilmq.util import frames
 
 if TYPE_CHECKING:
@@ -31,12 +30,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
-
-
-@pytest.fixture
-def store() -> MemoryQueue:
-    """Returns the :func:`server` fixture's ``store`` argument."""
-    return MemoryQueue()
 
 
 class TestServerWithDefaultClasses:
