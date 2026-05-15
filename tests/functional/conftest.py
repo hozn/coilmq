@@ -9,28 +9,42 @@ from coilmq.protocol import STOMP10
 from coilmq.queue import QueueManager
 from coilmq.scheduler import FavorReliableSubscriberScheduler, RandomQueueScheduler
 from coilmq.server.socket_server import ThreadedStompServer
+from coilmq.store.memory import MemoryQueue
 from coilmq.topic import TopicManager
 from tests.functional import Client
 
 if TYPE_CHECKING:
     from coilmq.auth import Authenticator
+    from coilmq.protocol import STOMP
     from coilmq.store import QueueStore
+
+
+@pytest.fixture
+def store() -> MemoryQueue:
+    """Returns the :func:`server` fixture's ``store`` argument."""
+    return MemoryQueue()
+
+
+@pytest.fixture
+def protocol_class() -> type[STOMP]:
+    """Returns the :func:`server` fixture's ``protocol_class`` argument."""
+    return STOMP10
 
 
 @pytest.fixture
 def server(
     request: pytest.FixtureRequest,
     store: QueueStore,
+    protocol_class: type[STOMP],
 ) -> Generator[ThreadedStompServer, None, None]:
     """Returns a :class:`ThreadedStompServer` instance.
 
-    This function creates a new server and runs it in a thread.
+    This function creates a new server and runs it in a thread.  The default ``store``
+    fixture returns an ephemeral, memory-backed queue store.
 
     :param request: if a test needs to provide a :class:`Authenticator`
         instance, pass it as ``request.param`` via indirect parametrization
-    :param store: is a fixture-provided :class:`QueueStore` instance; a
-        ``store`` fixture must exist in the scope where this fixture is used by
-        a test
+    :param store: is a fixture-provided :class:`QueueStore` instance
 
     """
     authenticator: Authenticator | None = (
@@ -46,7 +60,7 @@ def server(
             RandomQueueScheduler(),
         ),
         topic_manager=TopicManager(),
-        protocol=STOMP10,
+        protocol=protocol_class,
     )
     thread = threading.Thread(target=server.serve_forever, name="server")
     thread.start()
