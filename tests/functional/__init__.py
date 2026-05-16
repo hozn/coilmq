@@ -64,6 +64,14 @@ class Client:
         self._sending.put(Frame(frames.CONNECT, headers=headers))
         self._rsock.sendall(b"\0")
 
+    def stomp(self, accept_version: str, extra_headers: dict[str, str] | None = None):
+        """Send a ``STOMP`` frame to the server."""
+        headers = {"accept-version": accept_version}
+        if extra_headers is not None:
+            headers.update(extra_headers)
+        self._sending.put(Frame(frames.STOMP_CMD, headers=headers))
+        self._rsock.sendall(b"\0")
+
     def send(
         self,
         destination: str,

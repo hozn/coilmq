@@ -55,6 +55,18 @@ class TestSTOMP11:
         assert engine.connected
         assert engine.protocol.timer._running
 
+    def test_malformed_heartbeat(self, engine: StompEngine) -> None:
+        engine.process_frame(
+            Frame(
+                frames.CONNECT,
+                headers={"heart-beat": "1.0,100", "accept-version": "1.1"},
+            ),
+        )
+        assert engine.connection.frames[-1].cmd == frames.ERROR
+        assert (
+            engine.connection.frames[-1].headers["message"] == "Malformed 'heart-beat'"
+        )
+
     def test_protocol_version_common_exists(self, engine: StompEngine) -> None:
         engine.process_frame(
             Frame(

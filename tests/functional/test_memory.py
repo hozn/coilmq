@@ -38,11 +38,75 @@ limitations under the License."""
 class TestServerWithDefaultClasses:
     """Functional tests using default storage engine, etc."""
 
-    def test_connect(self, c1: Client) -> None:
+    @pytest.mark.parametrize(
+        ("headers", "expectation"),
+        [
+            (
+                None,
+                None,
+            ),
+            (
+                {"accept-version": "1.0"},
+                None,
+            ),
+            (
+                {"accept-version": "1.0,1.1"},
+                "1.1",
+            ),
+            (
+                {"accept-version": "1.0,1.1,1.2", "host": socket.getfqdn()},
+                "1.2",
+            ),
+            (
+                {"accept-version": "1.0,99.0"},
+                None,
+            ),
+        ],
+    )
+    def test_connect(
+        self,
+        c1: Client,
+        headers: dict[str, str] | None,
+        expectation: str | None,
+    ) -> None:
         """Test a basic (non-auth) connection."""
-        c1.connect()
+        c1.connect(headers)
         frame = c1.received_frames.get(timeout=0.5)
         assert frame.cmd == frames.CONNECTED
+        assert frame.headers.get("version") == expectation
+
+    @pytest.mark.parametrize(
+        ("accept_version", "extra_headers", "expectation"),
+        [
+            (
+                "1.1",
+                None,
+                "1.1",
+            ),
+            (
+                "1.1,1.2",
+                {"host": socket.getfqdn()},
+                "1.2",
+            ),
+            (
+                "1.1,99.0",
+                None,
+                "1.1",
+            ),
+        ],
+    )
+    def test_stomp_command(
+        self,
+        c1: Client,
+        accept_version: str,
+        extra_headers: dict[str, str] | None,
+        expectation: str | None,
+    ) -> None:
+        """Test a basic (non-auth) connection using the ``STOMP`` command."""
+        c1.stomp(accept_version, extra_headers)
+        frame = c1.received_frames.get(timeout=0.5)
+        assert frame.cmd == frames.CONNECTED
+        assert frame.headers.get("version") == expectation
 
     @pytest.mark.parametrize(
         "server",

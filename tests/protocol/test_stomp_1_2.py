@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from coilmq.protocol import STOMP11, STOMP12
+from coilmq.protocol import STOMP12
 from coilmq.util import frames
 from coilmq.util.frames import Frame
 
@@ -60,21 +60,3 @@ class TestSTOMP12:
             engine.connection.frames[-1].headers["message"]
             == '"host" header is required'
         )
-
-    def test_protocol_downgrade(self, engine: StompEngine) -> None:
-        engine.process_frame(
-            Frame(
-                frames.CONNECT,
-                {
-                    "host": socket.getfqdn(),
-                    "accept-version": "1.1",
-                },
-            )
-        )
-        assert engine.connection.frames[-1].cmd == frames.CONNECTED
-        assert engine.connection.frames[-1].headers["version"] == "1.1"
-        # Note: assertIsInstance is not appropriate here because the test would
-        # pass if self.engine.protocol was STOMP10 which is not what we want.
-        # `assertIs(type(obj), cls)` is appropriate way to check for an object's
-        # exact type.
-        assert type(engine.protocol) is STOMP11
