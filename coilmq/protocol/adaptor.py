@@ -60,10 +60,6 @@ class STOMP(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def process_heartbeat(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def disable_heartbeat(self):
         raise NotImplementedError
 
@@ -107,9 +103,6 @@ class STOMP10(STOMP):
                 self.engine.connection.send_frame(
                     ReceiptFrame(receipt=frame.headers.get("receipt"))
                 )
-
-    def process_heartbeat(self):
-        pass
 
     def disable_heartbeat(self):
         pass
@@ -248,13 +241,7 @@ class STOMP11(STOMP10):
         **kwargs,
     ):
         super().__init__(engine)
-        self.last_hb = datetime.datetime.now()
-        self.last_hb_sent = datetime.datetime.now()
         self.timer = CoilThreadingTimer()
-
-        # flags to control heartbeating
-        self.send_hb = self.receive_hb = False
-
         self.send_heartbeat_interval = datetime.timedelta(
             milliseconds=send_heartbeat_interval
         )
@@ -290,18 +277,14 @@ class STOMP11(STOMP10):
         if not self.engine.connected:
             return
         self.engine.connection.send_heartbeat()
-        self.last_hb_sent = datetime.datetime.now()
 
     def check_receive_heartbeat(self):
-        ago = datetime.datetime.now() - self.last_hb
+        ago = datetime.datetime.now() - self.engine.connection.last_data
         if ago > (self.receive_heartbeat_interval * 2):
             self.engine.log.debug(
                 "No heartbeat was received for %s seconds", ago.total_seconds()
             )
             self.engine.unbind()
-
-    def process_heartbeat(self):
-        self.last_hb = datetime.datetime.now()
 
     def connect(self, frame, response=None):
         connected_frame = Frame(frames.CONNECTED)

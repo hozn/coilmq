@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import pytest
@@ -31,6 +32,7 @@ class TestSTOMP11:
         assert abs(engine.connection.heartbeat_count - 5) < 1
 
     def test_no_heartbeat_from_client(self, engine: StompEngine) -> None:
+        engine.connection.last_data = datetime.now()
         # FIXME: set the protocol's receive_heartbeat_interval to 50; see #64.
         engine.process_frame(
             Frame(
