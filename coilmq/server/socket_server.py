@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from datetime import datetime
 from itertools import chain
 from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 from typing import TYPE_CHECKING, Generator
@@ -56,12 +57,16 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     request: socket
     """The TCP socket connected to the client."""
 
+    last_data: datetime
+    """The time at which data was last read from the socket."""
+
     def setup(self) -> None:
         if self.server.timeout is not None:
             self.request.settimeout(self.server.timeout)
         self.debug = False
         self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
         self.buffer = FrameBuffer()
+        self.last_data = datetime.min
 
     def handle(self) -> None:
         """Handle a new socket connection."""
@@ -115,6 +120,8 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
 
             if not data:
                 break
+
+            self.last_data = datetime.now()
 
             self.log.debug("RECV: %r", data)
 

@@ -1,6 +1,9 @@
 """Classes to be used for mock objects."""
 
+from __future__ import annotations
+
 from collections import defaultdict
+from datetime import datetime
 
 from coilmq import auth
 
@@ -24,6 +27,7 @@ class MockConnection:
         self.frames = []
         self.heartbeat_count = 0
         self.reliable_subscriber = False
+        self.last_data = datetime.min  # noqa: DTZ901
 
     def send_frame(self, frame):
         self.frames.append(frame)
