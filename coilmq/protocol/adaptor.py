@@ -2,18 +2,25 @@ from __future__ import annotations
 
 import abc
 import datetime
+import importlib.metadata
+import re
 import socket
 import uuid
-from typing import ClassVar
+from typing import TYPE_CHECKING, cast
 
 from coilmq.exception import AuthError, ProtocolError
 from coilmq.util import frames
 from coilmq.util.concurrency import CoilThreadingTimer
-from coilmq.util.frames import ErrorFrame, Frame, ReceiptFrame
+from coilmq.util.frames import ConnectedFrame, ErrorFrame, ReceiptFrame
+
+if TYPE_CHECKING:
+    from coilmq.engine import StompEngine
+    from coilmq.util.frames import Frame
 
 
 class STOMP(abc.ABC):
-    def __init__(self, engine):
+    def __init__(self, engine: StompEngine, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.engine = engine
 
     def stomp(self, frame):
@@ -24,7 +31,7 @@ class STOMP(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def connect(self, frame):
+    def connect(self, frame: Frame, response: ConnectedFrame | None = None) -> None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -107,7 +114,7 @@ class STOMP10(STOMP):
     def disable_heartbeat(self):
         pass
 
-    def connect(self, frame, response=None):
+    def connect(self, frame: Frame, response: ConnectedFrame | None = None) -> None:
         """Handle CONNECT command: Establishes a new connection and checks auth (if applicable)."""
         self.engine.log.debug("CONNECT")
 
@@ -119,8 +126,7 @@ class STOMP10(STOMP):
 
         self.engine.connected = True
 
-        response = response or Frame(frames.CONNECTED)
-        response.headers["session"] = uuid.uuid4()
+        response = response or ConnectedFrame(str(uuid.uuid4()))
 
         # TODO: Do we want to do anything special to track sessions?
         # (Actually, I don't think the spec actually does anything with this at all.)
@@ -230,17 +236,15 @@ class STOMP10(STOMP):
 
 
 class STOMP11(STOMP10):
-    SUPPORTED_VERSIONS: ClassVar[set[str]] = {"1.0", "1.1"}
-
     def __init__(
         self,
-        engine,
-        send_heartbeat_interval=100,
-        receive_heartbeat_interval=100,
+        engine: StompEngine,
+        send_heartbeat_interval: int = 100,
+        receive_heartbeat_interval: int = 100,
         *args,
         **kwargs,
-    ):
-        super().__init__(engine)
+    ) -> None:
+        super().__init__(engine, *args, **kwargs)
         self.timer = CoilThreadingTimer()
         self.send_heartbeat_interval = datetime.timedelta(
             milliseconds=send_heartbeat_interval
@@ -249,7 +253,7 @@ class STOMP11(STOMP10):
             milliseconds=receive_heartbeat_interval
         )
 
-    def enable_heartbeat(self, cx, cy, response):
+    def enable_heartbeat(self, cx: int, cy: int) -> tuple[int, int]:
         if self.send_heartbeat_interval and cy:
             self.send_heartbeat_interval = max(
                 self.send_heartbeat_interval, datetime.timedelta(milliseconds=cy)
@@ -268,7 +272,7 @@ class STOMP11(STOMP10):
         self.timer.start()
         sx = int(self.send_heartbeat_interval / datetime.timedelta(milliseconds=1))
         sy = int(self.receive_heartbeat_interval / datetime.timedelta(milliseconds=1))
-        response.headers["heart-beat"] = f"{sx},{sy}"
+        return sx, sy
 
     def disable_heartbeat(self):
         self.timer.stop()
@@ -286,15 +290,24 @@ class STOMP11(STOMP10):
             )
             self.engine.unbind()
 
-    def connect(self, frame, response=None):
-        connected_frame = Frame(frames.CONNECTED)
-        self._negotiate_protocol(frame, connected_frame)
-        heart_beat = frame.headers.get("heart-beat", "0,0")
+    def connect(self, frame: Frame, response: ConnectedFrame | None = None) -> None:
+        response = response or ConnectedFrame(str(uuid.uuid4()))
+        response.headers.setdefault("version", "1.1")
+        response.headers["server"] = f"coilmq/{importlib.metadata.version('coilmq')}"
+
+        heart_beat = frame.headers.get("heart-beat")
         if heart_beat:
-            self.enable_heartbeat(
-                *map(int, heart_beat.split(",")), response=connected_frame
-            )
-        super().connect(frame, response=connected_frame)
+            match = re.match(r"(?P<cx>\d+),(?P<cy>\d+)$", heart_beat)
+            if not match:
+                msg = "Malformed 'heart-beat'"
+                raise ProtocolError(msg)
+            groups = match.groupdict()
+            cx = int(cast("str", groups["cx"]))
+            cy = int(cast("str", groups["cy"]))
+            sx, sy = self.enable_heartbeat(cx, cy)
+            response.headers["heart-beat"] = f"{sx},{sy}"
+
+        super().connect(frame, response)
 
     def nack(self, frame):
         """Handles the NACK command: Unacknowledges receipt of a message.
@@ -307,32 +320,6 @@ class STOMP11(STOMP10):
 
         raise NotImplementedError("Nack implementation incomplete")
         # ToDo: self.engine.queue_manager.nack()
-
-    def _negotiate_protocol(self, frame, response):
-        client_versions = frame.headers.get("accept-version", "1.0")
-        if not client_versions:
-            raise ProtocolError("No version specified")
-        common = set(client_versions.split(",")) & self.SUPPORTED_VERSIONS
-        if not common:
-            versions = ",".join(self.SUPPORTED_VERSIONS)
-            self.engine.connection.send_frame(
-                Frame(
-                    frames.ERROR,
-                    headers={"version": versions, "content-type": frames.TEXT_PLAIN},
-                    body=f"Supported protocol versions are {versions}",
-                )
-            )
-        else:
-            response.headers["version"] = max(common)
-            protocol_class = PROTOCOL_MAP[response.headers["version"]]
-
-            # Note: `type(obj) is not cls` is the appropriate test.  A test
-            # using `instanceof` would lead to false negatives (i.e. the
-            # protocol wouldn't get changed when it should) due to the
-            # inheritance relationship between the protocol classes.
-            if type(self) is not protocol_class:
-                self.engine.protocol = protocol_class(self.engine)
-                self.engine.protocol.connect(frame, response=response)
 
     def subscribe(self, frame):
         if "id" not in frame.headers:
@@ -355,16 +342,14 @@ class STOMP11(STOMP10):
 
 
 class STOMP12(STOMP11):
-    SUPPORTED_VERSIONS: ClassVar[set[str]] = STOMP11.SUPPORTED_VERSIONS.union({
-        "1.2",
-    })
-
-    def connect(self, frame, response=None):
+    def connect(self, frame: Frame, response: ConnectedFrame | None = None) -> None:
         host = frame.headers.get("host")
         if not host:
             raise ProtocolError('"host" header is required')
         if host != socket.getfqdn():
             raise ProtocolError("Virtual hosting is not supported or host is unknown")
+        response = response or ConnectedFrame(str(uuid.uuid4()))
+        response.headers.setdefault("version", "1.2")
         super().connect(frame, response)
 
     def ack(self, frame):
@@ -375,6 +360,3 @@ class STOMP12(STOMP11):
         self.engine.queue_manager.ack(
             self.engine.connection, frame, id=frame.headers["id"]
         )
-
-
-PROTOCOL_MAP = {"1.0": STOMP10, "1.1": STOMP11, "1.2": STOMP12}
