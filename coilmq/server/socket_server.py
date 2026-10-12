@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import socket
 import threading
 from datetime import datetime
 from itertools import chain
@@ -16,8 +17,6 @@ from coilmq.server import StompConnection
 from coilmq.util.frames import ErrorFrame, FrameBuffer
 
 if TYPE_CHECKING:
-    from socket import socket
-
     from coilmq.util.frames import Frame
 
 __authors__ = ['"Hans Lellelid" <hans@xmpl.org>']
@@ -54,7 +53,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
     """
 
     server: StompServer
-    request: socket
+    request: socket.socket
     """The TCP socket connected to the client."""
 
     last_data: datetime
@@ -115,7 +114,7 @@ class StompRequestHandler(BaseRequestHandler, StompConnection):
         while not self.server.shutdown_requested.is_set():
             try:
                 data = self.request.recv(4096)
-            except TimeoutError:
+            except (socket.timeout, TimeoutError):
                 continue
 
             if not data:
