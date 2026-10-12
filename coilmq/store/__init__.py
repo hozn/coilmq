@@ -113,7 +113,7 @@ class QueueStore(abc.ABC):
         """
         raise NotImplementedError
 
-    @synchronized(lock)
+    @synchronized(lock)  # ruff: ignore[empty-method-without-abstract-decorator]
     def close(self):
         """May be implemented to perform any necessary cleanup operations when store is closed."""
 
