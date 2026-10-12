@@ -192,7 +192,7 @@ class HeaderValue:
         :type calculator: callable
         """
         if not callable(calculator):
-            raise TypeError("Non-callable param: {calculator}")
+            raise TypeError(f"Non-callable param: {calculator}")
         self.calc = calculator
 
     def __get__(self, obj, objtype):
