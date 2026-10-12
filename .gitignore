@@ -1,8 +1,6 @@
+*.egg-info
 *.py[cod]
-__pycache__/
-
-*.egg-info/
-.eggs/
-
-.*
+.coverage*
+.eggs
 /data
+__pycache__
