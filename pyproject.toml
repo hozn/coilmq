@@ -105,7 +105,7 @@ indent = 4
 keep_full_version = true
 
 [tool.pytest]
-ini_options.addopts = "--doctest-modules --cov=coilmq --cov=tests"
+ini_options.addopts = "--doctest-modules --cov=coilmq --cov=tests --cov-branch"
 ini_options.python_files = "*.py"
 
 [tool.coverage]
