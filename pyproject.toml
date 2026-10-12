@@ -32,6 +32,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Communications",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Distributed Computing",
@@ -105,8 +106,8 @@ indent = 4
 keep_full_version = true
 
 [tool.pytest]
-ini_options.addopts = "--doctest-modules --cov=coilmq --cov=tests --cov-branch"
 ini_options.python_files = "*.py"
+ini_options.addopts = "--doctest-modules --cov=coilmq --cov=tests --cov-branch"
 
 [tool.coverage]
 report.exclude_also = [
