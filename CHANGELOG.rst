@@ -36,6 +36,7 @@ Unreleased
 - `~coilmq.scheduler.QueuePriorityScheduler` should be an abstract base class (:issue:`53`)
 - use `importlib.resources` to load the default configuration (:issue:`56`)
 - pytest treats ``TestStompServer`` and ``TestStompClient`` as test cases (:issue:`62`)
+- coilmq sends ``CONNECTED`` twice when handling STOMP 1.0 ``CONNECT`` (:issue:`32`)
 
 v1.0.1
 ------
