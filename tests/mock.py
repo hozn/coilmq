@@ -27,7 +27,7 @@ class MockConnection:
         self.frames = []
         self.heartbeat_count = 0
         self.reliable_subscriber = False
-        self.last_data = datetime.min  # noqa: DTZ901
+        self.last_data = datetime.min
 
     def send_frame(self, frame):
         self.frames.append(frame)
