@@ -80,6 +80,7 @@ tests = [
 
 [tool.setuptools]
 packages = [ "coilmq" ]
+package-dir = { "" = "src" }
 
 [tool.setuptools_scm]
 
