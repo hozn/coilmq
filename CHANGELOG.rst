@@ -5,15 +5,36 @@
 ..
     Unreleased
     ----------
+
     **Added**
+
     **Changed**
+
     **Deprecated**
+
     **Removed**
+
     **Fixed**
+
     **Security**
 
 Unreleased
 ----------
+
+**Added**
+
+**Changed**
+
+**Deprecated**
+
+**Removed**
+
+**Fixed**
+
+**Security**
+
+v1.1.0
+------
 
 **Changed**
 
