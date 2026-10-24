@@ -120,12 +120,11 @@ ini_options.addopts = "--doctest-modules --cov=src/coilmq --cov=tests --cov-bran
 report.exclude_also = [
     # ignore in-line stubs like ``def func() -> None: ...``:
     "^\\s*(((async )?def .*?)?\\)(\\s*0>.*?)?:\\s*)?\\.\\.\\.\\s*(#|$)",
+    # debug-only code
     "def __repr__",
-    "if __name__ == '__main__':",
-    "if 0:",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
+    # type-checking code is not executed during testing
+    "if TYPE_CHECKING:",
+    # abstract method bodies are not executed during testing
     "raise NotImplementedError",
     "raise NotImplementedError()",
 ]
